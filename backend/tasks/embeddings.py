@@ -1,0 +1,155 @@
+from celery import Task
+from celery_app import celery_app
+import httpx
+from bs4 import BeautifulSoup
+import structlog
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct
+import uuid
+
+from config import settings
+
+logger = structlog.get_logger()
+
+
+class EmbeddingTask(Task):
+    """Base embedding task with retry configuration"""
+    autoretry_for = (Exception,)
+    retry_kwargs = {'max_retries': 3, 'countdown': 10}
+    retry_backoff = True
+
+
+# Initialize clients
+qdrant_client = QdrantClient(
+    host=settings.qdrant_host,
+    port=settings.qdrant_port
+)
+
+embeddings = OpenAIEmbeddings(
+    model=settings.embedding_model,
+    openai_api_key=settings.openai_api_key
+)
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=settings.chunk_size,
+    chunk_overlap=settings.chunk_overlap,
+    length_function=len,
+    separators=["\n\n", "\n", ". ", " ", ""]
+)
+
+
+@celery_app.task(base=EmbeddingTask, name="process_url_for_embedding")
+def process_url_for_embedding(url: str):
+    """
+    Process a URL: fetch content, extract text, chunk, embed, and store
+    """
+    logger.info("Processing URL for embedding", url=url)
+    
+    try:
+        # Ensure collection exists
+        ensure_collection_exists()
+        
+        # Fetch and extract text
+        text_content = fetch_and_extract_text(url)
+        
+        if not text_content or len(text_content.strip()) < 50:
+            logger.warning("Insufficient content", url=url, length=len(text_content))
+            return {"status": "skipped", "url": url, "reason": "insufficient_content"}
+        
+        # Split text into chunks
+        chunks = text_splitter.split_text(text_content)
+        logger.info(f"Split into {len(chunks)} chunks", url=url)
+        
+        # Embed and store chunks
+        points = []
+        for idx, chunk in enumerate(chunks):
+            # Generate embedding
+            embedding = embeddings.embed_query(chunk)
+            
+            # Create point
+            point_id = str(uuid.uuid4())
+            point = PointStruct(
+                id=point_id,
+                vector=embedding,
+                payload={
+                    "text": chunk,
+                    "url": url,
+                    "chunk_index": idx,
+                    "total_chunks": len(chunks)
+                }
+            )
+            points.append(point)
+        
+        # Batch upload to Qdrant
+        qdrant_client.upsert(
+            collection_name=settings.qdrant_collection_name,
+            points=points
+        )
+        
+        logger.info(f"Stored {len(points)} embeddings", url=url)
+        return {
+            "status": "success",
+            "url": url,
+            "chunks_processed": len(chunks)
+        }
+    
+    except Exception as e:
+        logger.error("Failed to process URL", url=url, error=str(e))
+        raise
+
+
+def ensure_collection_exists():
+    """Ensure Qdrant collection exists with proper configuration"""
+    collections = qdrant_client.get_collections().collections
+    collection_names = [c.name for c in collections]
+    
+    if settings.qdrant_collection_name not in collection_names:
+        qdrant_client.create_collection(
+            collection_name=settings.qdrant_collection_name,
+            vectors_config=VectorParams(
+                size=1536,  # OpenAI embedding dimension
+                distance=Distance.COSINE
+            )
+        )
+        logger.info("Created Qdrant collection", name=settings.qdrant_collection_name)
+
+
+def fetch_and_extract_text(url: str) -> str:
+    """Fetch URL content and extract text"""
+    try:
+        # Fetch content
+        response = httpx.get(url, timeout=30, follow_redirects=True)
+        response.raise_for_status()
+        
+        # Parse HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Remove script and style elements
+        for script in soup(["script", "style", "nav", "footer", "header"]):
+            script.decompose()
+        
+        # Try to find main content areas
+        main_content = None
+        for tag in ['main', 'article', 'div[role="main"]', '.content', '#content']:
+            main_content = soup.select_one(tag)
+            if main_content:
+                break
+        
+        # If no main content found, use body
+        if not main_content:
+            main_content = soup.body if soup.body else soup
+        
+        # Extract text
+        text = main_content.get_text(separator="\n", strip=True)
+        
+        # Clean up excessive whitespace
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        text = '\n'.join(lines)
+        
+        return text
+    
+    except Exception as e:
+        logger.error("Failed to fetch/extract text", url=url, error=str(e))
+        raise

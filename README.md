@@ -1,2 +1,92 @@
-# retriever-project
-크롤링 기반 AI 챗봇을 위한 엔드투엔드 정보 제공 파이프라인 구축
+# School RAG Chatbot
+
+학교 웹사이트의 분산된 정보를 크롤링하고 RAG (Retrieval-Augmented Generation) 기반 챗봇을 통해 질문에 답변하는 시스템입니다.
+
+## 시스템 구성
+
+- **Backend**: FastAPI + Celery + Playwright
+- **Vector DB**: Qdrant
+- **Message Queue**: RabbitMQ
+- **Cache**: Redis
+- **Frontend**: Next.js
+- **LLM**: OpenAI GPT-4
+
+## 시작하기
+
+### 1. 환경 변수 설정
+
+```bash
+cp .env.example .env
+```
+
+`.env` 파일을 열고 `OPENAI_API_KEY`를 설정하세요.
+
+### 2. Docker 서비스 시작
+
+```bash
+docker-compose up -d
+```
+
+### 3. Backend 설정
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+playwright install chromium
+```
+
+### 4. Celery Worker 시작
+
+```bash
+# Terminal 1 - Celery Worker
+cd backend
+celery -A celery_app worker --loglevel=info
+```
+
+### 5. FastAPI 서버 시작
+
+```bash
+# Terminal 2 - API Server
+cd backend
+python main.py
+```
+
+### 6. Frontend 시작
+
+```bash
+# Terminal 3 - Frontend
+cd frontend
+npm install
+npm run dev
+```
+
+## API 사용법
+
+### 크롤링 시작
+
+```bash
+curl -X POST http://localhost:8000/crawl \
+  -H "Content-Type: application/json" \
+  -d '{
+    "root_url": "https://example-school.edu",
+    "max_depth": 2
+  }'
+```
+
+### 질문하기
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "입학 절차는 어떻게 되나요?"
+  }'
+```
+
+## 모니터링
+
+- RabbitMQ Management: http://localhost:15672 (admin/admin123)
+- Qdrant Dashboard: http://localhost:6333/dashboard
+- API Docs: http://localhost:8000/docs

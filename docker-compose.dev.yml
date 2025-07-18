@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # Backend API
+  api:
+    build: ./backend
+    container_name: rag-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - qdrant
+      - redis
+    command: python main.py
+
+  # Celery Worker
+  celery:
+    build: ./backend
+    container_name: rag-celery
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - qdrant
+      - redis
+    command: celery -A celery_app worker --loglevel=info
+
+  # Frontend
+  frontend:
+    build: ./frontend
+    container_name: rag-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
