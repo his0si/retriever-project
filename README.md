@@ -87,6 +87,6 @@ curl -X POST http://localhost:8000/chat \
 
 ## 모니터링
 
-- RabbitMQ Management: http://localhost:15672 (admin/admin123)
+- RabbitMQ Management: http://localhost:15672
 - Qdrant Dashboard: http://localhost:6333/dashboard
 - API Docs: http://localhost:8000/docs
