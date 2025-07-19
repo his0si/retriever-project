@@ -25,7 +25,7 @@ def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
     """
     Crawl a website starting from root_url up to max_depth
     """
-    logger.info("Starting crawl task", task_id=task_id, root_url=root_url, max_depth=max_depth)
+    logger.info("🔵 MANUAL CRAWL STARTED", task_id=task_id, root_url=root_url, max_depth=max_depth)
     
     # Run async crawler
     loop = asyncio.new_event_loop()
@@ -38,9 +38,9 @@ def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
         
         logger.info(f"Crawl completed, found {len(urls)} URLs", task_id=task_id)
         
-        # Queue each URL for embedding processing
+        # Queue each URL for smart embedding processing (checks content changes)
         for url in urls:
-            process_url_for_embedding.delay(url)
+            process_url_for_embedding_smart.delay(url)
         
         return {
             "task_id": task_id,
@@ -77,7 +77,7 @@ async def crawl_async(root_url: str, max_depth: int) -> Set[str]:
                     await page.goto(current_url, wait_until="networkidle", timeout=30000)
                     
                     visited_urls.add(current_url)
-                    logger.info(f"Crawled: {current_url}", depth=depth)
+                    logger.info(f"🌐 Crawled: {current_url}", depth=depth)
                     
                     if depth < max_depth:
                         # Extract all links
@@ -119,7 +119,7 @@ def auto_crawl_websites():
     """
     from config import settings
     
-    logger.info("Starting automatic crawl of predefined websites")
+    logger.info("🤖 AUTO CRAWL STARTED - JSON SITES")
     
     total_urls_found = 0
     total_new_urls = 0

@@ -79,7 +79,8 @@ def process_url_for_embedding(url: str):
                     "text": chunk,
                     "url": url,
                     "chunk_index": idx,
-                    "total_chunks": len(chunks)
+                    "total_chunks": len(chunks),
+                    "updated_at": str(datetime.now())
                 }
             )
             points.append(point)

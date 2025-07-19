@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">학교 정보 RAG 챗봇</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">retriever project</h1>
         
         <div className="flex mb-6 border-b">
           <button
