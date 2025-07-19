@@ -8,6 +8,8 @@ from langchain_openai import OpenAIEmbeddings
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 import uuid
+import hashlib
+from datetime import datetime
 
 from config import settings
 
@@ -152,4 +154,179 @@ def fetch_and_extract_text(url: str) -> str:
     
     except Exception as e:
         logger.error("Failed to fetch/extract text", url=url, error=str(e))
+        raise
+
+
+def url_exists_in_db(url: str) -> bool:
+    """Check if URL already exists in the database"""
+    try:
+        search_result = qdrant_client.scroll(
+            collection_name=settings.qdrant_collection_name,
+            scroll_filter={
+                "must": [
+                    {
+                        "key": "url",
+                        "match": {
+                            "value": url
+                        }
+                    }
+                ]
+            },
+            limit=1
+        )
+        
+        return len(search_result[0]) > 0
+    except Exception:
+        return False
+
+
+def get_content_hash(text: str) -> str:
+    """Generate hash of content for duplicate detection"""
+    return hashlib.md5(text.encode('utf-8')).hexdigest()
+
+
+def content_changed_since_last_crawl(url: str, new_content: str) -> bool:
+    """Check if content has changed since last crawl"""
+    try:
+        new_hash = get_content_hash(new_content)
+        
+        # Search for existing content with same URL
+        search_result = qdrant_client.scroll(
+            collection_name=settings.qdrant_collection_name,
+            scroll_filter={
+                "must": [
+                    {
+                        "key": "url",
+                        "match": {
+                            "value": url
+                        }
+                    }
+                ]
+            },
+            limit=1,
+            with_payload=True
+        )
+        
+        if len(search_result[0]) == 0:
+            return True  # New URL, content definitely changed
+            
+        # Get stored content hash
+        existing_payload = search_result[0][0].payload
+        stored_hash = existing_payload.get("content_hash", "")
+        
+        return new_hash != stored_hash
+        
+    except Exception as e:
+        logger.error(f"Error checking content change: {e}")
+        return True  # Assume changed if error
+
+
+@celery_app.task(base=EmbeddingTask, name="process_url_for_embedding_incremental")
+def process_url_for_embedding_incremental(url: str):
+    """
+    Process URL for embedding with duplicate checking
+    """
+    logger.info("Processing URL for incremental embedding", url=url)
+    
+    # Skip if URL already exists
+    if url_exists_in_db(url):
+        logger.info("URL already exists, skipping", url=url)
+        return {"status": "skipped", "url": url, "reason": "already_exists"}
+    
+    # Process new URL
+    return process_url_for_embedding(url)
+
+
+@celery_app.task(base=EmbeddingTask, name="process_url_for_embedding_smart")
+def process_url_for_embedding_smart(url: str):
+    """
+    Process URL with smart duplicate detection based on content changes
+    """
+    logger.info("Processing URL with smart duplicate detection", url=url)
+    
+    try:
+        # Always fetch content first to check if it changed
+        text_content = fetch_and_extract_text(url)
+        
+        if not text_content or len(text_content.strip()) < 50:
+            logger.warning("Insufficient content", url=url, length=len(text_content))
+            return {"status": "skipped", "url": url, "reason": "insufficient_content"}
+        
+        # Check if content actually changed
+        if not content_changed_since_last_crawl(url, text_content):
+            logger.info("Content unchanged, skipping", url=url)
+            return {"status": "skipped", "url": url, "reason": "content_unchanged"}
+        
+        # Content changed or new URL - process it
+        logger.info("Content changed or new URL, processing", url=url)
+        
+        # Ensure collection exists
+        ensure_collection_exists()
+        
+        # Remove old content for this URL if exists
+        try:
+            qdrant_client.delete(
+                collection_name=settings.qdrant_collection_name,
+                points_selector={
+                    "filter": {
+                        "must": [
+                            {
+                                "key": "url",
+                                "match": {
+                                    "value": url
+                                }
+                            }
+                        ]
+                    }
+                }
+            )
+            logger.info("Removed old content for URL", url=url)
+        except Exception as e:
+            logger.warning(f"Could not remove old content: {e}")
+        
+        # Split text into chunks
+        chunks = text_splitter.split_text(text_content)
+        logger.info(f"Split into {len(chunks)} chunks", url=url)
+        
+        # Generate content hash
+        content_hash = get_content_hash(text_content)
+        
+        # Embed and store chunks
+        points = []
+        for idx, chunk in enumerate(chunks):
+            # Generate embedding
+            embedding = embeddings.embed_query(chunk)
+            
+            # Create point with content hash
+            point_id = str(uuid.uuid4())
+            point = PointStruct(
+                id=point_id,
+                vector=embedding,
+                payload={
+                    "text": chunk,
+                    "url": url,
+                    "chunk_index": idx,
+                    "total_chunks": len(chunks),
+                    "content_hash": content_hash,
+                    "updated_at": str(datetime.now())
+                }
+            )
+            points.append(point)
+        
+        # Batch upload to Qdrant
+        qdrant_client.upsert(
+            collection_name=settings.qdrant_collection_name,
+            points=points
+        )
+        
+        logger.info(f"Updated {len(points)} embeddings", url=url)
+        return {
+            "status": "success",
+            "url": url,
+            "chunks_processed": len(chunks),
+            "content_hash": content_hash
+        }
+        
+    except Exception as e:
+        logger.error("Failed to process URL", url=url, error=str(e))
         raise

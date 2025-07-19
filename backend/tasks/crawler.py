@@ -8,6 +8,7 @@ from playwright.async_api import async_playwright
 from collections import deque
 
 from tasks.embeddings import process_url_for_embedding
+from tasks.embeddings import process_url_for_embedding_incremental, process_url_for_embedding_smart
 
 logger = structlog.get_logger()
 
@@ -109,3 +110,59 @@ async def crawl_async(root_url: str, max_depth: int) -> Set[str]:
             await browser.close()
     
     return visited_urls
+
+
+@celery_app.task(base=CrawlerTask, name="auto_crawl_websites")
+def auto_crawl_websites():
+    """
+    Automatically crawl predefined websites for new content
+    """
+    from config import settings
+    
+    logger.info("Starting automatic crawl of predefined websites")
+    
+    total_urls_found = 0
+    total_new_urls = 0
+    
+    for root_url in settings.crawl_urls:
+        try:
+            logger.info(f"Auto-crawling: {root_url}")
+            
+            # Run async crawler
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                urls = loop.run_until_complete(
+                    crawl_async(root_url, settings.max_crawl_depth)
+                )
+                
+                logger.info(f"Found {len(urls)} URLs from {root_url}")
+                total_urls_found += len(urls)
+                
+                # Queue each URL for smart embedding processing
+                new_urls = 0
+                for url in urls:
+                    # Use smart processing that checks content changes
+                    result = process_url_for_embedding_smart.delay(url)
+                    new_urls += 1
+                
+                total_new_urls += new_urls
+                logger.info(f"Queued {new_urls} URLs for processing from {root_url}")
+                
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to auto-crawl {root_url}: {str(e)}")
+            continue
+    
+    result = {
+        "status": "completed",
+        "total_urls_found": total_urls_found,
+        "total_new_urls_queued": total_new_urls,
+        "crawled_sites": settings.crawl_urls
+    }
+    
+    logger.info("Auto-crawl completed", **result)
+    return result

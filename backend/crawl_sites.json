@@ -1,0 +1,16 @@
+{
+  "sites": [
+    {
+      "name": "이화여대 컴공과 메인",
+      "url": "https://cse.ewha.ac.kr/cse/index.do",
+      "description": "학과 소개 및 주요 정보",
+      "enabled": true
+    }
+  ],
+  "settings": {
+    "max_depth": 2,
+    "update_frequency": "매일 새벽 2시",
+    "last_updated": "2025-07-19",
+    "total_sites": 5
+  }
+} 

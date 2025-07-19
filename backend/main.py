@@ -6,7 +6,7 @@ import uuid
 import structlog
 
 from config import settings
-from tasks.crawler import crawl_website
+from tasks.crawler import crawl_website, auto_crawl_websites
 from services.rag import RAGService
 
 # Configure structured logging
@@ -120,6 +120,99 @@ async def get_crawl_status(task_id: str):
         "status": "in_progress",
         "message": "Task status tracking will be implemented"
     }
+
+
+@app.get("/crawl/sites")
+async def get_crawl_sites():
+    """
+    Get list of configured crawl sites
+    """
+    try:
+        import json
+        from pathlib import Path
+        
+        config_path = Path(__file__).parent / "crawl_sites.json"
+        with open(config_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        return {
+            "sites": data["sites"],
+            "settings": data["settings"],
+            "total_enabled": len([s for s in data["sites"] if s.get("enabled", True)]),
+            "schedule": settings.crawl_schedule
+        }
+    
+    except Exception as e:
+        logger.error("Failed to load crawl sites", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to load crawl sites configuration")
+
+
+# Scheduler setup
+if settings.auto_crawl_enabled:
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from apscheduler.triggers.cron import CronTrigger
+    
+    scheduler = BackgroundScheduler()
+    
+    # Add auto-crawl job
+    cron_parts = settings.crawl_schedule.split()
+    trigger = CronTrigger(
+        minute=int(cron_parts[0]) if cron_parts[0] != '*' else None,
+        hour=int(cron_parts[1]) if cron_parts[1] != '*' else None,
+        day=int(cron_parts[2]) if cron_parts[2] != '*' else None,
+        month=int(cron_parts[3]) if cron_parts[3] != '*' else None,
+        day_of_week=int(cron_parts[4]) if cron_parts[4] != '*' else None,
+    )
+    
+    scheduler.add_job(
+        func=lambda: auto_crawl_websites.delay(),
+        trigger=trigger,
+        id='auto_crawl_job',
+        name='Auto Crawl Websites',
+        replace_existing=True
+    )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services on startup"""
+    logger.info("Starting up RAG Chatbot API")
+    
+    if settings.auto_crawl_enabled:
+        scheduler.start()
+        logger.info(f"Auto-crawl scheduler started: {settings.crawl_schedule}")
+    
+    logger.info("RAG service initialized")
+
+
+@app.on_event("shutdown") 
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    if settings.auto_crawl_enabled:
+        scheduler.shutdown()
+    logger.info("RAG Chatbot API shutdown complete")
+
+
+@app.post("/crawl/auto", response_model=dict)
+async def trigger_auto_crawl():
+    """
+    Manually trigger automatic crawling of predefined websites
+    """
+    try:
+        task = auto_crawl_websites.delay()
+        
+        logger.info("Manual auto-crawl triggered", task_id=task.id)
+        
+        return {
+            "task_id": task.id,
+            "status": "triggered",
+            "message": "Auto-crawl task started",
+            "sites": settings.crawl_urls
+        }
+    
+    except Exception as e:
+        logger.error("Failed to trigger auto-crawl", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to trigger auto-crawl")
 
 
 if __name__ == "__main__":
