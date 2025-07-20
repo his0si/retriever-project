@@ -12,7 +12,11 @@ interface Message {
   sources?: string[]
 }
 
-export default function ChatInterface() {
+interface ChatInterfaceProps {
+  isGuestMode?: boolean
+}
+
+export default function ChatInterface({ isGuestMode = false }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -62,8 +66,16 @@ export default function ChatInterface() {
     <div className="flex flex-col h-[600px]">
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 rounded-lg">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
-            학교에 대해 궁금한 점을 물어보세요!
+          <div className="text-center text-gray-500 mt-2">
+            {isGuestMode && (
+              <div className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg border border-orange-200 mb-4">
+                <p className="font-medium mb-1">⚠️ 게스트 모드</p>
+                <p>비회원 이용 시 채팅 기록 등 일부 기능이 제한됩니다.</p>
+              </div>
+            )}
+            <div>
+              학교에 대해 궁금한 점을 물어보세요!
+            </div>
           </div>
         ) : (
           messages.map(message => (

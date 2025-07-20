@@ -9,6 +9,7 @@ import { Session } from "next-auth";
 interface ExtendedToken extends JWT {
   accessToken?: string;
   provider?: string;
+  role?: string;
 }
 
 interface ExtendedSession extends Session {
@@ -18,6 +19,7 @@ interface ExtendedSession extends Session {
     image?: string | null;
     accessToken?: string;
     provider?: string;
+    role?: string;
   }
 }
 
@@ -67,6 +69,7 @@ const handler = NextAuth({
           ...token,
           accessToken: account.access_token,
           provider: account.provider,
+          role: (user as any).role || 'user', // 관리자 역할 추가
         };
       }
       return token;
@@ -79,6 +82,7 @@ const handler = NextAuth({
       if (extendedSession.user) {
         extendedSession.user.accessToken = extendedToken.accessToken;
         extendedSession.user.provider = extendedToken.provider;
+        extendedSession.user.role = extendedToken.role;
       }
       
       return extendedSession;

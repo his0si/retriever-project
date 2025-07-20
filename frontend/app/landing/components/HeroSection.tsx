@@ -10,6 +10,10 @@ export default function HeroSection() {
     signIn()
   }
 
+  const handleStartNow = () => {
+    router.push('/chat')
+  }
+
   const handleNeedHelp = () => {
     // Contact 페이지로 이동하거나 이메일 링크
     window.location.href = 'mailto:contact@retrieverproject.com'
@@ -53,7 +57,7 @@ export default function HeroSection() {
           </button>
           
           <button
-            onClick={handleNeedHelp}
+            onClick={handleStartNow}
             className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-black transition-colors w-[200px] h-16 flex items-center justify-center"
           >
             바로 시작하기
