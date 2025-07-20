@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import KakaoProvider from "next-auth/providers/kakao";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { JWT } from "next-auth/jwt";
 import { Session } from "next-auth";
 
@@ -29,6 +30,30 @@ const handler = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    CredentialsProvider({
+      id: "admin",
+      name: "Admin",
+      credentials: {
+        username: { label: "관리자 ID", type: "text" },
+        password: { label: "비밀번호", type: "password" }
+      },
+      async authorize(credentials) {
+        // 환경변수에서 관리자 정보 가져오기
+        const adminUsername = process.env.ADMIN_USERNAME || "admin";
+        const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+        
+        if (credentials?.username === adminUsername && 
+            credentials?.password === adminPassword) {
+          return {
+            id: "admin",
+            name: "관리자",
+            email: "admin@retriever.com",
+            role: "admin"
+          };
+        }
+        return null;
+      }
     }),
   ],
   pages: {

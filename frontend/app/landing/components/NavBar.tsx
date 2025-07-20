@@ -19,8 +19,8 @@ export default function NavBar() {
           <Link href="#features" className="text-white hover:text-gray-300 transition-colors font-medium">
             Features
           </Link>
-          <Link href="#faq" className="text-white hover:text-gray-300 transition-colors font-medium">
-            FAQ
+          <Link href="#contact" className="text-white hover:text-gray-300 transition-colors font-medium">
+            Contact
           </Link>
           <Link href="/auth/signin" className="text-white hover:text-gray-300 transition-colors font-medium">
             Sign In
