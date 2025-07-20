@@ -1,0 +1,65 @@
+'use client'
+
+import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+
+export default function HeroSection() {
+  const router = useRouter()
+
+  const handleGetStarted = () => {
+    signIn()
+  }
+
+  const handleNeedHelp = () => {
+    // Contact 페이지로 이동하거나 이메일 링크
+    window.location.href = 'mailto:contact@retrieverproject.com'
+  }
+
+  return (
+    <div className="relative min-h-screen flex items-center justify-center">
+      {/* Background Image Overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
+      
+      {/* Background Image */}
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+           style={{ 
+             backgroundImage: 'url(/images/background.png)' 
+           }}>
+      </div>
+      
+      {/* Content */}
+      <div className="relative z-20 text-center px-8 max-w-4xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          Retriever Project
+        </h1>
+        
+        <div className="text-white mb-12 leading-relaxed">
+          <p className="text-lg md:text-xl mb-2">
+            리트리버가 대신 찾아드릴게요!
+          </p>
+          <p className="text-sm md:text-base text-white/70">
+            학교 정보, 직접 뒤지지 말고 똑똑한 퍼피 도우미에게 맡겨보세요.<br />
+            공식 출처 기반으로 정확하게 알려드립니다.
+          </p>
+        </div>
+        
+        {/* Action Buttons */}
+        <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
+          <button
+            onClick={handleGetStarted}
+            className="bg-white text-black px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-100 transition-colors w-[200px] h-16 flex items-center justify-center"
+          >
+            간편 로그인
+          </button>
+          
+          <button
+            onClick={handleNeedHelp}
+            className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-black transition-colors w-[200px] h-16 flex items-center justify-center"
+          >
+            바로 시작하기
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+} 
