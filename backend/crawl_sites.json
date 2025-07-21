@@ -4,7 +4,7 @@
       "name": "이화여대 컴공과 메인",
       "url": "https://cse.ewha.ac.kr/cse/index.do",
       "description": "학과 소개 및 주요 정보",
-      "enabled": true
+      "enabled": false
     }
   ],
   "settings": {
