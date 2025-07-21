@@ -12,13 +12,13 @@ timeout /t 10
 REM Open services in browser
 echo Opening monitoring dashboards...
 start http://localhost:15672
-start http://localhost:6333/dashboard
+REM Qdrant Cloud: https://cloud.qdrant.io/ (Check dashboard in browser)
 
 echo.
 echo Services are starting up!
 echo.
 echo RabbitMQ Management: http://localhost:15672 (admin/admin123)
-echo Qdrant Dashboard: http://localhost:6333/dashboard
+echo Qdrant Cloud Dashboard: https://cloud.qdrant.io/ (login and check your cluster)
 echo API Docs: http://localhost:8000/docs (will be available after starting backend)
 echo Frontend: http://localhost:3000 (will be available after starting frontend)
 echo.

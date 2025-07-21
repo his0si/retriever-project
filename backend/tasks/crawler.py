@@ -6,6 +6,7 @@ from urllib.parse import urljoin, urlparse
 import structlog
 from playwright.async_api import async_playwright
 from collections import deque
+import uuid
 
 from tasks.embeddings import process_url_for_embedding
 from tasks.embeddings import process_url_for_embedding_incremental, process_url_for_embedding_smart
@@ -63,7 +64,9 @@ async def crawl_async(root_url: str, max_depth: int) -> Set[str]:
     
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context()
+        context = await browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        )
         
         try:
             while to_visit:
@@ -74,7 +77,7 @@ async def crawl_async(root_url: str, max_depth: int) -> Set[str]:
                 
                 try:
                     page = await context.new_page()
-                    await page.goto(current_url, wait_until="networkidle", timeout=30000)
+                    await page.goto(current_url, wait_until="networkidle", timeout=60000)
                     
                     visited_urls.add(current_url)
                     logger.info(f"🌐 Crawled: {current_url}", depth=depth)

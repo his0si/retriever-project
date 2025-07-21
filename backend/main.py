@@ -156,8 +156,8 @@ async def get_db_status():
         from qdrant_client import QdrantClient
         
         qdrant_client = QdrantClient(
-            host=settings.qdrant_host,
-            port=settings.qdrant_port
+            url=settings.qdrant_host,
+            api_key=settings.qdrant_api_key
         )
         
         logger.info(f"Connecting to Qdrant at {settings.qdrant_host}:{settings.qdrant_port}")

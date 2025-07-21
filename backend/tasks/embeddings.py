@@ -25,8 +25,8 @@ class EmbeddingTask(Task):
 
 # Initialize clients
 qdrant_client = QdrantClient(
-    host=settings.qdrant_host,
-    port=settings.qdrant_port
+    url=settings.qdrant_host,
+    api_key=settings.qdrant_api_key
 )
 
 embeddings = OpenAIEmbeddings(

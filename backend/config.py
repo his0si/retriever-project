@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     qdrant_host: str = Field(default="localhost", env="QDRANT_HOST")
     qdrant_port: int = Field(default=6333, env="QDRANT_PORT")
     qdrant_collection_name: str = Field(default="school_documents", env="QDRANT_COLLECTION_NAME")
+    qdrant_api_key: str = Field(default="", env="QDRANT_API_KEY")
     
     # Redis
     redis_host: str = Field(default="localhost", env="REDIS_HOST")
