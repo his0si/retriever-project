@@ -1,6 +1,6 @@
 # retriever project
 
-학교 웹사이트의 분산된 정보를 크롤링하고 RAG (Retrieval-Augmented Generation) 기반 챗봇을 통해 질문에 답변하는 시스템입니다.
+학교 웹사이트의 분산된 정보를 크롤링하고 RAG (Retrieval-Augmented Generation) 기반 챗봇을 통해 질문에 답변하는 시스템입니다. 
 
 ## 시스템 구성
 
