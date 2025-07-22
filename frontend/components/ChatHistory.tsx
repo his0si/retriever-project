@@ -1,0 +1,199 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
+import { useSession } from 'next-auth/react'
+import { DocumentIcon, StarIcon as StarOutline, TrashIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
+
+interface SessionItem {
+  id: string
+  title: string
+  created_at: string
+}
+
+export default function ChatHistory({
+  onSelectSession,
+  selectedSessionId
+}: {
+  onSelectSession: (sessionId: string | null) => void
+  selectedSessionId: string | null
+}) {
+  const { data: session } = useSession()
+  const user = session?.user as { email?: string } | undefined
+  const [sessions, setSessions] = useState<SessionItem[]>([])
+  const [tab, setTab] = useState<'history' | 'favorites'>('history')
+  const [favoriteSessionIds, setFavoriteSessionIds] = useState<string[]>([])
+
+  // 즐겨찾기 세션 동기화
+  useEffect(() => {
+    if (!user?.email) return;
+    supabase
+      .from('favorites')
+      .select('session_id')
+      .eq('user_id', user.email)
+      .is('message_id', null)
+      .then(({ data }) => {
+        if (data) setFavoriteSessionIds(data.map((f: any) => f.session_id));
+      });
+  }, [user]);
+
+  // 세션 즐겨찾기 토글
+  const handleFavoriteSession = async (sessionId: string) => {
+    if (!user?.email) return
+    if (favoriteSessionIds.includes(sessionId)) {
+      // 즐겨찾기 해제
+      await supabase.from('favorites').delete().eq('user_id', user.email).eq('session_id', sessionId)
+      setFavoriteSessionIds(favoriteSessionIds.filter(id => id !== sessionId))
+    } else {
+      // 즐겨찾기 추가
+      await supabase.from('favorites').insert([
+        { user_id: user.email, session_id: sessionId }
+      ])
+      setFavoriteSessionIds([...favoriteSessionIds, sessionId])
+    }
+  }
+
+  // 세션 삭제 함수
+  const handleDeleteSession = async (sessionId: string) => {
+    // chat_history 먼저 삭제
+    await supabase.from('chat_history').delete().eq('session_id', sessionId);
+    // chat_sessions 삭제
+    await supabase.from('chat_sessions').delete().eq('id', sessionId);
+    // 상태에서 제거
+    setSessions(prev => prev.filter(s => s.id !== sessionId));
+    // 즐겨찾기에서도 제거
+    setFavoriteSessionIds(prev => prev.filter(id => id !== sessionId));
+  };
+
+  useEffect(() => {
+    if (!user?.email) return
+    supabase
+      .from('chat_sessions')
+      .select('*')
+      .eq('user_id', user.email)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setSessions(data as SessionItem[])
+      })
+  }, [user])
+
+  return (
+    <div className="w-full max-w-xs bg-white rounded-xl shadow p-0">
+      {/* 탭 + 즐겨찾기 숫자 뱃지 */}
+      <div className="flex items-center border-b px-5 pt-4 pb-2">
+        <button
+          className={`flex-1 pb-2 font-bold text-base transition border-b-2 ${tab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}
+          onClick={() => setTab('history')}
+        >
+          최근 파일
+        </button>
+        <button
+          className={`flex-1 pb-2 font-bold text-base flex items-center justify-center gap-1 transition border-b-2 ${tab === 'favorites' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}
+          onClick={() => setTab('favorites')}
+        >
+          즐겨찾기
+          <span className="ml-1 bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 text-xs font-semibold">{favoriteSessionIds.length}</span>
+        </button>
+      </div>
+      {/* 새 채팅 버튼 */}
+      <button
+        className="w-[90%] mx-auto mb-2 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded transition block"
+        onClick={() => onSelectSession(null)}
+      >
+        + 새 채팅
+      </button>
+      {/* 파일/대화 리스트 */}
+      <div className="overflow-y-auto max-h-96 px-2 pb-2">
+        {tab === 'history' && (
+          <ul>
+            {sessions.map(session => (
+              <li key={session.id} className={`flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 transition mb-1 ${selectedSessionId === session.id ? 'bg-blue-50' : ''}`}>
+                <button
+                  className="flex-1 text-left min-w-0"
+                  onClick={() => onSelectSession(session.id)}
+                >
+                  <div className="truncate font-medium text-gray-800 text-sm">{session.title.slice(0, 30)}</div>
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                    {session.created_at && (
+                      <span className="flex items-center gap-1">
+                        <ClockIcon className="w-4 h-4" />
+                        {(() => {
+                          const utc = new Date(session.created_at);
+                          // UTC+9로 변환
+                          const kst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
+                          return `${kst.getFullYear()}. ${kst.getMonth() + 1}. ${kst.getDate()}. ${kst.getHours().toString().padStart(2, '0')}:${kst.getMinutes().toString().padStart(2, '0')}`;
+                        })()}
+                      </span>
+                    )}
+                  </div>
+                </button>
+                <button
+                  className="ml-1"
+                  onClick={() => handleFavoriteSession(session.id)}
+                  aria-label="즐겨찾기"
+                >
+                  {favoriteSessionIds.includes(session.id) ? (
+                    <StarSolid className="w-5 h-5 text-yellow-400" />
+                  ) : (
+                    <StarOutline className="w-5 h-5 text-gray-300" />
+                  )}
+                </button>
+                <button
+                  className="ml-1 opacity-60 hover:opacity-100"
+                  aria-label="삭제"
+                  onClick={() => handleDeleteSession(session.id)}
+                >
+                  <TrashIcon className="w-5 h-5 text-gray-300" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {tab === 'favorites' && (
+          <ul>
+            {sessions.filter(session => favoriteSessionIds.includes(session.id)).map(session => (
+              <li key={session.id} className={`flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 transition mb-1 ${selectedSessionId === session.id ? 'bg-blue-50' : ''}`}>
+                <button
+                  className="flex-1 text-left min-w-0"
+                  onClick={() => onSelectSession(session.id)}
+                >
+                  <div className="truncate font-medium text-gray-800 text-sm">{session.title.slice(0, 30)}</div>
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
+                    {session.created_at && (
+                      <span className="flex items-center gap-1">
+                        <ClockIcon className="w-4 h-4" />
+                        {new Date(session.created_at).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'numeric',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </button>
+                <button
+                  className="ml-1"
+                  onClick={() => handleFavoriteSession(session.id)}
+                  aria-label="즐겨찾기"
+                >
+                  <StarSolid className="w-5 h-5 text-yellow-400" />
+                </button>
+                <button
+                  className="ml-1 opacity-60 hover:opacity-100"
+                  aria-label="삭제"
+                  onClick={() => handleDeleteSession(session.id)}
+                >
+                  <TrashIcon className="w-5 h-5 text-gray-300" />
+                </button>
+              </li>
+            ))}
+            {sessions.filter(session => favoriteSessionIds.includes(session.id)).length === 0 && (
+              <li className="text-gray-400 text-center py-4">즐겨찾기한 파일이 없습니다.</li>
+            )}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
+} 

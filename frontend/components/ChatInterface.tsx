@@ -1,9 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
+import { useSession } from 'next-auth/react'
+import { useEffect } from 'react'
+import { supabase } from '@/lib/supabaseClient'
+import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
+import { StarIcon as StarOutline } from '@heroicons/react/24/outline'
+import { v4 as uuidv4 } from 'uuid';
 
 interface Message {
   id: string
@@ -14,12 +20,81 @@ interface Message {
 
 interface ChatInterfaceProps {
   isGuestMode?: boolean
+  selectedSessionId?: string
+  onSessionCreated?: (sessionId: string) => void
+}
+// 세션 타입 확장
+interface ExtendedSessionUser {
+  id: string // uuid
+  name?: string | null
+  email?: string | null
+  image?: string | null
 }
 
-export default function ChatInterface({ isGuestMode = false }: ChatInterfaceProps) {
+export default function ChatInterface({ isGuestMode = false, selectedSessionId, onSessionCreated }: ChatInterfaceProps) {
+  const { data: session } = useSession()
+  const user = session?.user as ExtendedSessionUser | undefined
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const sessionIdRef = useRef<string>(selectedSessionId ? selectedSessionId : '')
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([])
+
+  // 대화 내역/즐겨찾기 클릭 시 해당 대화 불러오기
+  useEffect(() => {
+    if (!user?.email || !selectedSessionId) {
+      setMessages([]);
+      sessionIdRef.current = '';
+      return;
+    }
+    const sessionId = String(selectedSessionId);
+    supabase
+      .from('chat_history')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          setMessages(data.map((msg: any) => ({
+            id: msg.id,
+            type: msg.role,
+            content: msg.message,
+            sources: msg.sources
+          })))
+        } else {
+          setMessages([])
+        }
+      })
+  }, [selectedSessionId, user]);
+
+  // 즐겨찾기 불러오기
+  useEffect(() => {
+    if (!user?.email || typeof sessionIdRef.current !== 'string' || sessionIdRef.current === '') return;
+    const sessionId: string = sessionIdRef.current;
+    supabase
+      .from('favorites')
+      .select('message_id')
+      .eq('user_id', user.email)
+      .eq('session_id', sessionId)
+      .then(({ data }) => {
+        if (data) setFavoriteIds(data.map((f: any) => f.message_id))
+      })
+  }, [user, sessionIdRef.current])
+
+  const handleToggleFavorite = async (messageId: string) => {
+    if (!user?.email || !sessionIdRef.current) return
+    if (favoriteIds.includes(messageId)) {
+      // 즐겨찾기 해제
+      await supabase.from('favorites').delete().eq('user_id', user.email).eq('session_id', sessionIdRef.current).eq('message_id', messageId)
+      setFavoriteIds(favoriteIds.filter(id => id !== messageId))
+    } else {
+      // 즐겨찾기 추가
+      await supabase.from('favorites').insert([
+        { user_id: user.email, session_id: sessionIdRef.current, message_id: messageId }
+      ])
+      setFavoriteIds([...favoriteIds, messageId])
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,6 +111,19 @@ export default function ChatInterface({ isGuestMode = false }: ChatInterfaceProp
     setIsLoading(true)
 
     try {
+      // 1. 세션이 없으면 chat_sessions에 insert (title=첫 질문)
+      if (!sessionIdRef.current && user?.email) {
+        const { data: sessionData, error: sessionError } = await supabase.from('chat_sessions').insert([
+          { user_id: user.email, title: userMessage.content, created_at: new Date().toISOString() }
+        ]).select()
+        if (sessionError || !sessionData || !sessionData[0]?.id) {
+          throw new Error('세션 생성 실패')
+        }
+        sessionIdRef.current = sessionData[0].id
+        if (onSessionCreated) onSessionCreated(sessionIdRef.current)
+      }
+
+      // 2. 챗봇 응답 받기
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/chat`,
         { question: userMessage.content }
@@ -49,6 +137,18 @@ export default function ChatInterface({ isGuestMode = false }: ChatInterfaceProp
       }
 
       setMessages(prev => [...prev, assistantMessage])
+
+      // 3. chat_history에 session_id로 메시지 저장
+      if (user?.email && sessionIdRef.current) {
+        const now = new Date().toISOString();
+        const { error } = await supabase.from('chat_history').insert([
+          { id: uuidv4(), user_id: user.email, session_id: sessionIdRef.current, message: userMessage.content, role: 'user', created_at: now },
+          { id: uuidv4(), user_id: user.email, session_id: sessionIdRef.current, message: assistantMessage.content, role: 'assistant', created_at: now }
+        ])
+        if (error) {
+          console.error('chat_history insert error:', error)
+        }
+      }
     } catch (error) {
       console.error('Chat error:', error)
       const errorMessage: Message = {

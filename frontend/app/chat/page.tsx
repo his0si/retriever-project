@@ -1,92 +1,52 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession, signOut } from 'next-auth/react'
-import { redirect } from 'next/navigation'
+import { useState } from 'react'
+import ChatHistory from '@/components/ChatHistory'
 import ChatInterface from '@/components/ChatInterface'
-
-// 세션 타입 확장
-interface ExtendedSession {
-  user: {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    role?: string;
-  }
-}
+import Profile from '@/components/Profile'
+import { useSession, signOut } from 'next-auth/react'
+import { supabase } from '@/lib/supabaseClient'
+import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
 
 export default function ChatPage() {
-  const { data: session, status } = useSession()
-  const extendedSession = session as ExtendedSession | null
-
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">로딩중...</div>
-      </div>
-    )
-  }
-
-  const isLoggedIn = !!session
-  const isAdmin = extendedSession?.user?.role === 'admin'
+  const { data: session } = useSession()
+  const user = session?.user as { email?: string } | undefined
+  const isLoggedIn = !!session?.user?.email;
+  const [selectedSessionId, setSelectedSessionId] = useState<string>('')
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <main className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header with user info and logout */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Retriever Project</h1>
-          <div className="flex items-center gap-4">
-            {isLoggedIn ? (
-              <>
-                <span className="text-gray-600">
-                  안녕하세요, {session.user?.name}님!
-                </span>
-                <button
-                  onClick={() => signOut({ callbackUrl: '/landing' })}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-                >
-                  로그아웃
-                </button>
-              </>
-            ) : (
-              <>
-                <span className="text-gray-600">
-                  게스트 모드
-                </span>
-                <a
-                  href="/auth/signin"
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-                >
-                  로그인
-                </a>
-              </>
-            )}
-          </div>
-        </div>
-        
-        {/* Navigation - 관리자만 크롤링 링크 표시 */}
+      <Header />
+      {!sidebarOpen && isLoggedIn && (
+        <button
+          className="fixed top-8 left-4 z-50 bg-white border shadow rounded-full p-2 hover:bg-blue-50 transition"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="사이드바 열기"
+        >
+          <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
+      <div className="max-w-4xl mx-auto flex gap-8">
+        {/* 왼쪽: 사이드바 (로그인한 경우만) */}
         {isLoggedIn && (
-          <div className="flex mb-6 border-b">
-            <a
-              href="/chat"
-              className="px-4 py-2 font-medium border-b-2 border-blue-500 text-blue-600"
-            >
-              챗봇
-            </a>
-            {isAdmin && (
-              <a
-                href="/crawl"
-                className="px-4 py-2 font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent hover:border-gray-300"
-              >
-                크롤링
-              </a>
-            )}
-          </div>
+          <Sidebar
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+            selectedSessionId={selectedSessionId}
+            setSelectedSessionId={setSelectedSessionId}
+          />
         )}
-
-        {/* Chat Content */}
-        <ChatInterface isGuestMode={!isLoggedIn} />
+        {/* 오른쪽: 챗봇 */}
+        <div className="flex-1">
+          <ChatInterface
+            selectedSessionId={selectedSessionId}
+            isGuestMode={!isLoggedIn}
+          />
+        </div>
       </div>
     </main>
   )
