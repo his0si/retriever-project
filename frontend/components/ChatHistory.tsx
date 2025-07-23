@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useSession } from 'next-auth/react'
 import { DocumentIcon, StarIcon as StarOutline, TrashIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
+import { useRouter } from 'next/navigation'
 
 interface SessionItem {
   id: string
@@ -18,10 +19,11 @@ export default function ChatHistory({
   selectedSessionId: string | null
 }) {
   const { data: session } = useSession()
-  const user = session?.user as { email?: string } | undefined
+  const user = session?.user as { email?: string; role?: string } | undefined
   const [sessions, setSessions] = useState<SessionItem[]>([])
   const [tab, setTab] = useState<'history' | 'favorites'>('history')
   const [favoriteSessionIds, setFavoriteSessionIds] = useState<string[]>([])
+  const router = useRouter();
 
   // 즐겨찾기 세션 동기화
   useEffect(() => {
@@ -76,8 +78,14 @@ export default function ChatHistory({
       })
   }, [user])
 
+  // 실제로 존재하는 세션 중 즐겨찾기된 세션만 카운트
+  const validFavoriteCount = sessions.filter(session => favoriteSessionIds.includes(session.id)).length;
+
+  // 관리자 여부 판별
+  const isAdmin = user?.email === 'admin@retriever.com' || user?.role === 'admin';
+
   return (
-    <div className="w-full max-w-xs bg-white rounded-xl shadow p-0">
+    <div className="w-full max-w-xs bg-transparent p-0">
       {/* 탭 + 즐겨찾기 숫자 뱃지 */}
       <div className="flex items-center border-b px-5 pt-4 pb-2">
         <button
@@ -91,7 +99,7 @@ export default function ChatHistory({
           onClick={() => setTab('favorites')}
         >
           즐겨찾기
-          <span className="ml-1 bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 text-xs font-semibold">{favoriteSessionIds.length}</span>
+          <span className="ml-1 bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 text-xs font-semibold">{validFavoriteCount}</span>
         </button>
       </div>
       {/* 새 채팅 버튼 */}
@@ -101,6 +109,15 @@ export default function ChatHistory({
       >
         + 새 채팅
       </button>
+      {/* 관리자 전용 크롤링 버튼 */}
+      {isAdmin && (
+        <button
+          className="w-[90%] mx-auto mb-2 py-2 bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded transition block"
+          onClick={() => router.push('/crawl')}
+        >
+          크롤링
+        </button>
+      )}
       {/* 파일/대화 리스트 */}
       <div className="overflow-y-auto max-h-96 px-2 pb-2">
         {tab === 'history' && (
@@ -161,13 +178,11 @@ export default function ChatHistory({
                     {session.created_at && (
                       <span className="flex items-center gap-1">
                         <ClockIcon className="w-4 h-4" />
-                        {new Date(session.created_at).toLocaleDateString('ko-KR', {
-                          year: 'numeric',
-                          month: 'numeric',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {(() => {
+                          const utc = new Date(session.created_at);
+                          const kst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
+                          return `${kst.getFullYear()}. ${kst.getMonth() + 1}. ${kst.getDate()}. ${kst.getHours().toString().padStart(2, '0')}:${kst.getMinutes().toString().padStart(2, '0')}`;
+                        })()}
                       </span>
                     )}
                   </div>

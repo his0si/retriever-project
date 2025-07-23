@@ -7,7 +7,7 @@ export default function Profile({ sidebarOpen, setSidebarOpen }: { sidebarOpen: 
   const name = session.user.name || ''
   const initial = name[0] || '?'
   return (
-    <div className="relative flex flex-col items-center bg-white rounded-xl shadow p-4 pt-6 mb-4">
+    <div className="relative flex flex-col items-center bg-transparent p-4 pt-6 mb-4">
       {/* 뒤로가기 아이콘 */}
       <button className="absolute left-3 top-3 p-1 rounded-full hover:bg-gray-100" onClick={() => setSidebarOpen(!sidebarOpen)}>
         <ArrowLeftIcon className="w-5 h-5 text-gray-400" />
