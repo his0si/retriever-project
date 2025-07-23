@@ -165,7 +165,7 @@ export default function CrawlInterface() {
       )}
 
               {/* 데이터베이스 상태 */}
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-gray-100 p-4 rounded-lg">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-medium text-gray-900">📊 데이터베이스 상태</h3>
             <div className="space-x-2">

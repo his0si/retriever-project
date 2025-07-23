@@ -10,6 +10,8 @@ import { supabase } from '@/lib/supabaseClient'
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutline } from '@heroicons/react/24/outline'
 import { v4 as uuidv4 } from 'uuid';
+import { PlusIcon, Cog6ToothIcon, MicrophoneIcon, Bars3BottomLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { useRouter } from 'next/navigation'
 
 interface Message {
   id: string
@@ -39,6 +41,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   const [isLoading, setIsLoading] = useState(false)
   const sessionIdRef = useRef<string>(selectedSessionId ? selectedSessionId : '')
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
+  const router = useRouter();
 
   // 대화 내역/즐겨찾기 클릭 시 해당 대화 불러오기
   useEffect(() => {
@@ -163,66 +166,62 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   }
 
   return (
-    <div className="flex flex-col h-[600px]">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 rounded-lg">
+    <div className="flex-1 min-h-0 flex flex-col">
+      {/* 게스트 모드일 때만 좌측 상단 뒤로가기 버튼 */}
+      {isGuestMode && (
+        <button
+          className="absolute left-4 top-4 bg-transparent p-0 m-0 z-50"
+          onClick={() => router.push('/landing')}
+          aria-label="뒤로가기"
+          style={{ border: 'none', boxShadow: 'none', borderRadius: 0 }}
+        >
+          <ArrowLeftIcon className="w-6 h-6 text-gray-500" />
+        </button>
+      )}
+      {/* 대화 영역 */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 space-y-4 scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-2">
+          <div className="flex flex-col items-center mt-2 text-lg">
             {isGuestMode && (
-              <div className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg border border-orange-200 mb-4">
-                <p className="font-medium mb-1">⚠️ 게스트 모드</p>
-                <p>비회원 이용 시 채팅 기록 등 일부 기능이 제한됩니다.</p>
+              <div className="flex flex-col items-center">
+                <div className="bg-orange-50 p-3 rounded-lg border border-orange-200 mb-4 max-w-md w-full text-center flex flex-col items-center">
+                  <div className="text-base font-bold text-orange-600 mb-1">⚠️ 게스트 모드</div>
+                  <div className="text-sm text-orange-500 mb-2">비회원 이용 시 채팅 기록 등 일부 기능이 제한됩니다.</div>
+                  <span
+                    className="text-blue-600 hover:underline cursor-pointer mt-2 text-sm font-semibold"
+                    onClick={() => router.push('/auth/signin')}
+                  >
+                    회원가입하러 가기
+                  </span>
+                </div>
               </div>
             )}
-            <div>
-              학교에 대해 궁금한 점을 물어보세요!
-            </div>
+            <div className="text-gray-400">무엇이든 물어보세요</div>
           </div>
         ) : (
           messages.map(message => (
             <div
               key={message.id}
-              className={`flex ${
-                message.type === 'user' ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] rounded-lg p-4 ${
-                  message.type === 'user'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white border border-gray-200'
-                }`}
+                className={`max-w-[70%] rounded-2xl px-5 py-3 text-base break-words whitespace-pre-line ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-900'}`}
               >
-                <ReactMarkdown className="prose prose-sm max-w-none">
+                <ReactMarkdown className="prose prose-sm max-w-none break-words whitespace-pre-line">
                   {message.content}
                 </ReactMarkdown>
-                
-                {message.sources && message.sources.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <p className="text-sm font-medium mb-1">관련 출처:</p>
-                    <ul className="text-sm space-y-1">
-                      {message.sources.map((source, idx) => (
-                        <li key={idx}>
-                          <a
-                            href={source}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            {source}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             </div>
           ))
         )}
-        
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="bg-gray-100 rounded-2xl px-5 py-3">
               <div className="flex space-x-2">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-75"></div>
@@ -232,23 +231,33 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           </div>
         )}
       </div>
-
-      <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="질문을 입력하세요..."
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isLoading}
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <PaperAirplaneIcon className="w-5 h-5" />
-        </button>
+      <form onSubmit={handleSubmit} className="w-full flex justify-center items-center px-8 py-6 bg-white flex-shrink-0">
+        <div className="flex items-center w-full max-w-2xl bg-white border border-gray-200 rounded-full px-4 py-2">
+          <button type="button" className="p-1 mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
+            <PlusIcon className="w-6 h-6" />
+          </button>
+          <button type="button" className="p-1 mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
+            <Cog6ToothIcon className="w-6 h-6" />
+          </button>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="무엇이든 물어보세요"
+            className="flex-1 bg-transparent outline-none px-2 text-base"
+            disabled={isLoading}
+          />
+          <button type="button" className="p-1 ml-2 text-gray-500 hover:bg-gray-100 rounded-full">
+            <MicrophoneIcon className="w-6 h-6" />
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className="p-1 ml-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <PaperAirplaneIcon className="w-6 h-6 rotate-90" />
+          </button>
+        </div>
       </form>
     </div>
   )

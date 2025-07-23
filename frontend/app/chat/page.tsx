@@ -6,7 +6,6 @@ import ChatInterface from '@/components/ChatInterface'
 import Profile from '@/components/Profile'
 import { useSession, signOut } from 'next-auth/react'
 import { supabase } from '@/lib/supabaseClient'
-import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 
 export default function ChatPage() {
@@ -17,20 +16,19 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <main className="min-h-screen p-8">
-      <Header />
-      <div className="max-w-4xl mx-auto flex gap-8">
-        {/* 왼쪽: 사이드바 (로그인한 경우만) */}
+    <main className="h-screen w-screen bg-white">
+      <div className="flex h-full w-full flex-row">
         {isLoggedIn && (
-          <Sidebar
-            sidebarOpen={sidebarOpen}
-            setSidebarOpen={setSidebarOpen}
-            selectedSessionId={selectedSessionId}
-            setSelectedSessionId={setSelectedSessionId}
-          />
+          <div className={`transition-all duration-300 ${sidebarOpen ? 'w-80' : 'w-16'}`}>
+            <Sidebar
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+              selectedSessionId={selectedSessionId}
+              setSelectedSessionId={setSelectedSessionId}
+            />
+          </div>
         )}
-        {/* 오른쪽: 챗봇 */}
-        <div className="flex-1">
+        <div className="flex-1 min-h-0 flex flex-col">
           <ChatInterface
             selectedSessionId={selectedSessionId}
             isGuestMode={!isLoggedIn}

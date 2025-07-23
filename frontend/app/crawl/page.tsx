@@ -5,8 +5,6 @@ import { useSession } from 'next-auth/react'
 import { redirect, useRouter } from 'next/navigation'
 import CrawlInterface from '@/components/CrawlInterface'
 import Sidebar from '@/components/Sidebar'
-import Header from '@/components/Header'
-
 // 세션 타입 확장
 interface ExtendedSession {
   user: {
@@ -55,19 +53,25 @@ export default function CrawlPage() {
   }
 
   return (
-    <main className="min-h-screen p-8">
-      <Header />
-      <div className="max-w-4xl mx-auto flex gap-8">
-        {/* 왼쪽: 사이드바 */}
-        <Sidebar
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          selectedSessionId={selectedSessionId}
-          setSelectedSessionId={handleSelectSession}
-        />
-        {/* 오른쪽: 크롤링 */}
-        <div className="flex-1">
-          <CrawlInterface />
+    <main className="h-screen w-screen bg-white">
+      <div className="flex h-full w-full flex-row">
+        <div className={`transition-all duration-300 h-full ${sidebarOpen ? 'w-80' : 'w-16'}`}>
+          <Sidebar
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+            selectedSessionId={selectedSessionId}
+            setSelectedSessionId={handleSelectSession}
+          />
+        </div>
+        <div className="flex-1 h-full flex flex-col min-h-0">
+          <div className="w-full max-w-4xl mx-auto p-8 h-full flex-1 overflow-y-auto flex flex-col scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <style jsx>{`
+              div::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
+            <CrawlInterface />
+          </div>
         </div>
       </div>
     </main>

@@ -137,7 +137,12 @@ export default function ChatHistory({
         </button>
       )}
       {/* 파일/대화 리스트 */}
-      <div className="overflow-y-auto max-h-96 px-2 pb-2">
+      <div className="overflow-y-auto max-h-96 px-2 pb-2 scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
         {tab === 'history' && (
           <ul>
             {sessions.map(session => (
