@@ -225,7 +225,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         </button>
       )}
       {/* 대화 영역 */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-0 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
+      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-24 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
         <style jsx>{`
           div::-webkit-scrollbar {
             width: 6px;
@@ -295,8 +295,8 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       <form
         ref={formRef}
         onSubmit={handleSubmit}
-        className="w-full flex justify-center items-center px-2 sm:px-8 py-6 sm:py-8 bg-white"
-        style={{ paddingBottom: `calc(env(safe-area-inset-bottom, 0px) + ${bottomPad}px)` }}
+        className="fixed bottom-0 left-0 right-0 z-50 w-full flex justify-center items-center px-2 sm:px-8 py-3 sm:py-4 bg-white"
+        style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
       >
         <div className="flex items-center w-full max-w-lg sm:max-w-2xl bg-white border border-gray-200 rounded-full px-2 sm:px-4 py-1.5 sm:py-2">
           <button type="button" className="p-1 mr-1 sm:mr-2 text-gray-500 hover:bg-gray-100 rounded-full">

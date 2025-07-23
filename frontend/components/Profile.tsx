@@ -55,10 +55,10 @@ export default function Profile({ sidebarOpen, setSidebarOpen }: { sidebarOpen: 
       <button className="absolute left-3 top-3 p-1 rounded-full hover:bg-gray-100" onClick={() => setSidebarOpen(!sidebarOpen)}>
         <ArrowLeftIcon className="w-5 h-5 text-gray-400" />
       </button>
-      {/* 환경설정(톱니바퀴) 아이콘 - 오른쪽 위 */}
+      {/* 환경설정(톱니바퀴) 아이콘 - 오른쪽 위 (모바일에서는 숨김) */}
       <div className="absolute top-3 right-3">
         <button
-          className="p-1 rounded-full hover:bg-gray-100 focus:outline-none"
+          className="p-1 rounded-full hover:bg-gray-100 focus:outline-none hidden sm:inline-flex"
           onClick={() => setShowSettings((prev) => !prev)}
           aria-label="환경설정"
         >

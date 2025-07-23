@@ -105,7 +105,7 @@ export default function ChatHistory({
   return (
     <div className="w-full max-w-xs bg-transparent p-0 h-full flex flex-col">
       {/* 탭 + 즐겨찾기 숫자 뱃지 */}
-      <div className="flex items-center border-b px-5 pt-4 pb-2 flex-shrink-0">
+      <div className="flex items-center px-5 pt-4 pb-2 flex-shrink-0">
         <button
           className={`flex-1 pb-2 font-bold text-base transition border-b-2 ${tab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}
           onClick={() => setTab('history')}
@@ -137,7 +137,7 @@ export default function ChatHistory({
         </button>
       )}
       {/* 파일/대화 리스트 */}
-      <div className="flex-1 px-2 pb-2 overflow-y-auto min-h-0" style={{
+      <div className="flex-1 px-2 pb-10 overflow-y-auto min-h-0" style={{
         scrollbarWidth: 'thin',
         scrollbarColor: '#e5e7eb transparent'
       }}>
