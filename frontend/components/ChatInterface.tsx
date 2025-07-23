@@ -146,7 +146,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         const now = new Date().toISOString();
         const { error } = await supabase.from('chat_history').insert([
           { id: uuidv4(), user_id: user.email, session_id: sessionIdRef.current, message: userMessage.content, role: 'user', created_at: now },
-          { id: uuidv4(), user_id: user.email, session_id: sessionIdRef.current, message: assistantMessage.content, role: 'assistant', created_at: now }
+          { id: uuidv4(), user_id: user.email, session_id: sessionIdRef.current, message: assistantMessage.content, role: 'assistant', created_at: now, sources: assistantMessage.sources }
         ])
         if (error) {
           console.error('chat_history insert error:', error)
@@ -215,6 +215,16 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                 <ReactMarkdown className="prose prose-sm max-w-none break-words whitespace-pre-line">
                   {message.content}
                 </ReactMarkdown>
+                {/* 출처 링크 표시 */}
+                {message.type === 'assistant' && message.sources && message.sources.length > 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    {message.sources.map((src, idx) => (
+                      <div key={idx}>
+                        출처: <a href={src} target="_blank" rel="noopener noreferrer" className="underline">{src}</a>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))
