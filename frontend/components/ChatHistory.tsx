@@ -110,7 +110,7 @@ export default function ChatHistory({
           className={`flex-1 pb-2 font-bold text-base transition border-b-2 ${tab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}
           onClick={() => setTab('history')}
         >
-          최근 파일
+          최근 채팅
         </button>
         <button
           className={`flex-1 pb-2 font-bold text-base flex items-center justify-center gap-1 transition border-b-2 ${tab === 'favorites' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}
