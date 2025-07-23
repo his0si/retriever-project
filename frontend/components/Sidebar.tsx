@@ -35,7 +35,7 @@ export default function Sidebar({
       )}
       {/* 열린 상태: 기존 요소만 */}
       {sidebarOpen && (
-        <div className="flex flex-col gap-0 w-full px-4 mt-4 h-full overflow-hidden">
+        <div className="flex flex-col gap-0 w-full px-4 mt-4 h-full overflow-visible">
           {/* 프로필 - 그림자, 배경 제거 */}
           <div className="bg-transparent shadow-none p-0 flex-shrink-0">
             <Profile sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
@@ -43,7 +43,7 @@ export default function Sidebar({
           {/* 구분선 */}
           <div className="w-full h-px bg-gray-200 my-2 flex-shrink-0" />
           {/* 채팅 히스토리 - 그림자, 배경 제거 */}
-          <div className="bg-transparent shadow-none p-0 flex-1 min-h-0 overflow-hidden">
+          <div className="bg-transparent shadow-none p-0 flex-1 min-h-0">
             <ChatHistory
               onSelectSession={(id) => id !== null ? setSelectedSessionId(id) : setSelectedSessionId('')}
               selectedSessionId={selectedSessionId}
