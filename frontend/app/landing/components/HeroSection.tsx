@@ -11,7 +11,11 @@ export default function HeroSection() {
   }
 
   const handleStartNow = () => {
-    router.push('/chat')
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      router.push('/chat?guest=1');
+    } else {
+      router.push('/chat');
+    }
   }
 
   const handleNeedHelp = () => {
@@ -51,14 +55,14 @@ export default function HeroSection() {
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center w-full">
           <button
             onClick={handleGetStarted}
-            className="bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-gray-100 transition-colors w-full sm:w-[180px] md:w-[200px] h-12 sm:h-16 flex items-center justify-center"
+            className="bg-white text-black px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-gray-100 transition-colors w-[220px] sm:w-[180px] md:w-[200px] h-12 sm:h-16 flex items-center justify-center"
           >
             간편 로그인
           </button>
           
           <button
             onClick={handleStartNow}
-            className="border-2 border-white text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-white hover:text-black transition-colors w-full sm:w-[180px] md:w-[200px] h-12 sm:h-16 flex items-center justify-center"
+            className="border-2 border-white text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-white hover:text-black transition-colors w-[220px] sm:w-[180px] md:w-[200px] h-12 sm:h-16 flex items-center justify-center"
           >
             바로 시작하기
           </button>
