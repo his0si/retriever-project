@@ -20,6 +20,12 @@ export default function CrawlPage() {
   const extendedSession = session as ExtendedSession | null
   const [selectedSessionId, setSelectedSessionId] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  // 모바일에서는 사이드바를 기본적으로 닫힘 상태로
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      setSidebarOpen(false);
+    }
+  }, [])
   const router = useRouter();
 
   useEffect(() => {
@@ -54,8 +60,8 @@ export default function CrawlPage() {
 
   return (
     <main className="h-screen w-screen bg-white">
-      <div className="flex h-full w-full flex-row">
-        <div className={`transition-all duration-300 h-full ${sidebarOpen ? 'w-80' : 'w-16'}`}>
+      <div className="flex h-full w-full flex-row sm:flex-row flex-col">
+        <div className={`hidden sm:block transition-all duration-300 h-full ${sidebarOpen ? 'w-80' : 'w-16'}`}>
           <Sidebar
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
@@ -75,7 +81,7 @@ export default function CrawlPage() {
                 border-radius: 4px;
               }
             `}</style>
-            <div className="w-full max-w-4xl mx-auto px-8">
+            <div className="w-full max-w-4xl mx-auto px-2 sm:px-8">
               <CrawlInterface />
             </div>
           </div>
