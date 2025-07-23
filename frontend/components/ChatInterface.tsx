@@ -166,7 +166,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* 게스트 모드일 때만 좌측 상단 뒤로가기 버튼 */}
       {isGuestMode && (
         <button
@@ -179,7 +179,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         </button>
       )}
       {/* 대화 영역 */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 space-y-4 scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div className="flex-1 overflow-y-auto px-8 pb-20 pt-8 space-y-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <style jsx>{`
           div::-webkit-scrollbar {
             display: none;
@@ -231,7 +231,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           </div>
         )}
       </div>
-      <form onSubmit={handleSubmit} className="w-full flex justify-center items-center px-8 py-6 bg-white flex-shrink-0">
+      <form onSubmit={handleSubmit} className="w-full flex justify-center items-center px-8 py-8 bg-white">
         <div className="flex items-center w-full max-w-2xl bg-white border border-gray-200 rounded-full px-4 py-2">
           <button type="button" className="p-1 mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
             <PlusIcon className="w-6 h-6" />

@@ -63,8 +63,8 @@ export default function CrawlPage() {
             setSelectedSessionId={handleSelectSession}
           />
         </div>
-        <div className="flex-1 h-full flex flex-col min-h-0">
-          <div className="w-full max-w-4xl mx-auto p-8 h-full flex-1 overflow-y-auto flex flex-col scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex-1 flex flex-col min-h-0"> {/* h-full 제거, min-h-0 추가 */}
+          <div className="w-full max-w-4xl mx-auto px-8 py-8 pb-20 flex-1 min-h-0 overflow-y-auto flex flex-col scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <style jsx>{`
               div::-webkit-scrollbar {
                 display: none;
