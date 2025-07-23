@@ -1,5 +1,6 @@
 import { Bars3BottomLeftIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { useRef, useState, useEffect } from 'react';
+import { signOut } from 'next-auth/react';
 
 // ToggleSwitch 컴포넌트 (Profile에서 복사)
 function ToggleSwitch({ enabled, onChange }: { enabled: boolean, onChange: (v: boolean) => void }) {
@@ -76,7 +77,7 @@ export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettin
           >
             <button
               className="px-4 py-2 text-left hover:bg-gray-100 text-gray-800"
-              onClick={() => { setShowSettings(false); onSettingsClick(); }}
+              onClick={() => { setShowSettings(false); signOut({ callbackUrl: '/landing' }); }}
             >
               로그아웃
             </button>
