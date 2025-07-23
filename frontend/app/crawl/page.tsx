@@ -20,6 +20,13 @@ export default function CrawlPage() {
   const extendedSession = session as ExtendedSession | null
   const [selectedSessionId, setSelectedSessionId] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  // 모바일에서는 사이드바를 기본적으로 닫힘 상태로
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      setSidebarOpen(false);
+    }
+  }, [])
   const router = useRouter();
 
   useEffect(() => {
@@ -54,8 +61,18 @@ export default function CrawlPage() {
 
   return (
     <main className="h-screen w-screen bg-white">
-      <div className="flex h-full w-full flex-row">
-        <div className={`transition-all duration-300 h-full ${sidebarOpen ? 'w-80' : 'w-16'}`}>
+      <div className="flex h-full w-full flex-row sm:flex-row flex-col">
+        {/* 모바일 햄버거 버튼 */}
+        <button
+          className="sm:hidden fixed top-4 left-4 z-40 p-0 m-0 bg-transparent border-none shadow-none"
+          onClick={() => setMobileSidebarOpen(true)}
+          aria-label="모바일 사이드바 열기"
+        >
+          <svg className="w-7 h-7 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <div className={`hidden sm:block transition-all duration-300 h-full ${sidebarOpen ? 'w-80' : 'w-16'}`}>
           <Sidebar
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
@@ -63,6 +80,18 @@ export default function CrawlPage() {
             setSelectedSessionId={handleSelectSession}
           />
         </div>
+        {/* 모바일 오버레이 사이드바 */}
+        {typeof window !== 'undefined' && window.innerWidth < 640 && (
+          <Sidebar
+            sidebarOpen={true}
+            setSidebarOpen={() => {}}
+            selectedSessionId={selectedSessionId}
+            setSelectedSessionId={handleSelectSession}
+            mobileSidebarOpen={mobileSidebarOpen}
+            setMobileSidebarOpen={setMobileSidebarOpen}
+            isMobile
+          />
+        )}
         <div className="flex-1 flex flex-col min-h-0"> {/* h-full 제거, min-h-0 추가 */}
           <div className="w-full h-full py-8 pb-20 flex-1 min-h-0 overflow-y-auto flex flex-col scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
             <style jsx>{`
@@ -75,7 +104,7 @@ export default function CrawlPage() {
                 border-radius: 4px;
               }
             `}</style>
-            <div className="w-full max-w-4xl mx-auto px-8">
+            <div className="w-full max-w-4xl mx-auto px-2 sm:px-8 pt-12 sm:pt-8">
               <CrawlInterface />
             </div>
           </div>

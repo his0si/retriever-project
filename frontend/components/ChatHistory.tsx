@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from 'next-auth/react'
-import { DocumentIcon, StarIcon as StarOutline, TrashIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { DocumentIcon, StarIcon as StarOutline, TrashIcon, ClockIcon, PencilSquareIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 import { useRouter } from 'next/navigation'
 
@@ -105,7 +105,7 @@ export default function ChatHistory({
   return (
     <div className="w-full max-w-xs bg-transparent p-0 h-full flex flex-col">
       {/* 탭 + 즐겨찾기 숫자 뱃지 */}
-      <div className="flex items-center border-b px-5 pt-4 pb-2 flex-shrink-0">
+      <div className="flex items-center px-5 pt-4 pb-2 flex-shrink-0">
         <button
           className={`flex-1 pb-2 font-bold text-base transition border-b-2 ${tab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}
           onClick={() => setTab('history')}
@@ -122,22 +122,24 @@ export default function ChatHistory({
       </div>
       {/* 새 채팅 버튼 */}
       <button
-        className="w-[90%] mx-auto mb-2 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded transition block flex-shrink-0"
+        className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 text-black font-semibold rounded transition block flex-shrink-0 justify-start px-3"
         onClick={() => onSelectSession('NEW')}
       >
-        + 새 채팅
+        <PencilSquareIcon className="w-5 h-5 mr-1 text-black" />
+        <span>새 채팅</span>
       </button>
       {/* 관리자 전용 크롤링 버튼 */}
       {isAdmin && (
         <button
-          className="w-[90%] mx-auto mb-2 py-2 bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded transition block flex-shrink-0"
+          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 text-black font-semibold text-base rounded transition block flex-shrink-0 justify-start px-3"
           onClick={() => router.push('/crawl')}
         >
-          크롤링
+          <GlobeAltIcon className="w-5 h-5 mr-1 text-black" />
+          <span>크롤링</span>
         </button>
       )}
       {/* 파일/대화 리스트 */}
-      <div className="flex-1 px-2 pb-2 overflow-y-auto min-h-0" style={{
+      <div className="flex-1 px-2 pb-10 overflow-y-auto min-h-0" style={{
         scrollbarWidth: 'thin',
         scrollbarColor: '#e5e7eb transparent'
       }}>

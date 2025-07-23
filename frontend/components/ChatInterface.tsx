@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { PaperAirplaneIcon } from '@heroicons/react/24/solid'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import { useSession } from 'next-auth/react'
-import { useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutline } from '@heroicons/react/24/outline'
@@ -42,6 +41,10 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   const sessionIdRef = useRef<string>(selectedSessionId ? selectedSessionId : '')
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [bottomPad, setBottomPad] = useState(8); // 기본 8px
+  const [viewportHeight, setViewportHeight] = useState('100vh');
 
   // 대화 내역/즐겨찾기 클릭 시 해당 대화 불러오기
   useEffect(() => {
@@ -165,8 +168,51 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
     }
   }
 
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    const handleFocus = () => {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        window.scrollTo(0, document.body.scrollHeight);
+      }, 200); // 키보드/소프트키 올라오는 시간 고려
+    };
+    input.addEventListener('focus', handleFocus);
+    return () => {
+      input.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  useEffect(() => {
+    function updatePad() {
+      const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const wh = window.innerHeight;
+      if (vh < wh) {
+        setBottomPad(24); // 소프트키/키보드가 올라온 상태
+      } else {
+        setBottomPad(8); // 소프트키/키보드가 없는 상태
+      }
+    }
+    window.addEventListener('resize', updatePad);
+    updatePad();
+    return () => window.removeEventListener('resize', updatePad);
+  }, []);
+
+  useEffect(() => {
+    function updateHeight() {
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height + 'px');
+      } else {
+        setViewportHeight(window.innerHeight + 'px');
+      }
+    }
+    window.addEventListener('resize', updateHeight);
+    updateHeight();
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* 게스트 모드일 때만 좌측 상단 뒤로가기 버튼 */}
       {isGuestMode && (
         <button
@@ -179,7 +225,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         </button>
       )}
       {/* 대화 영역 */}
-      <div className="flex-1 overflow-y-auto px-8 pb-20 pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
+      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
         <style jsx>{`
           div::-webkit-scrollbar {
             width: 6px;
@@ -246,29 +292,36 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           </div>
         )}
       </div>
-      <form onSubmit={handleSubmit} className="w-full flex justify-center items-center px-8 py-8 bg-white">
-        <div className="flex items-center w-full max-w-2xl bg-white border border-gray-200 rounded-full px-4 py-2">
-          <button type="button" className="p-1 mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
+      {/* 입력란 */}
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className="w-full flex justify-center items-center px-2 sm:px-8 py-3 sm:py-4 bg-white"
+        style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
+      >
+        <div className="flex items-center w-full max-w-lg sm:max-w-2xl bg-white border border-gray-200 rounded-full px-2 sm:px-4 py-1.5 sm:py-2">
+          <button type="button" className="p-1 mr-1 sm:mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
             <PlusIcon className="w-6 h-6" />
           </button>
-          <button type="button" className="p-1 mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
+          <button type="button" className="p-1 mr-1 sm:mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
             <Cog6ToothIcon className="w-6 h-6" />
           </button>
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="예: 등록금 납부일 알려줘 / 복수전공 신청방법 알려줘"
-            className="flex-1 bg-transparent outline-none px-2 text-base"
+            placeholder="예: 등록금 납부일 알려줘"
+            className="flex-1 bg-transparent outline-none px-1 sm:px-2 text-sm sm:text-base"
             disabled={isLoading}
           />
-          <button type="button" className="p-1 ml-2 text-gray-500 hover:bg-gray-100 rounded-full">
+          <button type="button" className="p-1 ml-1 sm:ml-2 text-gray-500 hover:bg-gray-100 rounded-full">
             <MicrophoneIcon className="w-6 h-6" />
           </button>
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="p-1 ml-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 ml-1 sm:ml-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <PaperAirplaneIcon className="w-6 h-6 rotate-90" />
           </button>
