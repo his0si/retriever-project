@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from 'next-auth/react'
-import { DocumentIcon, StarIcon as StarOutline, TrashIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { DocumentIcon, StarIcon as StarOutline, TrashIcon, ClockIcon, PencilSquareIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 import { useRouter } from 'next/navigation'
 
@@ -122,18 +122,20 @@ export default function ChatHistory({
       </div>
       {/* 새 채팅 버튼 */}
       <button
-        className="w-[90%] mx-auto mb-2 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded transition block flex-shrink-0"
+        className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 text-black font-semibold rounded transition block flex-shrink-0 justify-start px-3"
         onClick={() => onSelectSession('NEW')}
       >
-        + 새 채팅
+        <PencilSquareIcon className="w-5 h-5 mr-1 text-black" />
+        <span>새 채팅</span>
       </button>
       {/* 관리자 전용 크롤링 버튼 */}
       {isAdmin && (
         <button
-          className="w-[90%] mx-auto mb-2 py-2 bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded transition block flex-shrink-0"
+          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 text-black font-semibold text-base rounded transition block flex-shrink-0 justify-start px-3"
           onClick={() => router.push('/crawl')}
         >
-          크롤링
+          <GlobeAltIcon className="w-5 h-5 mr-1 text-black" />
+          <span>크롤링</span>
         </button>
       )}
       {/* 파일/대화 리스트 */}
