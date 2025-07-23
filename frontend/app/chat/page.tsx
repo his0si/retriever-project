@@ -8,6 +8,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { supabase } from '@/lib/supabaseClient'
 import Sidebar from '@/components/Sidebar';
 import dynamic from 'next/dynamic';
+import { useRouter, useSearchParams } from 'next/navigation';
 const MobileChatHeader = dynamic(() => import('@/components/MobileChatHeader'), { ssr: false });
 
 export default function ChatPage() {
@@ -20,6 +21,9 @@ export default function ChatPage() {
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [newChatLoading, setNewChatLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const isGuestParam = searchParams?.get('guest') === '1';
+  const isGuestMode = isGuestParam || !isLoggedIn;
   // 모바일에서는 사이드바를 기본적으로 닫힘 상태로
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 640) {
@@ -54,9 +58,12 @@ export default function ChatPage() {
       <div className="flex flex-col h-full w-full">
         {/* 모바일 전용 헤더 */}
         <div className="sm:hidden">
-          <MobileChatHeader onHamburgerClick={() => setMobileSidebarOpen(true)} onNewChat={handleMobileNewChat} onSettingsClick={() => setShowMobileSettings((v) => !v)} newChatLoading={newChatLoading} />
+          {/* 게스트 모드일 때는 모바일 헤더 숨김 */}
+          {!isGuestMode && (
+            <MobileChatHeader onHamburgerClick={() => setMobileSidebarOpen(true)} onNewChat={handleMobileNewChat} onSettingsClick={() => setShowMobileSettings((v) => !v)} newChatLoading={newChatLoading} />
+          )}
           {/* 모바일 환경설정 팝업 */}
-          {showMobileSettings && (
+          {showMobileSettings && !isGuestMode && (
             <div ref={settingsRef} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
               <div className="bg-white rounded-lg shadow-lg w-80 max-w-xs p-6 relative">
                 {/* Profile의 환경설정 드롭다운과 동일한 내용 */}
@@ -87,7 +94,7 @@ export default function ChatPage() {
           )}
         </div>
         <div className="flex-1 flex flex-row sm:flex-row flex-col min-h-0">
-          {isLoggedIn && (
+          {isLoggedIn && !isGuestMode && (
             <>
               {/* PC용 사이드바 */}
               <div className={`hidden sm:block transition-all duration-300 ${sidebarOpen ? 'w-80' : 'w-16'}`}>
@@ -115,7 +122,7 @@ export default function ChatPage() {
           <div className="flex-1 flex flex-col min-h-0">
             <ChatInterface
               selectedSessionId={selectedSessionId}
-              isGuestMode={!isLoggedIn}
+              isGuestMode={isGuestMode}
             />
           </div>
         </div>
