@@ -1,7 +1,9 @@
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const { data: session } = useSession();
+  const router = useRouter();
 
   return (
     <div className="w-full bg-transparent">
@@ -21,12 +23,12 @@ export default function Header() {
           ) : (
             <>
               <span className="text-gray-500">게스트 모드</span>
-              <a
-                href="/auth/signin"
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+              <button
+                onClick={() => router.back()}
+                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition-colors"
               >
-                로그인
-              </a>
+                이전으로
+              </button>
             </>
           )}
         </div>
