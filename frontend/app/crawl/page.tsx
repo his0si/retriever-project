@@ -35,7 +35,7 @@ export default function CrawlPage() {
 
   // 새 채팅 버튼 누르면 챗봇 페이지로 이동
   const handleSelectSession = (id: string | null) => {
-    if (id === null || id === '') {
+    if (id === null || id === '' || id === 'NEW') {
       router.push('/chat');
     } else {
       setSelectedSessionId(id);

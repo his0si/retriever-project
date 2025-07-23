@@ -84,6 +84,24 @@ export default function ChatHistory({
   // 관리자 여부 판별
   const isAdmin = user?.email === 'admin@retriever.com' || user?.role === 'admin';
 
+  // 새 채팅 생성 함수
+  const handleNewChat = async () => {
+    if (!user?.email) return;
+    // 기본 제목: '새 채팅' + 현재 시각
+    const now = new Date();
+    const title = `새 채팅 (${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')})`;
+    const { data, error } = await supabase
+      .from('chat_sessions')
+      .insert([
+        { user_id: user.email, title }
+      ])
+      .select();
+    if (error || !data || !data[0]) return;
+    // 세션 목록 갱신
+    setSessions(prev => [data[0], ...prev]);
+    onSelectSession(data[0].id);
+  };
+
   return (
     <div className="w-full max-w-xs bg-transparent p-0">
       {/* 탭 + 즐겨찾기 숫자 뱃지 */}
@@ -105,7 +123,7 @@ export default function ChatHistory({
       {/* 새 채팅 버튼 */}
       <button
         className="w-[90%] mx-auto mb-2 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold rounded transition block"
-        onClick={() => onSelectSession(null)}
+        onClick={() => onSelectSession('NEW')}
       >
         + 새 채팅
       </button>

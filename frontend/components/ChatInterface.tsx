@@ -111,8 +111,8 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
     setIsLoading(true)
 
     try {
-      // 1. 세션이 없으면 chat_sessions에 insert (title=첫 질문)
-      if (!sessionIdRef.current && user?.email) {
+      // 1. 세션이 없거나 selectedSessionId가 'NEW'면 chat_sessions에 insert (title=첫 질문)
+      if ((!sessionIdRef.current || selectedSessionId === 'NEW') && user?.email) {
         const { data: sessionData, error: sessionError } = await supabase.from('chat_sessions').insert([
           { user_id: user.email, title: userMessage.content, created_at: new Date().toISOString() }
         ]).select()
