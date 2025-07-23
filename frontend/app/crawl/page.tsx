@@ -64,10 +64,15 @@ export default function CrawlPage() {
           />
         </div>
         <div className="flex-1 flex flex-col min-h-0"> {/* h-full 제거, min-h-0 추가 */}
-          <div className="w-full max-w-4xl mx-auto px-8 py-8 pb-20 flex-1 min-h-0 overflow-y-auto flex flex-col scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="w-full max-w-4xl mx-auto px-8 py-8 pb-20 flex-1 min-h-0 overflow-y-auto flex flex-col scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
             <style jsx>{`
               div::-webkit-scrollbar {
-                display: none;
+                width: 6px;
+                background: transparent;
+              }
+              div::-webkit-scrollbar-thumb {
+                background: #e5e7eb;
+                border-radius: 4px;
               }
             `}</style>
             <CrawlInterface />

@@ -179,10 +179,15 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         </button>
       )}
       {/* 대화 영역 */}
-      <div className="flex-1 overflow-y-auto px-8 pb-20 pt-8 space-y-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      <div className="flex-1 overflow-y-auto px-8 pb-20 pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
         <style jsx>{`
           div::-webkit-scrollbar {
-            display: none;
+            width: 6px;
+            background: transparent;
+          }
+          div::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 4px;
           }
         `}</style>
         {messages.length === 0 ? (
