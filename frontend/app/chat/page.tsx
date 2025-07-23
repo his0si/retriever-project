@@ -99,15 +99,17 @@ export default function ChatPage() {
                 />
               </div>
               {/* 모바일 오버레이 사이드바 */}
-              <Sidebar
-                sidebarOpen={true}
-                setSidebarOpen={() => {}}
-                selectedSessionId={selectedSessionId}
-                setSelectedSessionId={setSelectedSessionId}
-                mobileSidebarOpen={mobileSidebarOpen}
-                setMobileSidebarOpen={setMobileSidebarOpen}
-                isMobile
-              />
+              {typeof window !== 'undefined' && window.innerWidth < 640 && (
+                <Sidebar
+                  sidebarOpen={true}
+                  setSidebarOpen={() => {}}
+                  selectedSessionId={selectedSessionId}
+                  setSelectedSessionId={setSelectedSessionId}
+                  mobileSidebarOpen={mobileSidebarOpen}
+                  setMobileSidebarOpen={setMobileSidebarOpen}
+                  isMobile
+                />
+              )}
             </>
           )}
           <div className="flex-1 flex flex-col min-h-0">

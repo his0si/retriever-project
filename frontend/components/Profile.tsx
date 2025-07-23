@@ -52,7 +52,7 @@ export default function Profile({ sidebarOpen, setSidebarOpen }: { sidebarOpen: 
   return (
     <div className="relative flex flex-col items-center bg-transparent p-4 pt-6 mb-4">
       {/* 뒤로가기 아이콘 */}
-      <button className="absolute left-3 top-3 p-1 rounded-full hover:bg-gray-100" onClick={() => setSidebarOpen(!sidebarOpen)}>
+      <button className="absolute left-3 top-3 p-1 rounded-full hover:bg-gray-100" onClick={() => setSidebarOpen(false)}>
         <ArrowLeftIcon className="w-5 h-5 text-gray-400" />
       </button>
       {/* 환경설정(톱니바퀴) 아이콘 - 오른쪽 위 (모바일에서는 숨김) */}
