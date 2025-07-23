@@ -201,7 +201,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                 </div>
               </div>
             )}
-            <div className="text-gray-400">무엇이든 물어보세요</div>
+            <div className="text-gray-400">리트리버가 기다리고 있어요. 무엇이든 물어보세요!</div>
           </div>
         ) : (
           messages.map(message => (
@@ -253,7 +253,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="무엇이든 물어보세요"
+            placeholder="예: 등록금 납부일 알려줘 / 복수전공 신청방법 알려줘"
             className="flex-1 bg-transparent outline-none px-2 text-base"
             disabled={isLoading}
           />
