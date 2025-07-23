@@ -212,7 +212,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   }, []);
 
   return (
-    <div style={{ height: viewportHeight }} className="flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* 게스트 모드일 때만 좌측 상단 뒤로가기 버튼 */}
       {isGuestMode && (
         <button
@@ -225,7 +225,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         </button>
       )}
       {/* 대화 영역 */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-24 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
+      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
         <style jsx>{`
           div::-webkit-scrollbar {
             width: 6px;
@@ -292,10 +292,11 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           </div>
         )}
       </div>
+      {/* 입력란 */}
       <form
         ref={formRef}
         onSubmit={handleSubmit}
-        className="fixed bottom-0 left-0 right-0 z-50 w-full flex justify-center items-center px-2 sm:px-8 py-3 sm:py-4 bg-white"
+        className="w-full flex justify-center items-center px-2 sm:px-8 py-3 sm:py-4 bg-white"
         style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
       >
         <div className="flex items-center w-full max-w-lg sm:max-w-2xl bg-white border border-gray-200 rounded-full px-2 sm:px-4 py-1.5 sm:py-2">
