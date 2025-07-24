@@ -4,7 +4,7 @@ import { signOut } from 'next-auth/react';
 import ToggleSwitch from './ToggleSwitch';
 import { useDarkMode } from '../app/providers';
 
-export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettingsClick, newChatLoading }: { onHamburgerClick: () => void, onNewChat: () => void, onSettingsClick: () => void, newChatLoading?: boolean }) {
+export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettingsClick, newChatLoading, showNewChatButton = true, isGuestMode = false, onHomeClick = () => {} }: { onHamburgerClick: () => void, onNewChat: () => void, onSettingsClick: () => void, newChatLoading?: boolean, showNewChatButton?: boolean, isGuestMode?: boolean, onHomeClick?: () => void }) {
   const [showSettings, setShowSettings] = useState(false);
   const { darkMode, setDarkMode } = useDarkMode();
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -34,14 +34,18 @@ export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettin
 
   return (
     <header className="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white dark:bg-gray-800 dark:border-gray-700 relative transition-colors duration-200">
-      <button onClick={onHamburgerClick} className="p-1 mr-2 text-gray-900 dark:text-white focus:outline-none transition-colors duration-200">
-        <Bars3BottomLeftIcon className="w-7 h-7 text-gray-900 dark:text-white transition-colors duration-200" />
-      </button>
+      {!isGuestMode && (
+        <button onClick={onHamburgerClick} className="p-1 mr-2 text-gray-900 dark:text-white focus:outline-none transition-colors duration-200">
+          <Bars3BottomLeftIcon className="w-7 h-7 text-gray-900 dark:text-white transition-colors duration-200" />
+        </button>
+      )}
       <span className="flex-1 text-lg font-bold text-gray-900 dark:text-white text-left transition-colors duration-200">Retriever Project</span>
       <div className="flex items-center gap-4 relative">
-        <button className="p-1 text-gray-500 dark:text-white disabled:opacity-50 focus:outline-none transition-colors duration-200" onClick={onNewChat} disabled={!!newChatLoading}>
-          <PencilSquareIcon className="w-6 h-6 text-gray-500 dark:text-white transition-colors duration-200" />
-        </button>
+        {showNewChatButton && (
+          <button className="p-1 text-gray-500 dark:text-white disabled:opacity-50 focus:outline-none transition-colors duration-200" onClick={onNewChat} disabled={!!newChatLoading}>
+            <PencilSquareIcon className="w-6 h-6 text-gray-500 dark:text-white transition-colors duration-200" />
+          </button>
+        )}
         <button
           className="p-1 text-gray-500 dark:text-white focus:outline-none transition-colors duration-200"
           ref={settingsBtnRef}
@@ -59,12 +63,21 @@ export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettin
             ref={settingsRef}
             className="absolute right-0 top-full mt-4 z-50 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-2 flex flex-col items-stretch transition-all duration-200"
           >
-            <button
-              className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none transition-colors duration-200"
-              onClick={() => { setShowSettings(false); signOut({ callbackUrl: '/landing' }); }}
-            >
-              로그아웃
-            </button>
+            {isGuestMode ? (
+              <button
+                className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none transition-colors duration-200"
+                onClick={() => { setShowSettings(false); onHomeClick(); }}
+              >
+                홈으로 가기
+              </button>
+            ) : (
+              <button
+                className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none transition-colors duration-200"
+                onClick={() => { setShowSettings(false); signOut({ callbackUrl: '/landing' }); }}
+              >
+                로그아웃
+              </button>
+            )}
             <div className="px-4 py-2 flex items-center gap-3 justify-between select-none">
               <span className="text-gray-800 dark:text-gray-100 transition-colors duration-200">
                 다크 모드

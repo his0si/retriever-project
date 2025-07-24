@@ -36,11 +36,21 @@ export function DarkModeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const html = document.documentElement;
+      // 부드러운 전환을 위해 transition 일시적 비활성화
+      html.style.transition = 'none';
+      
       if (darkMode) {
         html.classList.add('dark');
       } else {
         html.classList.remove('dark');
       }
+      
+      // 리플로우 강제 실행
+      html.offsetHeight;
+      
+      // transition 다시 활성화
+      html.style.transition = '';
+      
       localStorage.setItem('darkMode', String(darkMode));
     }
   }, [darkMode]);

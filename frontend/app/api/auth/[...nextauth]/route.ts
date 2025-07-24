@@ -28,6 +28,17 @@ const handler = NextAuth({
     KakaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID!,
       clientSecret: process.env.KAKAO_CLIENT_SECRET!,
+      profile(profile) {
+        // email이 없으면 대체 이메일 생성
+        const kakaoId = profile.id;
+        const email = profile.kakao_account?.email || `kakao_${kakaoId}@noemail.local`;
+        return {
+          id: kakaoId,
+          name: profile.properties?.nickname,
+          email,
+          image: profile.properties?.profile_image,
+        };
+      },
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

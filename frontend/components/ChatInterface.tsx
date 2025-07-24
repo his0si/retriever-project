@@ -214,7 +214,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       {/* 게스트 모드일 때만 좌측 상단 뒤로가기 버튼 */}
       {isGuestMode && (
         <button
-          className="absolute left-4 top-4 bg-transparent p-0 m-0 z-50"
+          className="absolute left-4 top-4 bg-transparent p-0 m-0 z-50 hidden sm:block"
           onClick={() => router.push('/landing')}
           aria-label="뒤로가기"
           style={{ border: 'none', boxShadow: 'none', borderRadius: 0 }}
@@ -238,9 +238,9 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           <div className="flex flex-col items-center mt-2 text-lg">
             {isGuestMode && (
               <div className="flex flex-col items-center">
-                <div className="bg-orange-50 p-3 rounded-lg border border-orange-200 mb-4 max-w-md w-full text-center flex flex-col items-center">
-                  <div className="text-base font-bold text-orange-600 mb-1">⚠️ 게스트 모드</div>
-                  <div className="text-sm text-orange-500 mb-2">비회원 이용 시 채팅 기록 등 일부 기능이 제한됩니다.</div>
+                <div className="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-lg border border-orange-200 dark:border-orange-400 mb-4 max-w-md w-full text-center flex flex-col items-center">
+                  <div className="text-base font-bold text-orange-600 dark:text-orange-200 mb-1">⚠️ 게스트 모드</div>
+                  <div className="text-sm text-orange-500 dark:text-orange-200 mb-2">비회원 이용 시 채팅 기록 등 일부 기능이 제한됩니다.</div>
                   <span
                     className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer mt-2 text-sm font-semibold transition-colors duration-200"
                     onClick={() => router.push('/auth/signin')}
