@@ -3,6 +3,7 @@ import ChatHistory from './ChatHistory';
 import Image from 'next/image';
 import { useState } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { useDarkMode } from '../app/providers';
 
 export default function Sidebar({
   sidebarOpen,
@@ -21,6 +22,7 @@ export default function Sidebar({
   setMobileSidebarOpen?: (open: boolean) => void;
   isMobile?: boolean;
 }) {
+  const { darkMode } = useDarkMode();
   return (
     <>
       {/* PC/Tablet Sidebar */}
@@ -35,7 +37,7 @@ export default function Sidebar({
             aria-label="사이드바 열기"
           >
             <Image
-              src="/images/logo_black.png"
+              src={darkMode ? "/images/logo.png" : "/images/logo_black.png"}
               alt="Logo"
               width={32}
               height={32}
