@@ -45,7 +45,7 @@ export default function ChatHistory({
       .select('session_id')
       .eq('user_id', user.email)
       .is('message_id', null)
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (data) setFavoriteSessionIds(data.map((f: any) => f.session_id));
       });
   }, [user]);
@@ -85,7 +85,7 @@ export default function ChatHistory({
       .select('*')
       .eq('user_id', user.email)
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (data) setSessions(data as SessionItem[])
       })
   }, [user])

@@ -55,7 +55,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       .select('*')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true })
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (data) {
           setMessages(data.map((msg: any) => ({
             id: msg.id,
@@ -78,7 +78,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       .select('message_id')
       .eq('user_id', user.email)
       .eq('session_id', sessionId)
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (data) setFavoriteIds(data.map((f: any) => f.message_id))
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
