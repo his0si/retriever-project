@@ -102,71 +102,69 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || isLoading) return
+  // 입력창에서 Enter로 전송
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
+  // 버튼 클릭용 전송 함수
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
       content: input.trim()
-    }
-
-    setMessages(prev => [...prev, userMessage])
-    setInput('')
-    setIsLoading(true)
-
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
     try {
-      // 1. 세션이 없거나 selectedSessionId가 'NEW'면 chat_sessions에 insert (title=첫 질문)
       if ((!sessionIdRef.current || selectedSessionId === 'NEW') && user?.email) {
         const { data: sessionData, error: sessionError } = await supabase.from('chat_sessions').insert([
           { user_id: user.email, title: userMessage.content, created_at: new Date().toISOString() }
-        ]).select()
+        ]).select();
         if (sessionError || !sessionData || !sessionData[0]?.id) {
-          throw new Error('세션 생성 실패')
+          throw new Error('세션 생성 실패');
         }
-        sessionIdRef.current = sessionData[0].id
-        if (onSessionCreated) onSessionCreated(sessionIdRef.current)
+        sessionIdRef.current = sessionData[0].id;
+        if (onSessionCreated) onSessionCreated(sessionIdRef.current);
       }
-
-      // 2. 챗봇 응답 받기
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/chat`,
         { question: userMessage.content }
-      )
-
+      );
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
         content: response.data.answer,
         sources: response.data.sources
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
-
-      // 3. chat_history에 session_id로 메시지 저장
+      };
+      setMessages(prev => [...prev, assistantMessage]);
       if (user?.email && sessionIdRef.current) {
         const now = new Date().toISOString();
         const { error } = await supabase.from('chat_history').insert([
           { id: uuidv4(), user_id: user.email, session_id: sessionIdRef.current, message: userMessage.content, role: 'user', created_at: now },
           { id: uuidv4(), user_id: user.email, session_id: sessionIdRef.current, message: assistantMessage.content, role: 'assistant', created_at: now, sources: assistantMessage.sources }
-        ])
+        ]);
         if (error) {
-          console.error('chat_history insert error:', error)
+          console.error('chat_history insert error:', error);
         }
       }
     } catch (error) {
-      console.error('Chat error:', error)
+      console.error('Chat error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
         content: '죄송합니다. 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
-      }
-      setMessages(prev => [...prev, errorMessage])
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     const input = inputRef.current;
@@ -212,7 +210,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white dark:bg-gray-900">
       {/* 게스트 모드일 때만 좌측 상단 뒤로가기 버튼 */}
       {isGuestMode && (
         <button
@@ -225,7 +223,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         </button>
       )}
       {/* 대화 영역 */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent" style={{ minHeight: 0 }}>
+      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent bg-white dark:bg-gray-900" style={{ minHeight: 0 }}>
         <style jsx>{`
           div::-webkit-scrollbar {
             width: 6px;
@@ -244,7 +242,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                   <div className="text-base font-bold text-orange-600 mb-1">⚠️ 게스트 모드</div>
                   <div className="text-sm text-orange-500 mb-2">비회원 이용 시 채팅 기록 등 일부 기능이 제한됩니다.</div>
                   <span
-                    className="text-blue-600 hover:underline cursor-pointer mt-2 text-sm font-semibold"
+                    className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer mt-2 text-sm font-semibold transition-colors duration-200"
                     onClick={() => router.push('/auth/signin')}
                   >
                     회원가입하러 가기
@@ -252,7 +250,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                 </div>
               </div>
             )}
-            <div className="text-gray-400">리트리버가 기다리고 있어요. 무엇이든 물어보세요!</div>
+            <div className="text-gray-400 dark:text-gray-300">리트리버가 기다리고 있어요. 무엇이든 물어보세요!</div>
           </div>
         ) : (
           messages.map(message => (
@@ -261,14 +259,14 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] rounded-2xl px-5 py-3 text-base break-words whitespace-pre-line ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-900'}`}
+                className={`max-w-[70%] rounded-2xl px-5 py-3 text-base break-words whitespace-pre-line ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'}`}
               >
-                <ReactMarkdown className="prose prose-sm max-w-none break-words whitespace-pre-line">
+                <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-line">
                   {message.content}
                 </ReactMarkdown>
                 {/* 출처 링크 표시 */}
                 {message.type === 'assistant' && message.sources && message.sources.length > 0 && (
-                  <div className="mt-2 text-xs text-gray-500">
+                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                     {message.sources.map((src, idx) => (
                       <div key={idx}>
                         출처: <a href={src} target="_blank" rel="noopener noreferrer" className="underline">{src}</a>
@@ -282,51 +280,37 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         )}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-2xl px-5 py-3">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-5 py-3 transition-colors duration-200">
               <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-75"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-150"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-pulse delay-75"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-pulse delay-150"></div>
               </div>
             </div>
           </div>
         )}
       </div>
       {/* 입력란 */}
-      <form
-        ref={formRef}
-        onSubmit={handleSubmit}
-        className="w-full flex justify-center items-center px-2 sm:px-8 py-3 sm:py-4 bg-white"
-        style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
-      >
-        <div className="flex items-center w-full max-w-lg sm:max-w-2xl bg-white border border-gray-200 rounded-full px-2 sm:px-4 py-1.5 sm:py-2">
-          <button type="button" className="p-1 mr-1 sm:mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
-            <PlusIcon className="w-6 h-6" />
-          </button>
-          <button type="button" className="p-1 mr-1 sm:mr-2 text-gray-500 hover:bg-gray-100 rounded-full">
-            <Cog6ToothIcon className="w-6 h-6" />
-          </button>
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="예: 등록금 납부일 알려줘"
-            className="flex-1 bg-transparent outline-none px-1 sm:px-2 text-sm sm:text-base"
-            disabled={isLoading}
-          />
-          <button type="button" className="p-1 ml-1 sm:ml-2 text-gray-500 hover:bg-gray-100 rounded-full">
-            <MicrophoneIcon className="w-6 h-6" />
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="p-1 ml-1 sm:ml-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <PaperAirplaneIcon className="w-6 h-6 rotate-90" />
-          </button>
-        </div>
-      </form>
+      <div className="w-full px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center gap-2">
+        <input
+          type="text"
+          className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="예: 등록금 납부일 알려줘"
+          onKeyDown={handleInputKeyDown}
+          ref={inputRef}
+          disabled={isLoading}
+        />
+        <button
+          type="button"
+          className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+          onClick={handleSend}
+          disabled={isLoading || !input.trim()}
+        >
+          전송
+        </button>
+      </div>
     </div>
   )
 }
