@@ -11,6 +11,18 @@ interface SessionItem {
   created_at: string
 }
 
+// 날짜 포맷 함수
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${yyyy}.${mm}.${dd} ${hh}:${min}`;
+}
+
 export default function ChatHistory({
   onSelectSession,
   selectedSessionId
@@ -107,34 +119,34 @@ export default function ChatHistory({
       {/* 탭 + 즐겨찾기 숫자 뱃지 */}
       <div className="flex items-center px-5 pt-4 pb-2 flex-shrink-0">
         <button
-          className={`flex-1 pb-2 font-bold text-base transition border-b-2 ${tab === 'history' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}
+          className={`flex-1 pb-2 font-bold text-base transition border-b-2 ${tab === 'history' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
           onClick={() => setTab('history')}
         >
           최근 채팅
         </button>
         <button
-          className={`flex-1 pb-2 font-bold text-base flex items-center justify-center gap-1 transition border-b-2 ${tab === 'favorites' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'}`}
+          className={`flex-1 pb-2 font-bold text-base flex items-center justify-center gap-1 transition border-b-2 ${tab === 'favorites' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
           onClick={() => setTab('favorites')}
         >
           즐겨찾기
-          <span className="ml-1 bg-gray-100 text-gray-500 rounded-full px-2 py-0.5 text-xs font-semibold">{validFavoriteCount}</span>
+          <span className="ml-1 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-200 rounded-full px-2 py-0.5 text-xs font-semibold transition-colors">{validFavoriteCount}</span>
         </button>
       </div>
       {/* 새 채팅 버튼 */}
       <button
-        className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 text-black font-semibold rounded transition block flex-shrink-0 justify-start px-3"
+        className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-gray-100 font-semibold rounded transition block flex-shrink-0 justify-start px-3"
         onClick={() => onSelectSession('NEW')}
       >
-        <PencilSquareIcon className="w-5 h-5 mr-1 text-black" />
+        <PencilSquareIcon className="w-5 h-5 mr-1 text-black dark:text-white" />
         <span>새 채팅</span>
       </button>
       {/* 관리자 전용 크롤링 버튼 */}
       {isAdmin && (
         <button
-          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 text-black font-semibold text-base rounded transition block flex-shrink-0 justify-start px-3"
+          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-gray-100 font-semibold text-base rounded transition block flex-shrink-0 justify-start px-3"
           onClick={() => router.push('/crawl')}
         >
-          <GlobeAltIcon className="w-5 h-5 mr-1 text-black" />
+          <GlobeAltIcon className="w-5 h-5 mr-1 text-black dark:text-white" />
           <span>크롤링</span>
         </button>
       )}
@@ -157,43 +169,36 @@ export default function ChatHistory({
           }
         `}</style>
         {tab === 'history' && (
-          <ul>
-            {sessions.map(session => (
-              <li key={session.id} className={`flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 transition mb-1 ${selectedSessionId === session.id ? 'bg-blue-50' : ''}`}>
+          <ul className="space-y-1">
+            {sessions.map((item) => (
+              <li
+                key={item.id}
+                className={`group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors
+                  ${item.id === selectedSessionId
+                    ? 'bg-blue-50 dark:bg-blue-900 text-gray-900 dark:text-gray-100'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100'}
+                `}
+                onClick={() => onSelectSession(item.id)}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-medium text-gray-900 dark:text-gray-100 text-sm">{item.title}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-300">{formatDate(item.created_at)}</div>
+                </div>
                 <button
-                  className="flex-1 text-left min-w-0"
-                  onClick={() => onSelectSession(session.id)}
-                >
-                  <div className="truncate font-medium text-gray-800 text-sm">{session.title.slice(0, 30)}</div>
-                  <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
-                    {session.created_at && (
-                      <span className="flex items-center gap-1">
-                        <ClockIcon className="w-4 h-4" />
-                        {(() => {
-                          const utc = new Date(session.created_at);
-                          // UTC+9로 변환
-                          const kst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
-                          return `${kst.getFullYear()}. ${kst.getMonth() + 1}. ${kst.getDate()}. ${kst.getHours().toString().padStart(2, '0')}:${kst.getMinutes().toString().padStart(2, '0')}`;
-                        })()}
-                      </span>
-                    )}
-                  </div>
-                </button>
-                <button
-                  className="ml-1"
-                  onClick={() => handleFavoriteSession(session.id)}
+                  className="ml-1 group-hover:bg-gray-100 dark:group-hover:bg-gray-800 p-1 rounded transition-colors"
+                  onClick={(e) => { e.stopPropagation(); handleFavoriteSession(item.id); }}
                   aria-label="즐겨찾기"
                 >
-                  {favoriteSessionIds.includes(session.id) ? (
+                  {favoriteSessionIds.includes(item.id) ? (
                     <StarSolid className="w-5 h-5 text-yellow-400" />
                   ) : (
                     <StarOutline className="w-5 h-5 text-gray-300" />
                   )}
                 </button>
                 <button
-                  className="ml-1 opacity-60 hover:opacity-100"
+                  className="ml-1 group-hover:bg-gray-100 dark:group-hover:bg-gray-800 p-1 rounded transition-colors"
+                  onClick={(e) => { e.stopPropagation(); handleDeleteSession(item.id); }}
                   aria-label="삭제"
-                  onClick={() => handleDeleteSession(session.id)}
                 >
                   <TrashIcon className="w-5 h-5 text-gray-300" />
                 </button>
@@ -204,12 +209,19 @@ export default function ChatHistory({
         {tab === 'favorites' && (
           <ul>
             {sessions.filter(session => favoriteSessionIds.includes(session.id)).map(session => (
-              <li key={session.id} className={`flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 transition mb-1 ${selectedSessionId === session.id ? 'bg-blue-50' : ''}`}>
+              <li
+                key={session.id}
+                className={`group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors
+                  ${selectedSessionId === session.id
+                    ? 'bg-blue-50 dark:bg-blue-900 text-gray-900 dark:text-gray-100'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100'}
+                `}
+              >
                 <button
                   className="flex-1 text-left min-w-0"
                   onClick={() => onSelectSession(session.id)}
                 >
-                  <div className="truncate font-medium text-gray-800 text-sm">{session.title.slice(0, 30)}</div>
+                  <div className="truncate font-medium text-gray-800 dark:text-gray-100 text-sm">{session.title.slice(0, 30)}</div>
                   <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-400">
                     {session.created_at && (
                       <span className="flex items-center gap-1">

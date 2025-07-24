@@ -25,7 +25,7 @@ export default function Sidebar({
     <>
       {/* PC/Tablet Sidebar */}
       <div
-        className={`hidden sm:fixed sm:top-0 sm:left-0 sm:h-full sm:z-30 sm:bg-gray-50 sm:shadow-lg sm:transition-all sm:duration-300 sm:flex sm:flex-col sm:items-center ${sidebarOpen ? 'sm:w-64' : 'sm:w-16'}`}
+        className={`hidden sm:fixed sm:top-0 sm:left-0 sm:h-full sm:z-30 sm:bg-gray-50 dark:sm:bg-gray-900 sm:shadow-lg sm:transition-all sm:duration-300 sm:flex sm:flex-col sm:items-center ${sidebarOpen ? 'sm:w-64' : 'sm:w-16'}`}
       >
         {/* 닫힌 상태: 로고만 */}
         {!sidebarOpen && (
@@ -62,7 +62,7 @@ export default function Sidebar({
       {/* Mobile Sidebar Drawer (상위에서 제어) */}
       {isMobile && mobileSidebarOpen && setMobileSidebarOpen && (
         <div className="sm:hidden fixed inset-0 z-50 bg-black/60 flex">
-          <div className="w-64 bg-white h-full shadow-lg flex flex-col items-center relative animate-slide-in-left">
+          <div className="w-64 bg-white dark:bg-gray-900 h-full shadow-lg flex flex-col items-center relative animate-slide-in-left">
             {/* 닫기 버튼은 Profile 내부의 화살표만 사용, 상단 오른쪽 버튼 제거 */}
             <div className="w-full px-4 mt-8 flex flex-col gap-0 h-full overflow-visible">
               <div className="bg-transparent shadow-none p-0 flex-shrink-0">

@@ -54,7 +54,7 @@ export default function ChatPage() {
   }, [showMobileSettings]);
 
   return (
-    <main className="h-screen w-screen bg-white">
+    <main className="h-screen w-screen bg-white dark:bg-gray-900">
       <div className="flex flex-col h-full w-full">
         {/* 모바일 전용 헤더 */}
         <div className="sm:hidden">
