@@ -60,7 +60,7 @@ export default function CrawlPage() {
   }
 
   return (
-    <main className="h-screen w-screen bg-white">
+    <main className="h-screen w-screen bg-gray-50 dark:bg-gray-900">
       <div className="flex h-full w-full flex-row sm:flex-row flex-col">
         {/* 모바일 햄버거 버튼 */}
         <button
