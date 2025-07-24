@@ -10,25 +10,46 @@ export const DarkModeContext = createContext<{
   toggleDarkMode: () => void;
 } | undefined>(undefined);
 
-export function DarkModeProvider({ children }: { children: React.ReactNode }) {
-  const [darkMode, setDarkMode] = useState(false);
+// SSR을 고려한 초기값 설정 함수
+function getInitialDarkMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  const stored = localStorage.getItem('darkMode');
+  if (stored !== null) return stored === 'true';
+  // 시스템 설정 확인
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
 
-  // localStorage에서 초기값 불러오기
+export function DarkModeProvider({ children }: { children: React.ReactNode }) {
+  const [darkMode, setDarkModeState] = useState(getInitialDarkMode);
+
+  // 초기 렌더링 시 즉시 dark 클래스 적용
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('darkMode');
-      if (stored !== null) setDarkMode(stored === 'true');
+    const html = document.documentElement;
+    if (darkMode) {
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('dark');
     }
   }, []);
 
-  // 변경 시 localStorage에 저장
+  // darkMode가 바뀔 때 <html> 클래스와 localStorage 동기화
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const html = document.documentElement;
+      if (darkMode) {
+        html.classList.add('dark');
+      } else {
+        html.classList.remove('dark');
+      }
       localStorage.setItem('darkMode', String(darkMode));
     }
   }, [darkMode]);
 
-  const toggleDarkMode = () => setDarkMode((v) => !v);
+  const setDarkMode = (v: boolean) => {
+    setDarkModeState(v);
+  };
+
+  const toggleDarkMode = () => setDarkMode(!darkMode);
 
   return (
     <DarkModeContext.Provider value={{ darkMode, setDarkMode, toggleDarkMode }}>
@@ -43,26 +64,11 @@ export function useDarkMode() {
   return ctx;
 }
 
-function HtmlWithDarkClass({ children }: { children: React.ReactNode }) {
-  const { darkMode } = useDarkMode();
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const html = document.documentElement;
-      if (darkMode) {
-        html.classList.add('dark');
-      } else {
-        html.classList.remove('dark');
-      }
-    }
-  }, [darkMode]);
-  return <>{children}</>;
-}
-
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <DarkModeProvider>
-        <HtmlWithDarkClass>{children}</HtmlWithDarkClass>
+        {children}
       </DarkModeProvider>
     </SessionProvider>
   );

@@ -119,34 +119,34 @@ export default function ChatHistory({
       {/* 탭 + 즐겨찾기 숫자 뱃지 */}
       <div className="flex items-center px-5 pt-4 pb-2 flex-shrink-0">
         <button
-          className={`flex-1 pb-2 font-bold text-base transition border-b-2 ${tab === 'history' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
+          className={`flex-1 pb-2 font-bold text-base transition-all duration-200 border-b-2 ${tab === 'history' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
           onClick={() => setTab('history')}
         >
           최근 채팅
         </button>
         <button
-          className={`flex-1 pb-2 font-bold text-base flex items-center justify-center gap-1 transition border-b-2 ${tab === 'favorites' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
+          className={`flex-1 pb-2 font-bold text-base flex items-center justify-center gap-1 transition-all duration-200 border-b-2 ${tab === 'favorites' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
           onClick={() => setTab('favorites')}
         >
           즐겨찾기
-          <span className="ml-1 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-200 rounded-full px-2 py-0.5 text-xs font-semibold transition-colors">{validFavoriteCount}</span>
+          <span className="ml-1 bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-200 rounded-full px-2 py-0.5 text-xs font-semibold transition-colors duration-200">{validFavoriteCount}</span>
         </button>
       </div>
       {/* 새 채팅 버튼 */}
       <button
-        className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-900 text-black dark:text-gray-100 font-semibold rounded transition block flex-shrink-0 justify-start px-3"
+        className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-gray-100 font-semibold rounded transition-colors duration-200 block flex-shrink-0 justify-start px-3"
         onClick={() => onSelectSession('NEW')}
       >
-        <PencilSquareIcon className="w-5 h-5 mr-1 text-black dark:text-white" />
+        <PencilSquareIcon className="w-5 h-5 mr-1 text-black dark:text-white transition-colors duration-200" />
         <span>새 채팅</span>
       </button>
       {/* 관리자 전용 크롤링 버튼 */}
       {isAdmin && (
         <button
-          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-900 text-black dark:text-gray-100 font-semibold text-base rounded transition block flex-shrink-0 justify-start px-3"
+          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-gray-100 font-semibold text-base rounded transition-colors duration-200 block flex-shrink-0 justify-start px-3"
           onClick={() => router.push('/crawl')}
         >
-          <GlobeAltIcon className="w-5 h-5 mr-1 text-black dark:text-white" />
+          <GlobeAltIcon className="w-5 h-5 mr-1 text-black dark:text-white transition-colors duration-200" />
           <span>크롤링</span>
         </button>
       )}
@@ -157,10 +157,10 @@ export default function ChatHistory({
             {sessions.map((item) => (
               <li
                 key={item.id}
-                className={`group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors
+                className={`group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors duration-200
                   ${item.id === selectedSessionId
-                    ? 'bg-blue-50 dark:bg-blue-900 text-gray-900 dark:text-gray-100'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-900 dark:text-gray-100'}
+                    ? 'bg-blue-50 dark:bg-blue-900/50 text-gray-900 dark:text-gray-100'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'}
                 `}
                 onClick={() => onSelectSession(item.id)}
               >
@@ -169,22 +169,22 @@ export default function ChatHistory({
                   <div className="text-xs text-gray-400 dark:text-gray-300">{formatDate(item.created_at)}</div>
                 </div>
                 <button
-                  className="ml-1 group-hover:bg-gray-100 dark:group-hover:bg-gray-900 p-1 rounded transition-colors"
+                  className="ml-1 hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded transition-colors duration-200"
                   onClick={(e) => { e.stopPropagation(); handleFavoriteSession(item.id); }}
                   aria-label="즐겨찾기"
                 >
                   {favoriteSessionIds.includes(item.id) ? (
-                    <StarSolid className="w-5 h-5 text-yellow-400" />
+                    <StarSolid className="w-5 h-5 text-yellow-400 transition-colors duration-200" />
                   ) : (
-                    <StarOutline className="w-5 h-5 text-gray-300" />
+                    <StarOutline className="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors duration-200" />
                   )}
                 </button>
                 <button
-                  className="ml-1 group-hover:bg-gray-100 dark:group-hover:bg-gray-900 p-1 rounded transition-colors"
+                  className="ml-1 hover:bg-gray-200 dark:hover:bg-gray-600 p-1 rounded transition-colors duration-200"
                   onClick={(e) => { e.stopPropagation(); handleDeleteSession(item.id); }}
                   aria-label="삭제"
                 >
-                  <TrashIcon className="w-5 h-5 text-gray-300" />
+                  <TrashIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200" />
                 </button>
               </li>
             ))}
@@ -195,10 +195,10 @@ export default function ChatHistory({
             {sessions.filter(session => favoriteSessionIds.includes(session.id)).map(session => (
               <li
                 key={session.id}
-                className={`group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors
+                className={`group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors duration-200
                   ${selectedSessionId === session.id
-                    ? 'bg-blue-50 dark:bg-blue-900 text-gray-900 dark:text-gray-100'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-900 dark:text-gray-100'}
+                    ? 'bg-blue-50 dark:bg-blue-900/50 text-gray-900 dark:text-gray-100'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'}
                 `}
               >
                 <button

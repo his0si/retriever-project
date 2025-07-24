@@ -242,7 +242,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                   <div className="text-base font-bold text-orange-600 mb-1">⚠️ 게스트 모드</div>
                   <div className="text-sm text-orange-500 mb-2">비회원 이용 시 채팅 기록 등 일부 기능이 제한됩니다.</div>
                   <span
-                    className="text-blue-600 hover:underline cursor-pointer mt-2 text-sm font-semibold"
+                    className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer mt-2 text-sm font-semibold transition-colors duration-200"
                     onClick={() => router.push('/auth/signin')}
                   >
                     회원가입하러 가기
@@ -261,7 +261,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
               <div
                 className={`max-w-[70%] rounded-2xl px-5 py-3 text-base break-words whitespace-pre-line ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'}`}
               >
-                <ReactMarkdown className="prose prose-sm max-w-none break-words whitespace-pre-line">
+                <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-line">
                   {message.content}
                 </ReactMarkdown>
                 {/* 출처 링크 표시 */}
@@ -280,11 +280,11 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         )}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-2xl px-5 py-3">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-5 py-3 transition-colors duration-200">
               <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-75"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-150"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-pulse delay-75"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-pulse delay-150"></div>
               </div>
             </div>
           </div>
