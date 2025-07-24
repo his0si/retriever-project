@@ -15,9 +15,8 @@
     --background-rgb: 17, 24, 39;
   }
 
-  * {
-    @apply transition-colors duration-200;
-  }
+  /* 다크모드 전환 시 깜빡임 방지를 위해 전역 transition 제거 */
+  /* 필요한 요소에만 개별적으로 transition 적용 */
 
   html {
     @apply antialiased;
