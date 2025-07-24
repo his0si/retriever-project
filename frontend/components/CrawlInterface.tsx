@@ -13,7 +13,7 @@ import CrawlGuidance from '@/components/crawl/CrawlGuidance'
 export default function CrawlInterface() {
   // Manual crawl state
   const [rootUrl, setRootUrl] = useState('')
-  const [maxDepth, setMaxDepth] = useState(CRAWL_CONSTANTS.DEFAULT_MAX_DEPTH)
+  const [maxDepth, setMaxDepth] = useState<number>(CRAWL_CONSTANTS.DEFAULT_MAX_DEPTH)
   const [isLoading, setIsLoading] = useState(false)
   const [taskId, setTaskId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -154,7 +154,7 @@ export default function CrawlInterface() {
         maxDepth={maxDepth}
         isLoading={isLoading}
         onRootUrlChange={setRootUrl}
-        onMaxDepthChange={setMaxDepth}
+        onMaxDepthChange={(depth) => setMaxDepth(depth)}
         onSubmit={handleSubmit}
       />
 
