@@ -151,23 +151,7 @@ export default function ChatHistory({
         </button>
       )}
       {/* 파일/대화 리스트 */}
-      <div className="flex-1 px-2 pb-10 overflow-y-auto min-h-0" style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#e5e7eb transparent'
-      }}>
-        <style jsx>{`
-          div::-webkit-scrollbar {
-            width: 6px;
-            background: transparent;
-          }
-          div::-webkit-scrollbar-thumb {
-            background: #e5e7eb;
-            border-radius: 4px;
-          }
-          div::-webkit-scrollbar-thumb:hover {
-            background: #d1d5db;
-          }
-        `}</style>
+      <div className="flex-1 px-2 pb-10 overflow-y-auto min-h-0 scrollbar-thin">
         {tab === 'history' && (
           <ul className="space-y-1">
             {sessions.map((item) => (

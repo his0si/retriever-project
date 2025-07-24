@@ -10,7 +10,9 @@ function ToggleSwitch({ enabled, onChange }: { enabled: boolean, onChange: (v: b
       type="button"
       onClick={() => onChange(!enabled)}
       className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all duration-300
-        ${enabled ? 'bg-gray-800' : 'bg-gray-100 border border-gray-200'}`}
+        border border-gray-200 dark:border-gray-600
+        ${enabled ? 'bg-gray-800' : 'bg-gray-100'}
+      `}
       style={{ boxShadow: enabled ? '0 2px 8px #2224' : '0 2px 8px #0001' }}
     >
       <span

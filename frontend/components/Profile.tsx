@@ -3,14 +3,15 @@ import { ArrowLeftIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
 import { useState, useRef, useEffect } from 'react'
 import { useDarkMode } from '../app/providers';
 
-// ToggleSwitch 컴포넌트 수정 (작게, 색상 변경)
+// ToggleSwitch 컴포넌트
 function ToggleSwitch({ enabled, onChange }: { enabled: boolean, onChange: (v: boolean) => void }) {
   return (
     <button
       type="button"
       onClick={() => onChange(!enabled)}
       className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all duration-300
-        ${enabled ? 'bg-gray-800' : 'bg-gray-100 border border-gray-200'}
+        border border-gray-200 dark:border-gray-600
+        ${enabled ? 'bg-gray-800' : 'bg-gray-100'}
       `}
       style={{ boxShadow: enabled ? '0 2px 8px #2224' : '0 2px 8px #0001' }}
     >
