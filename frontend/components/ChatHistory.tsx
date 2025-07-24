@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from 'next-auth/react'
-import { DocumentIcon, StarIcon as StarOutline, TrashIcon, ClockIcon, PencilSquareIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
+import { StarIcon as StarOutline, TrashIcon, ClockIcon, PencilSquareIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 import { useRouter } from 'next/navigation'
 
@@ -96,23 +96,6 @@ export default function ChatHistory({
   // 관리자 여부 판별
   const isAdmin = user?.email === 'admin@retriever.com' || user?.role === 'admin';
 
-  // 새 채팅 생성 함수
-  const handleNewChat = async () => {
-    if (!user?.email) return;
-    // 기본 제목: '새 채팅' + 현재 시각
-    const now = new Date();
-    const title = `새 채팅 (${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')})`;
-    const { data, error } = await supabase
-      .from('chat_sessions')
-      .insert([
-        { user_id: user.email, title }
-      ])
-      .select();
-    if (error || !data || !data[0]) return;
-    // 세션 목록 갱신
-    setSessions(prev => [data[0], ...prev]);
-    onSelectSession(data[0].id);
-  };
 
   return (
     <div className="w-full max-w-xs bg-transparent p-0 h-full flex flex-col">

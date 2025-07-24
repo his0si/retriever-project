@@ -1,15 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { PaperAirplaneIcon } from '@heroicons/react/24/solid'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import { useSession } from 'next-auth/react'
 import { supabase } from '@/lib/supabaseClient'
-import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
-import { StarIcon as StarOutline } from '@heroicons/react/24/outline'
 import { v4 as uuidv4 } from 'uuid';
-import { PlusIcon, Cog6ToothIcon, MicrophoneIcon, Bars3BottomLeftIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useRouter } from 'next/navigation'
 
 interface Message {
@@ -44,7 +41,6 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   const inputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [bottomPad, setBottomPad] = useState(8); // 기본 8px
-  const [viewportHeight, setViewportHeight] = useState('100vh');
 
   // 대화 내역/즐겨찾기 클릭 시 해당 대화 불러오기
   useEffect(() => {
@@ -85,22 +81,9 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       .then(({ data }) => {
         if (data) setFavoriteIds(data.map((f: any) => f.message_id))
       })
-  }, [user, sessionIdRef.current])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
-  const handleToggleFavorite = async (messageId: string) => {
-    if (!user?.email || !sessionIdRef.current) return
-    if (favoriteIds.includes(messageId)) {
-      // 즐겨찾기 해제
-      await supabase.from('favorites').delete().eq('user_id', user.email).eq('session_id', sessionIdRef.current).eq('message_id', messageId)
-      setFavoriteIds(favoriteIds.filter(id => id !== messageId))
-    } else {
-      // 즐겨찾기 추가
-      await supabase.from('favorites').insert([
-        { user_id: user.email, session_id: sessionIdRef.current, message_id: messageId }
-      ])
-      setFavoriteIds([...favoriteIds, messageId])
-    }
-  }
 
   // 입력창에서 Enter로 전송
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -196,18 +179,6 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
     return () => window.removeEventListener('resize', updatePad);
   }, []);
 
-  useEffect(() => {
-    function updateHeight() {
-      if (window.visualViewport) {
-        setViewportHeight(window.visualViewport.height + 'px');
-      } else {
-        setViewportHeight(window.innerHeight + 'px');
-      }
-    }
-    window.addEventListener('resize', updateHeight);
-    updateHeight();
-    return () => window.removeEventListener('resize', updateHeight);
-  }, []);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white dark:bg-gray-900">

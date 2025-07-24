@@ -1,26 +1,22 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import ChatHistory from '@/components/ChatHistory'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import ChatInterface from '@/components/ChatInterface'
-import Profile from '@/components/Profile'
 import { useSession, signOut } from 'next-auth/react'
-import { supabase } from '@/lib/supabaseClient'
 import Sidebar from '@/components/Sidebar';
 import dynamic from 'next/dynamic';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 const MobileChatHeader = dynamic(() => import('@/components/MobileChatHeader'), { ssr: false });
 
-export default function ChatPage() {
+function ChatPageContent() {
   const { data: session } = useSession()
-  const user = session?.user as { email?: string } | undefined
   const isLoggedIn = !!session?.user;
   const [selectedSessionId, setSelectedSessionId] = useState<string>('')
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
-  const [newChatLoading, setNewChatLoading] = useState(false);
+  const [newChatLoading] = useState(false);
   const searchParams = useSearchParams();
   const isGuestParam = searchParams?.get('guest') === '1';
   const isGuestMode = isGuestParam || !isLoggedIn;
@@ -132,5 +128,13 @@ export default function ChatPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ChatPageContent />
+    </Suspense>
   )
 } 

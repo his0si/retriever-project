@@ -30,7 +30,7 @@ export function DarkModeProvider({ children }: { children: React.ReactNode }) {
     } else {
       html.classList.remove('dark');
     }
-  }, []);
+  }, [darkMode]);
 
   // darkMode가 바뀔 때 <html> 클래스와 localStorage 동기화
   useEffect(() => {

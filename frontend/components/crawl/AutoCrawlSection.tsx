@@ -37,7 +37,7 @@ export default function AutoCrawlSection({
               <ExclamationTriangleIcon className="w-4 h-4 mr-1" />주의:
             </span>
             <span className="text-gray-600 dark:text-gray-300 font-normal flex-1">
-              아래 "입력한 URL 크롤링"과는 다른 기능입니다!
+              아래 &ldquo;입력한 URL 크롤링&rdquo;과는 다른 기능입니다!
             </span>
           </div>
         </div>

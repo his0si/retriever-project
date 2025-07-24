@@ -2,12 +2,10 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import Image from 'next/image';
 import { useDarkMode } from '../../providers';
 
 export default function NavBar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { darkMode } = useDarkMode();
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-8 py-4 sm:py-6 bg-gradient-to-b from-black/80 to-transparent">
       <div className="max-w-7xl mx-auto flex justify-between items-center">

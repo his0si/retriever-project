@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useDarkMode } from '../app/providers'
 import ToggleSwitch from './ToggleSwitch'
 
-export default function Profile({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean, setSidebarOpen: (open: boolean) => void }) {
+export default function Profile({ setSidebarOpen }: { sidebarOpen: boolean, setSidebarOpen: (open: boolean) => void }) {
   const { data: session } = useSession()
   const [showSettings, setShowSettings] = useState(false)
   const { darkMode, setDarkMode } = useDarkMode();
@@ -64,6 +64,7 @@ export default function Profile({ sidebarOpen, setSidebarOpen }: { sidebarOpen: 
       </div>
       {/* 프로필 원형 */}
       {session.user.image ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img src={session.user.image} alt="프로필" className="w-14 h-14 rounded-full border mb-2" />
       ) : (
         <div className="w-14 h-14 rounded-full bg-cyan-500 flex items-center justify-center text-white text-xl font-bold mb-2">

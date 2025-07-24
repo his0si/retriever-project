@@ -4,7 +4,7 @@ import { signOut } from 'next-auth/react';
 import ToggleSwitch from './ToggleSwitch';
 import { useDarkMode } from '../app/providers';
 
-export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettingsClick, newChatLoading, showNewChatButton = true, isGuestMode = false, onHomeClick = () => {} }: { onHamburgerClick: () => void, onNewChat: () => void, onSettingsClick: () => void, newChatLoading?: boolean, showNewChatButton?: boolean, isGuestMode?: boolean, onHomeClick?: () => void }) {
+export default function MobileChatHeader({ onHamburgerClick, onNewChat, newChatLoading, showNewChatButton = true, isGuestMode = false, onHomeClick = () => {} }: { onHamburgerClick: () => void, onNewChat: () => void, onSettingsClick: () => void, newChatLoading?: boolean, showNewChatButton?: boolean, isGuestMode?: boolean, onHomeClick?: () => void }) {
   const [showSettings, setShowSettings] = useState(false);
   const { darkMode, setDarkMode } = useDarkMode();
   const settingsRef = useRef<HTMLDivElement>(null);

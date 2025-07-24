@@ -1,8 +1,6 @@
 import Profile from './Profile';
 import ChatHistory from './ChatHistory';
 import Image from 'next/image';
-import { useState } from 'react';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useDarkMode } from '../app/providers';
 
 export default function Sidebar({

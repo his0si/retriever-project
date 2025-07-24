@@ -18,10 +18,6 @@ export default function HeroSection() {
     }
   }
 
-  const handleNeedHelp = () => {
-    // Contact 페이지로 이동하거나 이메일 링크
-    window.location.href = 'mailto:contact@retrieverproject.com'
-  }
 
   return (
     <div className="relative min-h-screen flex items-center justify-center py-8 px-2 sm:px-8">
