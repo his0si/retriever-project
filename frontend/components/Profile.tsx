@@ -53,13 +53,13 @@ export default function Profile({ sidebarOpen, setSidebarOpen }: { sidebarOpen: 
   return (
     <div className="relative flex flex-col items-center bg-transparent p-4 pt-6 mb-4">
       {/* 뒤로가기 아이콘 */}
-      <button className="absolute left-3 top-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => setSidebarOpen(false)}>
+      <button className="absolute left-3 top-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900" onClick={() => setSidebarOpen(false)}>
         <ArrowLeftIcon className="w-5 h-5 text-gray-400 dark:text-gray-200" />
       </button>
       {/* 환경설정(톱니바퀴) 아이콘 - 오른쪽 위 (모바일에서는 숨김) */}
       <div className="absolute top-3 right-3">
         <button
-          className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none hidden sm:inline-flex"
+          className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none hidden sm:inline-flex"
           onClick={() => setShowSettings((prev) => !prev)}
           aria-label="환경설정"
         >
@@ -69,7 +69,7 @@ export default function Profile({ sidebarOpen, setSidebarOpen }: { sidebarOpen: 
         {showSettings && (
           <div ref={settingsRef} className="absolute mt-2 -right-50 z-50 w-52 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-2 flex flex-col items-stretch">
             <button
-              className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100"
+              className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-800 dark:text-gray-100"
               onClick={() => { signOut({ callbackUrl: '/landing' }) }}
             >
               로그아웃

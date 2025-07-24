@@ -134,7 +134,7 @@ export default function ChatHistory({
       </div>
       {/* 새 채팅 버튼 */}
       <button
-        className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-gray-100 font-semibold rounded transition block flex-shrink-0 justify-start px-3"
+        className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-900 text-black dark:text-gray-100 font-semibold rounded transition block flex-shrink-0 justify-start px-3"
         onClick={() => onSelectSession('NEW')}
       >
         <PencilSquareIcon className="w-5 h-5 mr-1 text-black dark:text-white" />
@@ -143,7 +143,7 @@ export default function ChatHistory({
       {/* 관리자 전용 크롤링 버튼 */}
       {isAdmin && (
         <button
-          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-gray-100 font-semibold text-base rounded transition block flex-shrink-0 justify-start px-3"
+          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-900 text-black dark:text-gray-100 font-semibold text-base rounded transition block flex-shrink-0 justify-start px-3"
           onClick={() => router.push('/crawl')}
         >
           <GlobeAltIcon className="w-5 h-5 mr-1 text-black dark:text-white" />
@@ -176,7 +176,7 @@ export default function ChatHistory({
                 className={`group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors
                   ${item.id === selectedSessionId
                     ? 'bg-blue-50 dark:bg-blue-900 text-gray-900 dark:text-gray-100'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100'}
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-900 dark:text-gray-100'}
                 `}
                 onClick={() => onSelectSession(item.id)}
               >
@@ -185,7 +185,7 @@ export default function ChatHistory({
                   <div className="text-xs text-gray-400 dark:text-gray-300">{formatDate(item.created_at)}</div>
                 </div>
                 <button
-                  className="ml-1 group-hover:bg-gray-100 dark:group-hover:bg-gray-800 p-1 rounded transition-colors"
+                  className="ml-1 group-hover:bg-gray-100 dark:group-hover:bg-gray-900 p-1 rounded transition-colors"
                   onClick={(e) => { e.stopPropagation(); handleFavoriteSession(item.id); }}
                   aria-label="즐겨찾기"
                 >
@@ -196,7 +196,7 @@ export default function ChatHistory({
                   )}
                 </button>
                 <button
-                  className="ml-1 group-hover:bg-gray-100 dark:group-hover:bg-gray-800 p-1 rounded transition-colors"
+                  className="ml-1 group-hover:bg-gray-100 dark:group-hover:bg-gray-900 p-1 rounded transition-colors"
                   onClick={(e) => { e.stopPropagation(); handleDeleteSession(item.id); }}
                   aria-label="삭제"
                 >
@@ -214,7 +214,7 @@ export default function ChatHistory({
                 className={`group flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer transition-colors
                   ${selectedSessionId === session.id
                     ? 'bg-blue-50 dark:bg-blue-900 text-gray-900 dark:text-gray-100'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100'}
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-900 text-gray-900 dark:text-gray-100'}
                 `}
               >
                 <button

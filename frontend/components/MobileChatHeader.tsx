@@ -51,16 +51,16 @@ export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettin
 
   return (
     <header className="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white dark:bg-gray-800 dark:border-gray-700 relative">
-      <button onClick={onHamburgerClick} className="p-1 mr-2 text-gray-900">
-        <Bars3BottomLeftIcon className="w-7 h-7" />
+      <button onClick={onHamburgerClick} className="p-1 mr-2 text-gray-900 dark:text-white focus:outline-none">
+        <Bars3BottomLeftIcon className="w-7 h-7 text-gray-900 dark:text-white" />
       </button>
-      <span className="flex-1 text-lg font-bold text-gray-900 text-left">Retriever Project</span>
+      <span className="flex-1 text-lg font-bold text-gray-900 dark:text-white text-left">Retriever Project</span>
       <div className="flex items-center gap-4 relative">
-        <button className="p-1 text-gray-500 disabled:opacity-50" onClick={onNewChat} disabled={!!newChatLoading}>
-          <PencilSquareIcon className="w-6 h-6" />
+        <button className="p-1 text-gray-500 dark:text-white disabled:opacity-50 focus:outline-none" onClick={onNewChat} disabled={!!newChatLoading}>
+          <PencilSquareIcon className="w-6 h-6 text-gray-500 dark:text-white" />
         </button>
         <button
-          className="p-1 text-gray-500"
+          className="p-1 text-gray-500 dark:text-white focus:outline-none"
           ref={settingsBtnRef}
           onClick={() => setShowSettings((v) => !v)}
         >
@@ -77,13 +77,15 @@ export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettin
             className="absolute right-0 top-full mt-4 z-50 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-2 flex flex-col items-stretch"
           >
             <button
-              className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100"
+              className="px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none"
               onClick={() => { setShowSettings(false); signOut({ callbackUrl: '/landing' }); }}
             >
               로그아웃
             </button>
             <div className="px-4 py-2 flex items-center gap-3 justify-between select-none">
-              <span className="text-gray-800 dark:text-gray-100">다크 모드</span>
+              <span className="text-gray-800 dark:text-gray-100">
+                다크 모드
+              </span>
               <ToggleSwitch enabled={darkMode} onChange={setDarkMode} />
             </div>
           </div>
