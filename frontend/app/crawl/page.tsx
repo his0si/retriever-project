@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { redirect, useRouter } from 'next/navigation'
 import CrawlInterface from '@/components/CrawlInterface'
 import Sidebar from '@/components/Sidebar'
+import dynamic from 'next/dynamic';
 // 세션 타입 확장
 interface ExtendedSession {
   user: {
@@ -59,19 +60,11 @@ export default function CrawlPage() {
     return null
   }
 
+  const MobileChatHeader = dynamic(() => import('@/components/MobileChatHeader'), { ssr: false });
+
   return (
     <main className="h-screen w-screen bg-gray-50 dark:bg-gray-900">
       <div className="flex h-full w-full flex-row sm:flex-row flex-col">
-        {/* 모바일 햄버거 버튼 */}
-        <button
-          className="sm:hidden fixed top-4 left-4 z-40 p-0 m-0 bg-transparent border-none shadow-none"
-          onClick={() => setMobileSidebarOpen(true)}
-          aria-label="모바일 사이드바 열기"
-        >
-          <svg className="w-7 h-7 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
         <div className={`hidden sm:block transition-all duration-300 h-full ${sidebarOpen ? 'w-80' : 'w-16'}`}>
           <Sidebar
             sidebarOpen={sidebarOpen}
@@ -79,6 +72,10 @@ export default function CrawlPage() {
             selectedSessionId={selectedSessionId}
             setSelectedSessionId={handleSelectSession}
           />
+        </div>
+        {/* 모바일 헤더 */}
+        <div className="sm:hidden w-full">
+          <MobileChatHeader showNewChatButton={false} onHamburgerClick={() => setMobileSidebarOpen(true)} onNewChat={() => {}} onSettingsClick={() => {}} />
         </div>
         {/* 모바일 오버레이 사이드바 */}
         {typeof window !== 'undefined' && window.innerWidth < 640 && (
@@ -104,7 +101,7 @@ export default function CrawlPage() {
                 border-radius: 4px;
               }
             `}</style>
-            <div className="w-full max-w-4xl mx-auto px-2 sm:px-8 pt-12 sm:pt-8">
+            <div className="w-full max-w-4xl mx-auto px-2 sm:px-8 pt-4 sm:pt-4">
               <CrawlInterface />
             </div>
           </div>

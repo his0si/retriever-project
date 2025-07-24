@@ -4,7 +4,7 @@ import { signOut } from 'next-auth/react';
 import ToggleSwitch from './ToggleSwitch';
 import { useDarkMode } from '../app/providers';
 
-export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettingsClick, newChatLoading }: { onHamburgerClick: () => void, onNewChat: () => void, onSettingsClick: () => void, newChatLoading?: boolean }) {
+export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettingsClick, newChatLoading, showNewChatButton = true }: { onHamburgerClick: () => void, onNewChat: () => void, onSettingsClick: () => void, newChatLoading?: boolean, showNewChatButton?: boolean }) {
   const [showSettings, setShowSettings] = useState(false);
   const { darkMode, setDarkMode } = useDarkMode();
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -39,9 +39,11 @@ export default function MobileChatHeader({ onHamburgerClick, onNewChat, onSettin
       </button>
       <span className="flex-1 text-lg font-bold text-gray-900 dark:text-white text-left transition-colors duration-200">Retriever Project</span>
       <div className="flex items-center gap-4 relative">
-        <button className="p-1 text-gray-500 dark:text-white disabled:opacity-50 focus:outline-none transition-colors duration-200" onClick={onNewChat} disabled={!!newChatLoading}>
-          <PencilSquareIcon className="w-6 h-6 text-gray-500 dark:text-white transition-colors duration-200" />
-        </button>
+        {showNewChatButton && (
+          <button className="p-1 text-gray-500 dark:text-white disabled:opacity-50 focus:outline-none transition-colors duration-200" onClick={onNewChat} disabled={!!newChatLoading}>
+            <PencilSquareIcon className="w-6 h-6 text-gray-500 dark:text-white transition-colors duration-200" />
+          </button>
+        )}
         <button
           className="p-1 text-gray-500 dark:text-white focus:outline-none transition-colors duration-200"
           ref={settingsBtnRef}

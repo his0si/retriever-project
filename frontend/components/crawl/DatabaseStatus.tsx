@@ -49,7 +49,7 @@ export default function DatabaseStatus({
           <Button
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="h-8 px-2 text-xs"
+            className="h-7 px-1 text-[11px] sm:h-8 sm:px-2 sm:text-xs"
           >
             {isRefreshing ? (
               <span className="flex items-center gap-1">
@@ -64,7 +64,7 @@ export default function DatabaseStatus({
           <Button
             onClick={onToggleShow}
             variant="secondary"
-            className="h-8 px-2 text-xs"
+            className="h-7 px-1 text-[11px] sm:h-8 sm:px-2 sm:text-xs"
           >
             {showDbStatus ? '숨기기' : '상세보기'}
           </Button>
