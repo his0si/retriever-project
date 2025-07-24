@@ -59,7 +59,7 @@ export default function CrawlInterface() {
       )
       
       setAutoTaskId(response.data.task_id)
-      setAutoError(`🤖 JSON 파일 사이트 크롤링이 시작되었습니다! 
+      setAutoError(`JSON 파일 사이트 크롤링이 시작되었습니다! 
       크롤링 대상:
       ${response.data.sites.map((site: string) => `• ${site}`).join('\n')}`)
       
@@ -113,7 +113,7 @@ export default function CrawlInterface() {
       {crawlSites && (
         <div className="bg-green-50 p-4 rounded-lg">
           <h3 className="font-medium text-green-900 mb-3">
-            🤖 자동 크롤링
+            자동 크롤링
           </h3>
           
           <div className="text-sm text-green-700 space-y-2 mb-3">
@@ -142,7 +142,7 @@ export default function CrawlInterface() {
             disabled={isAutoLoading}
             className="w-full mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm font-medium"
           >
-            {isAutoLoading ? '🤖 JSON 사이트 크롤링 중...' : '🤖 JSON 파일 사이트 크롤링'}
+            {isAutoLoading ? 'JSON 사이트 크롤링 중...' : 'JSON 파일 사이트 크롤링'}
           </button>
         </div>
       )}
@@ -188,23 +188,23 @@ export default function CrawlInterface() {
           {/* 진행중인 작업 정보 */}
           {(isLoading || isAutoLoading) && (
             <div className="mb-3 p-3 bg-yellow-100 border border-yellow-300 rounded">
-              <p className="text-yellow-800 font-medium">⚡ 진행중인 작업:</p>
+              <p className="text-yellow-800 font-medium"> 진행중인 작업:</p>
               {isLoading && (
-                <p className="text-yellow-700 text-sm">📝 수동 크롤링: {rootUrl}</p>
+                <p className="text-yellow-700 text-sm"> 수동 크롤링: {rootUrl}</p>
               )}
               {isAutoLoading && (
-                <p className="text-yellow-700 text-sm">🤖 자동 크롤링: JSON 파일 사이트들</p>
+                <p className="text-yellow-700 text-sm"> 자동 크롤링: JSON 파일 사이트들</p>
               )}
               <p className="text-yellow-600 text-xs mt-1">
-                💡 작업 완료 후 아래 상태가 업데이트됩니다
+                 작업 완료 후 아래 상태가 업데이트됩니다
               </p>
             </div>
           )}
 
           {dbStatus && (
             <div className="text-sm text-gray-600 space-y-1">
-              <div>📈 총 문서 수: <span className="font-semibold">{dbStatus.total_documents}개</span></div>
-              <div>🕐 마지막 확인: {new Date(dbStatus.last_checked).toLocaleString()}</div>
+              <div> 총 문서 수: <span className="font-semibold">{dbStatus.total_documents}개</span></div>
+              <div> 마지막 확인: {new Date(dbStatus.last_checked).toLocaleString()}</div>
               
               {showDbStatus && dbStatus.recent_updates && dbStatus.recent_updates.length > 0 && (
                 <div className="mt-3">
@@ -260,7 +260,7 @@ export default function CrawlInterface() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="bg-blue-50 p-3 rounded-lg mb-4">
-          <h4 className="font-medium text-blue-900 mb-2">📝 수동 URL 크롤링</h4>
+          <h4 className="font-medium text-blue-900 mb-2"> 수동 URL 크롤링</h4>
           <p className="text-xs text-blue-700">
             아래에 직접 입력한 URL을 크롤링합니다. 위의 "JSON 파일 사이트 크롤링"과는 별도의 기능입니다.
           </p>
@@ -306,7 +306,7 @@ export default function CrawlInterface() {
           disabled={isLoading || !rootUrl.trim()}
           className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? '📝 입력 URL 크롤링 중...' : '📝 입력한 URL 크롤링 시작'}
+          {isLoading ? ' 입력 URL 크롤링 중...' : ' 입력한 URL 크롤링 시작'}
         </button>
       </form>
 
