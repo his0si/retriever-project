@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { DocumentIcon, ClockIcon, ArrowPathIcon, LightBulbIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export default function CrawlInterface() {
   const [rootUrl, setRootUrl] = useState('')
@@ -117,11 +118,23 @@ export default function CrawlInterface() {
           </h3>
           
           <div className="text-sm text-green-700 space-y-2 mb-3">
-            <div className="bg-green-100 p-2 rounded text-xs">
-              💡 <strong>설명:</strong> crawl_sites.json 파일에 미리 설정된 사이트들을 크롤링합니다. 
-              매일 새벽 2시에 자동 실행되지만, 즉시 업데이트가 필요할 때 수동으로도 실행할 수 있습니다.
-              <br/>
-              <strong>⚠️ 주의:</strong> 아래 "입력한 URL 크롤링"과는 다른 기능입니다!
+            <div className="bg-green-100 p-2 rounded text-xs space-y-1">
+              <div className="flex items-start gap-2">
+                <span className="flex items-center flex-shrink-0 text-gray-500 font-semibold min-w-[3.5em]">
+                  <LightBulbIcon className="w-4 h-4 mr-1" />설명:
+                </span>
+                <span className="text-gray-600 font-normal flex-1">
+                  crawl_sites.json 파일에 미리 설정된 사이트들을 크롤링합니다. 매일 새벽 2시에 자동 실행되지만, 수동으로도 실행할 수 있습니다.
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="flex items-center flex-shrink-0 text-gray-500 font-semibold min-w-[3.5em]">
+                  <ExclamationTriangleIcon className="w-4 h-4 mr-1" />주의:
+                </span>
+                <span className="text-gray-600 font-normal flex-1">
+                  아래 "입력한 URL 크롤링"과는 다른 기능입니다!
+                </span>
+              </div>
             </div>
             
             <div className="font-medium">활성화된 사이트: {crawlSites.total_enabled}개</div>
@@ -168,17 +181,21 @@ export default function CrawlInterface() {
         <div className="bg-gray-100 p-4 rounded-lg">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-medium text-gray-900">데이터베이스 상태</h3>
-            <div className="space-x-2">
+            <div className="space-x-2 flex">
               <button
                 onClick={fetchDbStatus}
                 disabled={isRefreshing}
-                className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50"
+                className="h-9 px-4 flex items-center bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
               >
-                {isRefreshing ? '🔄 확인 중...' : '🔄 상태 확인'}
+                {isRefreshing ? (
+                  <span className="flex items-center gap-1"><ArrowPathIcon className="w-4 h-4 animate-spin" /> 확인 중...</span>
+                ) : (
+                  <span className="flex items-center gap-1"><ArrowPathIcon className="w-4 h-4" /> 상태 확인</span>
+                )}
               </button>
               <button
                 onClick={() => setShowDbStatus(!showDbStatus)}
-                className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
+                className="h-9 px-4 flex items-center bg-gray-500 text-white text-sm rounded hover:bg-gray-600 transition-colors"
               >
                 {showDbStatus ? '숨기기' : '상세보기'}
               </button>
@@ -244,10 +261,10 @@ export default function CrawlInterface() {
                           </div>
                         </div>
                         <div className="text-gray-500">
-                          📅 {displayTime}
+                          {displayTime}
                         </div>
                         <div className="text-gray-400 text-xs">
-                          📄 청크 {item.chunk_index + 1}/{item.total_chunks}
+                          청크 {item.chunk_index + 1}/{item.total_chunks}
                         </div>
                       </div>
                     );
