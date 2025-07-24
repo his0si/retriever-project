@@ -58,10 +58,14 @@ export default function ChatPage() {
       <div className="flex flex-col h-full w-full">
         {/* 모바일 전용 헤더 */}
         <div className="sm:hidden">
-          {/* 게스트 모드일 때는 모바일 헤더 숨김 */}
-          {!isGuestMode && (
-            <MobileChatHeader onHamburgerClick={() => setMobileSidebarOpen(true)} onNewChat={handleMobileNewChat} onSettingsClick={() => setShowMobileSettings((v) => !v)} newChatLoading={newChatLoading} />
-          )}
+          <MobileChatHeader
+            onHamburgerClick={() => setMobileSidebarOpen(true)}
+            onNewChat={handleMobileNewChat}
+            onSettingsClick={() => setShowMobileSettings((v) => !v)}
+            newChatLoading={newChatLoading}
+            isGuestMode={isGuestMode}
+            onHomeClick={() => { window.location.href = '/landing'; }}
+          />
           {/* 모바일 환경설정 팝업 */}
           {showMobileSettings && !isGuestMode && (
             <div ref={settingsRef} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
