@@ -38,7 +38,7 @@ services:
       - rabbitmq
       - redis
       - qdrant
-    command: celery -A celery_app worker --loglevel=info --concurrency=2
+    command: celery -A celery_app worker --loglevel=info --pool=solo
     deploy:
       resources:
         limits:
@@ -83,7 +83,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
-      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.4
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     deploy:

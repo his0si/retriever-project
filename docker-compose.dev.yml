@@ -31,7 +31,7 @@ services:
       - rabbitmq
       - redis
       - qdrant
-    command: celery -A celery_app worker --loglevel=info
+    command: celery -A celery_app worker --loglevel=info --pool=solo
 
   frontend:
     build:
