@@ -46,7 +46,7 @@ services:
         GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
         GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
         KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
-        KAKAO_CLIENT_SECRET: ${KAKO_CLIENT_SECRET}
+        KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
     container_name: rag-frontend
     ports:
       - "3000:3000"
