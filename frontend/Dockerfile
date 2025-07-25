@@ -11,6 +11,9 @@ RUN npm install
 # Copy application code
 COPY . .
 
+# Copy .env.local
+COPY .env.local ./
+
 # Build arguments for environment variables
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_KEY
