@@ -1,7 +1,7 @@
-FROM node:20-alpine
+# 빌드 스테이지
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# 빌드용 환경변수는 ARG로 받아 ENV로 설정
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_KEY
 ARG NEXT_PUBLIC_API_URL
@@ -14,15 +14,32 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXTAUTH_URL=$NEXTAUTH_URL
 ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 
-# 패키지 설치
 COPY package*.json ./
 RUN npm install
 
-# 코드 복사
 COPY . .
 
-# 프로덕션 모드 빌드
 RUN npm run build
 
+# 실행 스테이지
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV development
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
 EXPOSE 3000
+
 CMD ["npm", "start"]
