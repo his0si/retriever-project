@@ -91,8 +91,62 @@ curl -X POST http://localhost:8000/chat \
 - Qdrant Dashboard: http://localhost:6333/dashboard
 - API Docs: http://localhost:8000/docs
 
+## 프로덕션 배포 (HTTPS 설정)
 
-##  자동 크롤링 사이트 관리
+### SSL 인증서 설정
+
+모바일에서 접속이 안 되는 문제를 해결하려면 HTTPS를 설정해야 합니다.
+
+#### 1. Let's Encrypt 인증서 발급
+
+```bash
+# Certbot 설치
+sudo apt update
+sudo apt install -y certbot python3-certbot-nginx
+
+# SSL 디렉토리 생성
+mkdir ssl
+
+# Let's Encrypt 인증서 발급 (실제 이메일로 변경)
+sudo certbot certonly --standalone \
+    --email your-email@example.com \
+    --agree-tos \
+    --no-eff-email \
+    -d retrieverproject.duckdns.org
+
+# 인증서 파일 복사
+sudo cp /etc/letsencrypt/live/retrieverproject.duckdns.org/fullchain.pem ssl/
+sudo cp /etc/letsencrypt/live/retrieverproject.duckdns.org/privkey.pem ssl/
+sudo chown $USER:$USER ssl/*
+sudo chmod 600 ssl/*
+```
+
+#### 2. 프로덕션 서비스 시작
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### 3. 인증서 자동 갱신
+
+```bash
+# crontab에 추가 (90일마다 자동 갱신)
+sudo crontab -e
+
+# 다음 줄 추가:
+0 12 * * * /usr/bin/certbot renew --quiet && docker-compose -f /path/to/project/docker-compose.prod.yml restart nginx
+```
+
+### 프로덕션 환경 변수
+
+프로덕션에서는 다음 환경 변수를 설정하세요:
+
+```bash
+NEXTAUTH_URL=https://retrieverproject.duckdns.org
+NEXT_PUBLIC_API_URL=https://retrieverproject.duckdns.org/api
+```
+
+## 자동 크롤링 사이트 관리
 
 ### 크롤링 사이트 설정
 
