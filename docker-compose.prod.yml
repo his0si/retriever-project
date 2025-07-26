@@ -1,11 +1,25 @@
 version: '3.8'
 
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: rag-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - api
+    restart: unless-stopped
+
   api:
     build: ./backend
     container_name: rag-api
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     volumes:
       - ./backend:/app
     environment:
@@ -62,8 +76,8 @@ services:
         KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
         KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
     container_name: rag-frontend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
