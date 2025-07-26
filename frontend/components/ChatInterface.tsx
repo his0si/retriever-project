@@ -116,7 +116,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         if (onSessionCreated) onSessionCreated(sessionIdRef.current);
       }
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL || '/api'}/chat`,
+        '/api/chat',
         { question: userMessage.content }
       );
       const assistantMessage: Message = {
