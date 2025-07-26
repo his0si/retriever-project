@@ -40,10 +40,10 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(health.router)
-app.include_router(crawl.router)
-app.include_router(chat.router)
-app.include_router(database.router)
+app.include_router(health.router, prefix="/api")
+app.include_router(crawl.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(database.router, prefix="/api")
 
 
 @app.on_event("startup")
