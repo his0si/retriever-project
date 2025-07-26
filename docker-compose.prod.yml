@@ -9,6 +9,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - letsencrypt_certs:/etc/letsencrypt
+      - letsencrypt_www:/var/www/certbot
     depends_on:
       - frontend
       - api
@@ -176,3 +179,5 @@ volumes:
   rabbitmq_data:
   redis_data:
   qdrant_data:
+  letsencrypt_certs:
+  letsencrypt_www:
