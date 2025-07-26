@@ -70,3 +70,5 @@ coverage.xml
 .claude/
 .env
 .env.example
+
+ssl/
