@@ -97,6 +97,19 @@ services:
       timeout: 5s
       retries: 5
 
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: rag-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - api
+    restart: unless-stopped
+
 volumes:
   rabbitmq_data:
   redis_data:
