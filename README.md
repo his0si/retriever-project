@@ -1,187 +1,214 @@
-# retriever project
+# Retriever Project
 
-학교 웹사이트의 분산된 정보를 크롤링하고 RAG (Retrieval-Augmented Generation) 기반 챗봇을 통해 질문에 답변하는 시스템입니다. 
+리트리버가 대신 찾아드릴게요! 학교 정보를 AI가 정확하게 알려드립니다.
 
-## 시스템 구성
+## 🚀 빠른 시작
 
-- **Backend**: FastAPI + Celery + Playwright
-- **Vector DB**: Qdrant
-- **Message Queue**: RabbitMQ
-- **Cache**: Redis
-- **Frontend**: Next.js
-- **LLM**: OpenAI GPT-4
+### 1. 서버에 클론
+```bash
+git clone https://github.com/your-username/retriever-project.git
+cd retriever-project
+```
 
-## 시작하기
+### 2. 자동 설치 스크립트 실행
+```bash
+chmod +x setup.sh
+./setup.sh
+```
 
-### 1. 환경 변수 설정
+스크립트가 다음을 자동으로 설정합니다:
+- ✅ Docker 설치
+- ✅ 방화벽 설정
+- ✅ SSL 인증서 발급
+- ✅ 환경변수 설정
+- ✅ 컨테이너 시작
 
+### 3. 수동 설치 (선택사항)
+
+#### 필수 요구사항
+- Ubuntu 20.04+ 또는 Debian 11+
+- Docker & Docker Compose
+- DuckDNS 도메인 (무료)
+- Supabase 프로젝트
+- Google OAuth 설정
+- Kakao OAuth 설정
+
+#### 환경변수 설정
 ```bash
 cp .env.example .env
+nano .env
 ```
 
-`.env` 파일을 열고 `OPENAI_API_KEY`를 설정하세요.
+필수 환경변수:
+```env
+# DuckDNS Domain
+NEXT_PUBLIC_API_URL=https://your-domain.duckdns.org
+NEXTAUTH_URL=https://your-domain.duckdns.org
 
-### 2. Docker 서비스 시작
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_KEY=your-supabase-key
 
-```bash
-docker-compose up -d
+# NextAuth
+NEXTAUTH_SECRET=your-secret
+
+# OAuth Providers
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+KAKAO_CLIENT_ID=your-kakao-client-id
+KAKAO_CLIENT_SECRET=your-kakao-client-secret
 ```
 
-### 3. Backend 설정
-
+#### SSL 인증서 설정
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-playwright install chromium
-```
+# Let's Encrypt 설치
+sudo apt install certbot
 
-### 4. Celery Worker 시작
+# 인증서 발급
+sudo certbot certonly --standalone -d your-domain.duckdns.org
 
-```bash
-# Terminal 1 - Celery Worker
-cd backend
-celery -A celery_app worker --loglevel=info
-```
-
-### 5. FastAPI 서버 시작
-
-```bash
-# Terminal 2 - API Server
-cd backend
-python main.py
-```
-
-### 6. Frontend 시작
-
-```bash
-# Terminal 3 - Frontend
-cd frontend
-npm install
-npm run dev
-```
-
-## API 사용법
-
-### 크롤링 시작
-
-```bash
-curl -X POST http://localhost:8000/crawl \
-  -H "Content-Type: application/json" \
-  -d '{
-    "root_url": "https://example-school.edu",
-    "max_depth": 2
-  }'
-```
-
-### 질문하기
-
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "입학 절차는 어떻게 되나요?"
-  }'
-```
-
-## 모니터링
-
-- RabbitMQ Management: http://localhost:15672
-- Qdrant Dashboard: http://localhost:6333/dashboard
-- API Docs: http://localhost:8000/docs
-
-## 프로덕션 배포 (HTTPS 설정)
-
-### SSL 인증서 설정
-
-모바일에서 접속이 안 되는 문제를 해결하려면 HTTPS를 설정해야 합니다.
-
-#### 1. Let's Encrypt 인증서 발급
-
-```bash
-# Certbot 설치
-sudo apt update
-sudo apt install -y certbot python3-certbot-nginx
-
-# SSL 디렉토리 생성
-mkdir ssl
-
-# Let's Encrypt 인증서 발급 (실제 이메일로 변경)
-sudo certbot certonly --standalone \
-    --email your-email@example.com \
-    --agree-tos \
-    --no-eff-email \
-    -d retrieverproject.duckdns.org
-
-# 인증서 파일 복사
-sudo cp /etc/letsencrypt/live/retrieverproject.duckdns.org/fullchain.pem ssl/
-sudo cp /etc/letsencrypt/live/retrieverproject.duckdns.org/privkey.pem ssl/
+# 인증서 복사
+sudo cp /etc/letsencrypt/live/your-domain.duckdns.org/fullchain.pem ssl/
+sudo cp /etc/letsencrypt/live/your-domain.duckdns.org/privkey.pem ssl/
 sudo chown $USER:$USER ssl/*
-sudo chmod 600 ssl/*
 ```
 
-#### 2. 프로덕션 서비스 시작
-
+#### 컨테이너 시작
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-#### 3. 인증서 자동 갱신
+## 🏗️ 아키텍처
 
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Frontend  │    │     API     │    │   Celery    │
+│  (Next.js)  │◄──►│  (FastAPI)  │◄──►│   Worker    │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       │                   │                   │
+       ▼                   ▼                   ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│    Nginx    │    │   Qdrant    │    │   RabbitMQ  │
+│   (Proxy)   │    │ (Vector DB) │    │  (Message)  │
+└─────────────┘    └─────────────┘    └─────────────┘
+                           │                   │
+                           ▼                   ▼
+                   ┌─────────────┐    ┌─────────────┐
+                   │    Redis    │    │   Supabase  │
+                   │   (Cache)   │    │   (Auth)    │
+                   └─────────────┘    └─────────────┘
+```
+
+## 🔧 관리 명령어
+
+### 컨테이너 관리
 ```bash
-# crontab에 추가 (90일마다 자동 갱신)
-sudo crontab -e
+# 상태 확인
+docker ps
 
-# 다음 줄 추가:
-0 12 * * * /usr/bin/certbot renew --quiet && docker-compose -f /path/to/project/docker-compose.prod.yml restart nginx
+# 로그 확인
+docker compose -f docker-compose.prod.yml logs -f
+
+# 재시작
+docker compose -f docker-compose.prod.yml restart
+
+# 중지
+docker compose -f docker-compose.prod.yml down
 ```
 
-### 프로덕션 환경 변수
-
-프로덕션에서는 다음 환경 변수를 설정하세요:
-
+### SSL 인증서 갱신
 ```bash
-NEXTAUTH_URL=https://retrieverproject.duckdns.org
-NEXT_PUBLIC_API_URL=https://retrieverproject.duckdns.org/api
+# 수동 갱신
+sudo certbot renew
+
+# 인증서 복사
+sudo cp /etc/letsencrypt/live/your-domain.duckdns.org/fullchain.pem ssl/
+sudo cp /etc/letsencrypt/live/your-domain.duckdns.org/privkey.pem ssl/
+sudo chown $USER:$USER ssl/*
+
+# nginx 재시작
+docker compose -f docker-compose.prod.yml restart nginx
 ```
 
-## 자동 크롤링 사이트 관리
+### 백업
+```bash
+# 데이터 백업
+docker run --rm -v retriever-project_qdrant_data:/data -v $(pwd):/backup alpine tar czf /backup/qdrant_backup.tar.gz -C /data .
 
-### 크롤링 사이트 설정
-
-크롤링할 사이트는 `backend/crawl_sites.json` 파일에서 관리됩니다.
-
-```json
-{
-  "sites": [
-    {
-      "name": "이화여대 컴공과 메인",
-      "url": "https://cse.ewha.ac.kr/cse/index.do",
-      "description": "학과 소개 및 주요 정보",
-      "enabled": true
-    }
-  ]
-}
+# 복원
+docker run --rm -v retriever-project_qdrant_data:/data -v $(pwd):/backup alpine tar xzf /backup/qdrant_backup.tar.gz -C /data
 ```
 
-### 사이트 추가/수정 방법
+## 🛡️ 보안
 
-1. `backend/crawl_sites.json` 파일 편집
-2. 새 사이트 추가:
-   ```json
-   {
-     "name": "새 사이트명",
-     "url": "https://example.com",
-     "description": "사이트 설명",
-     "enabled": true
-   }
-   ```
-3. 사이트 비활성화: `"enabled": false`로 설정
-4. 백엔드 재시작 (자동으로 새 설정 반영)
+- **Rate Limiting**: API 요청 제한
+- **악성 요청 차단**: 자동 공격 방지
+- **SSL/TLS**: HTTPS 강제 적용
+- **보안 헤더**: XSS, CSRF 방지
+- **컨테이너 보안**: Read-only 파일시스템
 
-### 자동 크롤링 설정
+## 📊 모니터링
 
-- **주기**: 매일 새벽 2시 (환경변수 `CRAWL_SCHEDULE`로 변경 가능)
-- **깊이**: 2단계 하위 링크까지 탐색
-- **중복 방지**: 콘텐츠 해시 기반 변경 감지
+### 헬스체크
+```bash
+# API 상태
+curl https://your-domain.duckdns.org/health
+
+# 데이터베이스 상태
+curl https://your-domain.duckdns.org/api/db/status
+```
+
+### 로그 모니터링
+```bash
+# 실시간 로그
+docker compose -f docker-compose.prod.yml logs -f
+
+# 특정 서비스 로그
+docker logs rag-api
+docker logs rag-frontend
+```
+
+## 🐛 문제 해결
+
+### 컨테이너가 시작되지 않을 때
+```bash
+# 로그 확인
+docker logs rag-api
+
+# 의존성 확인
+docker ps -a
+
+# 강제 재시작
+docker compose -f docker-compose.prod.yml up -d --force-recreate
+```
+
+### SSL 인증서 문제
+```bash
+# 인증서 확인
+sudo certbot certificates
+
+# 수동 갱신
+sudo certbot renew --force-renewal
+```
+
+### 메모리 부족
+```bash
+# 메모리 사용량 확인
+docker stats
+
+# 컨테이너 리소스 제한 조정
+# docker-compose.prod.yml에서 memory 제한 수정
+```
+
+## 📝 라이선스
+
+MIT License
+
+## 🤝 기여
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
