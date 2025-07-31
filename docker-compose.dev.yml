@@ -12,7 +12,6 @@ services:
       - PYTHONUNBUFFERED=1
     env_file:
       - .env.local
-      - .env
     depends_on:
       - rabbitmq
       - redis
@@ -28,7 +27,6 @@ services:
       - PYTHONUNBUFFERED=1
     env_file:
       - .env.local
-      - .env
     depends_on:
       - rabbitmq
       - redis
@@ -49,9 +47,15 @@ services:
         GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
         KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
         KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+        BACKEND_URL: ${BACKEND_URL}
     container_name: rag-frontend
     ports:
       - "3000:3000"
+    environment:
+      - BACKEND_URL=http://api:8000
+      - NODE_ENV=development
+    env_file:
+      - .env.local
     # 프로덕션 환경에서는 빌드된 파일만 사용하므로 volumes 제거
     depends_on:
       - api

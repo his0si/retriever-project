@@ -1,8 +1,15 @@
 #!/bin/bash
 
 # SSL 인증서 설정 스크립트
-DOMAIN="retrieverproject.duckdns.org"
-EMAIL="his0si2276@gmail.com"  # 실제 이메일로 변경하세요
+
+# .env 파일에서 설정 읽기
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
+fi
+
+# 도메인과 이메일 설정
+DOMAIN="${DOMAIN_NAME:-retrieverproject.duckdns.org}"
+EMAIL="${SSL_EMAIL:-admin@example.com}"
 
 echo "SSL 인증서 설정을 시작합니다..."
 

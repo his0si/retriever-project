@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from pydantic_settings import BaseSettings
 from pydantic import Field
-from typing import List
+from typing import List, Optional
 
 
 def load_crawl_sites() -> List[str]:
@@ -79,13 +79,22 @@ class Settings(BaseSettings):
     crawl_schedule: str = Field(default="0 2 * * *", env="CRAWL_SCHEDULE")  # 매일 새벽 2시
     max_crawl_depth: int = Field(default=2, env="MAX_CRAWL_DEPTH")
     
+    # CORS Configuration
+    cors_origins: str = Field(default="http://localhost:3000", env="CORS_ORIGINS")
+    
+    @property
+    def cors_origins_list(self) -> List[str]:
+        """Parse CORS origins from comma-separated string"""
+        return [origin.strip() for origin in self.cors_origins.split(",")]
+    
     @property
     def crawl_urls(self) -> List[str]:
         """Load crawl URLs from configuration file"""
         return load_crawl_sites()
 
     class Config:
-        env_file = ".env"
+        # 로컬 환경 파일이 있으면 우선 로드, 없으면 기본 .env 로드
+        env_file = ".env.local" if os.path.exists(".env.local") else ".env"
         case_sensitive = False
         extra = "ignore"  # 추가 필드 무시
 

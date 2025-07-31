@@ -37,7 +37,14 @@ cp .env.example .env
 가장 간단한 방법으로 로컬에서 개발 환경을 실행할 수 있습니다:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+# Linux/Mac
+./start-local.sh
+
+# Windows
+start-local.bat
+
+# 또는 직접 실행
+docker compose --env-file .env.local -f docker-compose.dev.yml up -d
 ```
 
 ### 수동으로 로컬 개발하기
@@ -90,17 +97,36 @@ npm run dev
 
 ## 배포하기
 
-### 1. SSL 인증서 설정 (도메인이 있는 경우)
+### 1. 프로젝트 클론 및 환경 설정
+
+```bash
+git clone https://github.com/his0si/retriever-project.git
+cd retriever-project
+cp .env.example .env
+```
+
+`.env` 파일을 열고 필요한 값들을 설정하세요 (특히 OPENAI_API_KEY, DOMAIN_NAME 등).
+
+### 2. SSL 인증서 설정 (도메인이 있는 경우)
 
 ```bash
 chmod +x setup-ssl.sh && ./setup-ssl.sh
 ```
 
-### 2. 프로덕션 배포
+### 3. 프로덕션 배포
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d
+# Linux/Mac
+./start-prod.sh
+
+# Windows
+start-prod.bat
+
+# 또는 직접 실행
+docker compose --env-file .env -f docker-compose.prod.yml up -d
 ```
+
+자세한 배포 가이드는 [DEPLOYMENT.md](DEPLOYMENT.md)를 참고하세요.
 
 ### 3. 서비스 확인
 
