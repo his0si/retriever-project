@@ -1,9 +1,8 @@
 # retriever project
 
-학교 웹사이트의 분산된 정보를 크롤링하고 RAG (Retrieval-Augmented Generation) 기반 챗봇
+학교 웹사이트의 분산된 정보를 자동으로 크롤링하고, RAG(Retrieval-Augmented Generation) 기반 챗봇을 제공합니다.
 
 [사이트에서 기능 확인해보기](https://retrieverproject.duckdns.org/landing)
-
 
 ## 시스템 구성
 
@@ -16,21 +15,45 @@
 
 ## 시작하기
 
-### 1. 환경 변수 설정
+### 1. 프로젝트 클론
+
+```bash
+git clone https://github.com/his0si/retriever-project.git
+cd retriever-project
+```
+
+### 2. 환경 변수 설정
 
 ```bash
 cp .env.example .env
 ```
 
-`.env` 파일을 열고 `OPENAI_API_KEY`를 설정하세요.
+`.env` 파일을 열고 필요한 값들을 설정하세요.
 
-### 2. Docker 서비스 시작
+## 로컬 개발 환경
+
+### Docker로 로컬 개발하기
+
+가장 간단한 방법으로 로컬에서 개발 환경을 실행할 수 있습니다:
 
 ```bash
-docker-compose up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
 
-### 3. Backend 설정
+### 수동으로 로컬 개발하기
+
+각 서비스를 개별적으로 실행하여 개발할 수 있습니다:
+
+#### 1. 환경 변수 설정
+
+```bash
+cp .env.example .env
+cp .env.example .env.local  # 개발 환경용 추가 설정
+```
+
+`.env`와 `.env.local` 파일을 열고 필요한 값들을 설정하세요.
+
+#### 2. Backend 설정
 
 ```bash
 cd backend
@@ -40,7 +63,7 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-### 4. Celery Worker 시작
+#### 3. Celery Worker 시작
 
 ```bash
 # Terminal 1 - Celery Worker
@@ -48,7 +71,7 @@ cd backend
 celery -A celery_app worker --loglevel=info
 ```
 
-### 5. FastAPI 서버 시작
+#### 4. FastAPI 서버 시작
 
 ```bash
 # Terminal 2 - API Server
@@ -56,7 +79,7 @@ cd backend
 python main.py
 ```
 
-### 6. Frontend 시작
+#### 5. Frontend 시작
 
 ```bash
 # Terminal 3 - Frontend
@@ -64,6 +87,29 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## 배포하기
+
+### 1. SSL 인증서 설정 (도메인이 있는 경우)
+
+```bash
+chmod +x setup-ssl.sh && ./setup-ssl.sh
+```
+
+### 2. 프로덕션 배포
+
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### 3. 서비스 확인
+
+배포 후 다음 URL에서 서비스가 정상 작동하는지 확인하세요:
+
+- **프론트엔드**: http://localhost:3000 (개발) / http://localhost (프로덕션)
+- **API 문서**: http://localhost:8000/docs
+- **RabbitMQ 관리**: http://localhost:15672
+- **Qdrant 대시보드**: http://localhost:6333/dashboard
 
 ## API 사용법
 
@@ -93,61 +139,6 @@ curl -X POST http://localhost:8000/chat \
 - RabbitMQ Management: http://localhost:15672
 - Qdrant Dashboard: http://localhost:6333/dashboard
 - API Docs: http://localhost:8000/docs
-
-## 프로덕션 배포 (HTTPS 설정)
-
-### SSL 인증서 설정
-
-모바일에서 접속이 안 되는 문제를 해결하려면 HTTPS를 설정해야 합니다.
-
-#### 1. Let's Encrypt 인증서 발급
-
-```bash
-# Certbot 설치
-sudo apt update
-sudo apt install -y certbot python3-certbot-nginx
-
-# SSL 디렉토리 생성
-mkdir ssl
-
-# Let's Encrypt 인증서 발급 (실제 이메일로 변경)
-sudo certbot certonly --standalone \
-    --email your-email@example.com \
-    --agree-tos \
-    --no-eff-email \
-    -d retrieverproject.duckdns.org
-
-# 인증서 파일 복사
-sudo cp /etc/letsencrypt/live/retrieverproject.duckdns.org/fullchain.pem ssl/
-sudo cp /etc/letsencrypt/live/retrieverproject.duckdns.org/privkey.pem ssl/
-sudo chown $USER:$USER ssl/*
-sudo chmod 600 ssl/*
-```
-
-#### 2. 프로덕션 서비스 시작
-
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-#### 3. 인증서 자동 갱신
-
-```bash
-# crontab에 추가 (90일마다 자동 갱신)
-sudo crontab -e
-
-# 다음 줄 추가:
-0 12 * * * /usr/bin/certbot renew --quiet && docker-compose -f /path/to/project/docker-compose.prod.yml restart nginx
-```
-
-### 프로덕션 환경 변수
-
-프로덕션에서는 다음 환경 변수를 설정하세요:
-
-```bash
-NEXTAUTH_URL=https://retrieverproject.duckdns.org
-NEXT_PUBLIC_API_URL=https://retrieverproject.duckdns.org/api
-```
 
 ## 자동 크롤링 사이트 관리
 
