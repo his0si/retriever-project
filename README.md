@@ -2,7 +2,7 @@
 
 학교 웹사이트의 분산된 정보를 자동으로 크롤링하고, RAG(Retrieval-Augmented Generation) 기반 챗봇을 제공합니다.
 
-[사이트에서 기능 확인해보기](https://retrieverproject.duckdns.org/landing)
+배포 링크: https://retrieverproject.duckdns.org
 
 ## 시스템 구성
 
@@ -12,6 +12,7 @@
 - **Cache**: Redis
 - **Frontend**: Next.js
 - **LLM**: OpenAI GPT-4
+- **Reverse Proxy**: Nginx
 
 ## 시작하기
 
@@ -24,140 +25,78 @@ cd retriever-project
 
 ### 2. 환경 변수 설정
 
+#### 로컬 개발용 (.env.local)
 ```bash
-cp .env.example .env
+# .env.local 파일 생성
+touch .env.local
 ```
 
-`.env` 파일을 열고 필요한 값들을 설정하세요.
+#### 프로덕션용 (.env)
+```bash
+# .env 파일 생성
+touch .env
+```
 
-## 로컬 개발 환경
+필요한 환경 변수:
+- `OPENAI_API_KEY`: OpenAI API 키
+- `NEXT_PUBLIC_SUPABASE_URL`: Supabase URL
+- `NEXT_PUBLIC_SUPABASE_KEY`: Supabase API 키
+- `NEXTAUTH_URL`: NextAuth URL (로컬: http://localhost, 프로덕션: https://your-domain.com)
+- `NEXTAUTH_SECRET`: NextAuth 시크릿
+- `GOOGLE_CLIENT_ID`: Google OAuth 클라이언트 ID
+- `GOOGLE_CLIENT_SECRET`: Google OAuth 클라이언트 시크릿
+- `KAKAO_CLIENT_ID`: Kakao OAuth 클라이언트 ID
+- `KAKAO_CLIENT_SECRET`: Kakao OAuth 클라이언트 시크릿
+- `DOMAIN_NAME`: 도메인 이름 (프로덕션만)
 
-### Docker로 로컬 개발하기
-
-가장 간단한 방법으로 로컬에서 개발 환경을 실행할 수 있습니다:
+## 로컬 개발
 
 ```bash
-# Linux/Mac
-./start-local.sh
-
-# Windows
-start-local.bat
-
-# 또는 직접 실행
 docker compose --env-file .env.local -f docker-compose.dev.yml up -d
 ```
 
-### 수동으로 로컬 개발하기
+접속: http://localhost
 
-각 서비스를 개별적으로 실행하여 개발할 수 있습니다:
-
-#### 1. 환경 변수 설정
+## 프로덕션 배포
 
 ```bash
-cp .env.example .env
-cp .env.example .env.local  # 개발 환경용 추가 설정
-```
-
-`.env`와 `.env.local` 파일을 열고 필요한 값들을 설정하세요.
-
-#### 2. Backend 설정
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-playwright install chromium
-```
-
-#### 3. Celery Worker 시작
-
-```bash
-# Terminal 1 - Celery Worker
-cd backend
-celery -A celery_app worker --loglevel=info
-```
-
-#### 4. FastAPI 서버 시작
-
-```bash
-# Terminal 2 - API Server
-cd backend
-python main.py
-```
-
-#### 5. Frontend 시작
-
-```bash
-# Terminal 3 - Frontend
-cd frontend
-npm install
-npm run dev
-```
-
-## 배포하기
-
-### 1. 프로젝트 클론 및 환경 설정
-
-```bash
-git clone https://github.com/his0si/retriever-project.git
-cd retriever-project
-cp .env.example .env
-```
-
-`.env` 파일을 열고 필요한 값들을 설정하세요 (특히 OPENAI_API_KEY, DOMAIN_NAME 등).
-
-### 2. SSL 인증서 설정 (도메인이 있는 경우)
-
-```bash
+cd retriever
+# SSL 인증서 발급
 chmod +x setup-ssl.sh && ./setup-ssl.sh
+# 배포
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-### 3. 프로덕션 배포
-
-```bash
-# Linux/Mac
-./start-prod.sh
-
-# Windows
-start-prod.bat
-
-# 또는 직접 실행
-docker compose --env-file .env -f docker-compose.prod.yml up -d
-```
-
-자세한 배포 가이드는 [DEPLOYMENT.md](DEPLOYMENT.md)를 참고하세요.
-
-### 3. 서비스 확인
-
-배포 후 다음 URL에서 서비스가 정상 작동하는지 확인하세요:
-
-- **프론트엔드**: http://localhost (개발/프로덕션 모두 nginx 프록시 사용)
-- **API 문서**: http://localhost:8000/docs (개발 환경에서만 직접 접근 가능)
-- **RabbitMQ 관리**: http://localhost:15672
-- **Qdrant 대시보드**: http://localhost:6333/dashboard
+접속: https://your-domain.com
 
 ## API 사용법
 
 ### 크롤링 시작
 
 ```bash
+# 로컬
 curl -X POST http://localhost:8000/crawl \
   -H "Content-Type: application/json" \
-  -d '{
-    "root_url": "https://example-school.edu",
-    "max_depth": 2
-  }'
+  -d '{"root_url": "https://example-school.edu", "max_depth": 2}'
+
+# 프로덕션
+curl -X POST https://your-domain.com/backend/crawl \
+  -H "Content-Type: application/json" \
+  -d '{"root_url": "https://example-school.edu", "max_depth": 2}'
 ```
 
 ### 질문하기
 
 ```bash
+# 로컬
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{
-    "question": "입학 절차는 어떻게 되나요?"
-  }'
+  -d '{"question": "입학 절차는 어떻게 되나요?"}'
+
+# 프로덕션
+curl -X POST https://your-domain.com/backend/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question": "입학 절차는 어떻게 되나요?"}'
 ```
 
 ## 모니터링
@@ -167,8 +106,6 @@ curl -X POST http://localhost:8000/chat \
 - API Docs: http://localhost:8000/docs
 
 ## 자동 크롤링 사이트 관리
-
-### 크롤링 사이트 설정
 
 크롤링할 사이트는 `backend/crawl_sites.json` 파일에서 관리됩니다.
 
@@ -205,3 +142,5 @@ curl -X POST http://localhost:8000/chat \
 - **주기**: 매일 새벽 2시 (환경변수 `CRAWL_SCHEDULE`로 변경 가능)
 - **깊이**: 2단계 하위 링크까지 탐색
 - **중복 방지**: 콘텐츠 해시 기반 변경 감지
+
+
