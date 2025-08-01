@@ -60,8 +60,19 @@ async def get_crawl_sites():
     """
     try:
         config_path = Path(__file__).parent.parent.parent / "crawl_sites.json"
+        
+        # 파일 존재 여부 확인 및 로깅
+        if not config_path.exists():
+            logger.error("crawl_sites.json not found", path=str(config_path))
+            raise HTTPException(status_code=404, detail="crawl_sites.json file not found")
+        
+        # 파일을 매번 새로 읽음 (캐싱 방지)
         with open(config_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+        
+        logger.info("Loaded crawl sites", 
+                   path=str(config_path), 
+                   sites_count=len(data.get("sites", [])))
         
         return {
             "sites": data["sites"],
@@ -69,6 +80,9 @@ async def get_crawl_sites():
             "schedule": settings.crawl_schedule
         }
     
+    except json.JSONDecodeError as e:
+        logger.error("Invalid JSON in crawl_sites.json", error=str(e))
+        raise HTTPException(status_code=500, detail="Invalid JSON format in crawl_sites.json")
     except Exception as e:
         logger.error("Failed to load crawl sites", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to load crawl sites configuration")

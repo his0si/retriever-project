@@ -32,9 +32,11 @@ services:
     expose:
       - "8000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app:ro
+      - ./backend/crawl_sites.json:/app/crawl_sites.json:ro
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
     env_file:
       - .env
     depends_on:
@@ -54,9 +56,11 @@ services:
     build: ./backend
     container_name: rag-celery
     volumes:
-      - ./backend:/app
+      - ./backend:/app:ro
+      - ./backend/crawl_sites.json:/app/crawl_sites.json:ro
     environment:
       - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
     env_file:
       - .env
     depends_on:

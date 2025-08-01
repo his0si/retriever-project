@@ -19,18 +19,28 @@ ENV NEXTAUTH_URL=$NEXTAUTH_URL
 ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 ENV BACKEND_URL=$BACKEND_URL
 
-# 패키지 설치
+# 패키지 설치 (빌드에 필요한 dev dependencies 포함)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
-# 코드 복사
-COPY . .
+# 소스 코드를 여러 단계로 복사하여 캐시 활용
+COPY tsconfig.json ./
+COPY next.config.js ./
+COPY tailwind.config.js ./
+COPY postcss.config.js ./
+COPY public ./public
+COPY app ./app
+COPY styles ./styles
 
-# 빌드 시 메모리 제한 설정
-ENV NODE_OPTIONS="--max-old-space-size=1024"
+# 빌드 시 메모리 제한을 더 높게 설정
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 
 # 프로덕션 모드 빌드
 RUN npm run build
+
+# 프로덕션 의존성만 재설치
+RUN rm -rf node_modules
+RUN npm ci --only=production
 
 # 실행 스테이지
 FROM node:20-alpine AS runner
