@@ -132,8 +132,8 @@ docker compose --env-file .env -f docker-compose.prod.yml up -d
 
 배포 후 다음 URL에서 서비스가 정상 작동하는지 확인하세요:
 
-- **프론트엔드**: http://localhost:3000 (개발) / http://localhost (프로덕션)
-- **API 문서**: http://localhost:8000/docs
+- **프론트엔드**: http://localhost (개발/프로덕션 모두 nginx 프록시 사용)
+- **API 문서**: http://localhost:8000/docs (개발 환경에서만 직접 접근 가능)
 - **RabbitMQ 관리**: http://localhost:15672
 - **Qdrant 대시보드**: http://localhost:6333/dashboard
 

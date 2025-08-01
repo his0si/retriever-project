@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: rag-nginx-dev
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - api
+    restart: unless-stopped
+
   api:
     build: ./backend
     container_name: rag-api
@@ -49,8 +61,8 @@ services:
         KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
         BACKEND_URL: ${BACKEND_URL}
     container_name: rag-frontend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - BACKEND_URL=http://api:8000
       - NODE_ENV=development

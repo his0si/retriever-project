@@ -122,6 +122,11 @@ docker compose -f docker-compose.prod.yml logs nginx
    CORS_ORIGINS=http://your-domain.com,https://your-domain.com
    ```
 
+4. **nginx 라우팅**:
+   - `/api/auth/*` → 프론트엔드 (NextAuth)
+   - `/api/*` → 프론트엔드 (Next.js API Routes)
+   - `/backend/*` → 백엔드 (FastAPI 직접 접근용)
+
 ## 트러블슈팅
 
 ### SSL 인증서 문제
