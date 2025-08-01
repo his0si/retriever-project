@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { LightBulbIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { CrawlSites } from '@/types/crawl'
 import Button from '@/components/ui/Button'
@@ -14,6 +14,18 @@ export default function AutoCrawlSection({
   isAutoLoading, 
   onAutoCrawl 
 }: AutoCrawlSectionProps) {
+  const [enabledSites, setEnabledSites] = useState<Set<string>>(new Set())
+
+  const toggleSite = (siteName: string) => {
+    const newEnabledSites = new Set(enabledSites)
+    if (newEnabledSites.has(siteName)) {
+      newEnabledSites.delete(siteName)
+    } else {
+      newEnabledSites.add(siteName)
+    }
+    setEnabledSites(newEnabledSites)
+  }
+
   if (!crawlSites) return null
 
   return (
@@ -42,22 +54,29 @@ export default function AutoCrawlSection({
           </div>
         </div>
         
-        <div className="font-medium">활성화된 사이트: {crawlSites.total_enabled}개</div>
-        {crawlSites.sites.map((site, index) => (
-          <div key={index} className="flex items-center">
-            <span className={`w-2 h-2 rounded-full mr-2 ${
-              site.enabled ? 'bg-blue-500 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'
-            }`}></span>
-            <span className={site.enabled ? '' : 'line-through opacity-50'}>
-              {site.name}
-            </span>
-          </div>
-        ))}
+        <div className="font-medium">활성화된 사이트: {enabledSites.size}개</div>
+        {crawlSites.sites.map((site, index) => {
+          const isEnabled = enabledSites.has(site.name)
+          return (
+            <div 
+              key={index} 
+              className="flex items-center cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/20 p-1 rounded transition-colors"
+              onClick={() => toggleSite(site.name)}
+            >
+              <span className={`w-2 h-2 rounded-full mr-2 ${
+                isEnabled ? 'bg-blue-500 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'
+              }`}></span>
+              <span className={isEnabled ? '' : 'line-through opacity-50'}>
+                {site.name}
+              </span>
+            </div>
+          )
+        })}
       </div>
 
       <Button
         onClick={onAutoCrawl}
-        disabled={isAutoLoading}
+        disabled={isAutoLoading || enabledSites.size === 0}
         className="w-full mt-3 text-sm"
       >
         {isAutoLoading ? 'JSON 사이트 크롤링 중...' : 'JSON 파일 사이트 크롤링'}

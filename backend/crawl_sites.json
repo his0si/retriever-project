@@ -1,16 +1,20 @@
 {
   "sites": [
     {
-      "name": "이화여대 컴공과 메인",
+      "name": "이화여대 컴퓨터공학과",
       "url": "https://cse.ewha.ac.kr/cse/index.do",
-      "description": "학과 소개 및 주요 정보",
-      "enabled": false
+      "description": "컴퓨터공학과 소개 및 주요 정보"
+    },
+    {
+      "name": "이화여대 커뮤니케이션·미디어학부",
+      "url": "https://masscomm.ewha.ac.kr/",
+      "description": "커뮤니케이션·미디어학부 소개 및 주요 정보"
     }
   ],
   "settings": {
     "max_depth": 2,
     "update_frequency": "매일 새벽 2시",
-    "last_updated": "2025-07-19",
-    "total_sites": 5
+    "last_updated": "2025-08-01",
+    "total_sites": 2
   }
 } 

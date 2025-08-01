@@ -1,11 +1,18 @@
 export interface CrawlSite {
   name: string
-  enabled: boolean
+  url: string
+  description: string
 }
 
 export interface CrawlSites {
-  total_enabled: number
   sites: CrawlSite[]
+  settings: {
+    max_depth: number
+    update_frequency: string
+    last_updated: string
+    total_sites: number
+  }
+  schedule: string
 }
 
 export interface DbStatusUpdate {

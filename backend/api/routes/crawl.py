@@ -66,7 +66,6 @@ async def get_crawl_sites():
         return {
             "sites": data["sites"],
             "settings": data["settings"],
-            "total_enabled": len([s for s in data["sites"] if s.get("enabled", True)]),
             "schedule": settings.crawl_schedule
         }
     
