@@ -23,28 +23,15 @@ ENV BACKEND_URL=$BACKEND_URL
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# 패키지 설치 (빌드에 필요한 dev dependencies 포함)
+# 패키지 설치
 COPY package*.json ./
-RUN npm ci --prefer-offline --no-audit
+RUN npm install
 
-# 소스 코드를 여러 단계로 복사하여 캐시 활용
-COPY tsconfig.json ./
-COPY next.config.js ./
-COPY tailwind.config.js ./
-COPY postcss.config.js ./
-COPY public ./public
-COPY app ./app
-COPY components ./components
-COPY types ./types
-COPY constants ./constants
-COPY lib ./lib
+# 소스 코드 복사
+COPY . .
 
 # 프로덕션 모드 빌드
 RUN npm run build
-
-# 프로덕션 의존성만 재설치
-RUN rm -rf node_modules
-RUN npm ci --only=production --prefer-offline --no-audit
 
 # 실행 스테이지
 FROM node:20-alpine AS runner
