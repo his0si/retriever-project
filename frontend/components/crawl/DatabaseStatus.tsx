@@ -41,6 +41,12 @@ export default function DatabaseStatus({
     }
   }
 
+  const getSiteName = (url: string) => {
+    if (url.includes('cse.ewha.ac.kr')) return '이화여대 컴퓨터공학과'
+    if (url.includes('masscomm.ewha.ac.kr')) return '이화여대 커뮤니케이션·미디어학부'
+    return url
+  }
+
   return (
     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className="flex justify-between items-center mb-2">
@@ -96,10 +102,11 @@ export default function DatabaseStatus({
             <div className="mt-3">
               <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">최근 업데이트:</div>
               {dbStatus.recent_updates.map((item, index) => {
-                const isJsonSite = item.url.includes('cse.ewha.ac.kr')
+                const isJsonSite = item.url.includes('cse.ewha.ac.kr') || item.url.includes('masscomm.ewha.ac.kr')
+                const siteName = getSiteName(item.url)
                 
                 return (
-                  <div key={index} className={`p-2 rounded text-xs border ${
+                  <div key={index} className={`p-2 rounded text-xs border mb-2 ${
                     isJsonSite 
                       ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700' 
                       : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
@@ -113,7 +120,7 @@ export default function DatabaseStatus({
                         {isJsonSite ? 'JSON' : '수동'}
                       </span>
                       <div className="font-medium flex-1 truncate dark:text-gray-100" title={item.url}>
-                        {item.url}
+                        {siteName}
                       </div>
                     </div>
                     <div className="text-gray-500 dark:text-gray-400">
@@ -127,6 +134,18 @@ export default function DatabaseStatus({
               })}
             </div>
           )}
+          
+          {showDbStatus && (!dbStatus.recent_updates || dbStatus.recent_updates.length === 0) && (
+            <div className="mt-3 p-2 bg-gray-100 dark:bg-gray-700 rounded text-xs text-gray-500 dark:text-gray-400">
+              최근 업데이트 정보가 없습니다.
+            </div>
+          )}
+        </div>
+      )}
+      
+      {!dbStatus && (
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          데이터베이스 상태를 확인해주세요.
         </div>
       )}
     </div>

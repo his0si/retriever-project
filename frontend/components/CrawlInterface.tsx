@@ -118,6 +118,7 @@ export default function CrawlInterface() {
         crawlSites={crawlSites}
         isAutoLoading={isAutoLoading}
         onAutoCrawl={handleAutoCrawl}
+        onSitesUpdate={fetchCrawlSites}
       />
 
       {/* 자동 크롤링 결과 */}

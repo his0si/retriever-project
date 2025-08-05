@@ -2,6 +2,7 @@ export interface CrawlSite {
   name: string
   url: string
   description: string
+  enabled: boolean
 }
 
 export interface CrawlSites {
@@ -34,6 +35,12 @@ export interface CrawlResponse {
 
 export interface AutoCrawlResponse extends CrawlResponse {
   sites: string[]
+}
+
+export interface ToggleSiteResponse {
+  site_name: string
+  enabled: boolean
+  message: string
 }
 
 export type AlertType = 'success' | 'error' | 'info'

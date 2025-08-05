@@ -7,6 +7,8 @@ import structlog
 from playwright.async_api import async_playwright
 from collections import deque
 import uuid
+import json
+from pathlib import Path
 
 from tasks.embeddings import process_url_for_embedding
 from tasks.embeddings import process_url_for_embedding_incremental, process_url_for_embedding_smart
@@ -115,6 +117,30 @@ async def crawl_async(root_url: str, max_depth: int) -> Set[str]:
     return visited_urls
 
 
+def get_enabled_sites():
+    """
+    Get list of enabled sites from crawl_sites.json
+    """
+    try:
+        config_path = Path(__file__).parent.parent / "crawl_sites.json"
+        
+        if not config_path.exists():
+            logger.error("crawl_sites.json not found", path=str(config_path))
+            return []
+        
+        with open(config_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        enabled_sites = [site["url"] for site in data["sites"] if site.get("enabled", True)]
+        logger.info(f"Found {len(enabled_sites)} enabled sites for auto-crawl")
+        
+        return enabled_sites
+    
+    except Exception as e:
+        logger.error(f"Failed to load enabled sites: {str(e)}")
+        return []
+
+
 @celery_app.task(base=CrawlerTask, name="auto_crawl_websites")
 def auto_crawl_websites():
     """
@@ -124,10 +150,23 @@ def auto_crawl_websites():
     
     logger.info("🤖 AUTO CRAWL STARTED - JSON SITES")
     
+    # Get enabled sites from crawl_sites.json
+    enabled_sites = get_enabled_sites()
+    
+    if not enabled_sites:
+        logger.warning("No enabled sites found for auto-crawl")
+        return {
+            "status": "completed",
+            "total_urls_found": 0,
+            "total_new_urls_queued": 0,
+            "crawled_sites": [],
+            "message": "No enabled sites found"
+        }
+    
     total_urls_found = 0
     total_new_urls = 0
     
-    for root_url in settings.crawl_urls:
+    for root_url in enabled_sites:
         try:
             logger.info(f"Auto-crawling: {root_url}")
             
@@ -164,7 +203,7 @@ def auto_crawl_websites():
         "status": "completed",
         "total_urls_found": total_urls_found,
         "total_new_urls_queued": total_new_urls,
-        "crawled_sites": settings.crawl_urls
+        "crawled_sites": enabled_sites
     }
     
     logger.info("Auto-crawl completed", **result)
