@@ -40,6 +40,10 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# 런타임 환경변수 설정
+ARG BACKEND_URL
+ENV BACKEND_URL=$BACKEND_URL
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -48,6 +52,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/app ./app
 
 # 권한 설정
 RUN chown -R nextjs:nodejs /app
