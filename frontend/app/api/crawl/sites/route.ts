@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // 환경에 따라 백엔드 URL 결정
 const getBackendUrl = () => {
-  // 배포 환경에서는 Docker 컨테이너 내부 주소 사용
+  // 배포 환경에서는 nginx를 통해 연결
   if (process.env.NODE_ENV === 'production') {
-    return process.env.BACKEND_URL || 'http://api:8000'
+    return 'http://nginx:80'
   }
   // 로컬 개발 환경에서는 localhost 사용
   return process.env.BACKEND_URL || 'http://localhost:8000'
