@@ -2,17 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // 환경에 따라 백엔드 URL 결정
 const getBackendUrl = () => {
-  // 배포 환경에서는 Docker 컨테이너 내부 주소 사용
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.BACKEND_URL || 'http://api:8000'
-  }
-  // 로컬 개발 환경에서는 localhost 사용
-  return process.env.BACKEND_URL || 'http://localhost:8000'
+  // Docker 환경에서는 컨테이너 내부 주소 사용
+  return process.env.BACKEND_URL || 'http://api:8000'
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    let body = {}
+    
+    // Request body가 있는지 확인
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength) > 0) {
+      try {
+        body = await request.json()
+      } catch (e) {
+        // 빈 body이거나 파싱 오류 시 빈 객체 사용
+        body = {}
+      }
+    }
+    
     const backendUrl = getBackendUrl()
     
     const response = await fetch(`${backendUrl}/crawl/auto`, {
