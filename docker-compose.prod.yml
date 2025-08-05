@@ -33,7 +33,7 @@ services:
       - "8000"
     volumes:
       - ./backend:/app:ro
-      - ./backend/crawl_sites.json:/app/crawl_sites.json:ro
+      - ./backend/crawl_sites.json:/app/crawl_sites.json
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
@@ -57,7 +57,7 @@ services:
     container_name: rag-celery
     volumes:
       - ./backend:/app:ro
-      - ./backend/crawl_sites.json:/app/crawl_sites.json:ro
+      - ./backend/crawl_sites.json:/app/crawl_sites.json
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
