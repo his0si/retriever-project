@@ -30,7 +30,10 @@ COPY tailwind.config.js ./
 COPY postcss.config.js ./
 COPY public ./public
 COPY app ./app
-COPY styles ./styles
+COPY components ./components
+COPY types ./types
+COPY constants ./constants
+COPY lib ./lib
 
 # 빌드 시 메모리 제한을 더 높게 설정
 ENV NODE_OPTIONS="--max-old-space-size=2048"
