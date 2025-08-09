@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// 이 라우트를 동적으로 만들어 캐싱 비활성화
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // 환경에 따라 백엔드 URL 결정
 const getBackendUrl = () => {
   // 배포 환경에서는 Docker 컨테이너 내부 주소 사용
@@ -17,7 +21,9 @@ export async function GET(request: NextRequest) {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
       },
+      cache: 'no-store',  // Next.js 캐싱 비활성화
     })
 
     if (!response.ok) {
@@ -30,7 +36,13 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    })
   } catch (error) {
     console.error('DB status API error:', error)
     return NextResponse.json(

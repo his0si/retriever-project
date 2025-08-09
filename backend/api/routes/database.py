@@ -63,11 +63,26 @@ async def get_db_status():
         # 최근 저장된 데이터 조회 (더 많이 가져와서 정렬)
         try:
             logger.info("📋 Fetching recent data...")
-            recent_data = qdrant_client.scroll(
-                collection_name=settings.qdrant_collection_name,
-                limit=100,  # 더 많이 가져와서 최신 데이터 포함 확률 높이기
-                with_payload=True
-            )[0]
+            # 여러 번 scroll해서 더 많은 데이터 수집
+            all_points = []
+            next_offset = None
+            
+            # 최대 1000개까지 가져오기 (10번 * 100개)
+            for _ in range(10):
+                scroll_result = qdrant_client.scroll(
+                    collection_name=settings.qdrant_collection_name,
+                    limit=100,
+                    offset=next_offset,
+                    with_payload=True,
+                    with_vectors=False
+                )
+                points, next_offset = scroll_result
+                all_points.extend(points)
+                
+                if next_offset is None or len(all_points) >= 1000:
+                    break
+            
+            recent_data = all_points
             
             logger.info(f"📋 Found {len(recent_data)} recent data points")
             
@@ -87,13 +102,22 @@ async def get_db_status():
             # 시간순 정렬 (최신이 먼저, Unknown은 나중에)
             def sort_key(x):
                 if x["updated_at"] == "Unknown":
-                    return (1, "")  # Unknown은 맨 뒤로
+                    return (1, datetime.min)  # Unknown은 맨 뒤로
                 try:
                     # 시간 문자열을 datetime으로 파싱해서 정렬
-                    dt = datetime.fromisoformat(x["updated_at"].replace('Z', '+00:00'))
-                    return (0, dt)
-                except:
-                    return (1, x["updated_at"])  # 파싱 실패시 뒤로
+                    dt_str = x["updated_at"]
+                    # 시간대 정보 처리
+                    if '+' in dt_str or 'Z' in dt_str:
+                        dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+                    else:
+                        # naive datetime은 KST로 가정
+                        dt = datetime.fromisoformat(dt_str)
+                        if dt.tzinfo is None:
+                            dt = KST.localize(dt)
+                    return (0, dt.timestamp())  # timestamp로 비교
+                except Exception as e:
+                    logger.debug(f"Failed to parse date {x['updated_at']}: {e}")
+                    return (1, datetime.min.timestamp())  # 파싱 실패시 뒤로
                     
             recent_items.sort(key=sort_key, reverse=True)  # 최신이 먼저
             

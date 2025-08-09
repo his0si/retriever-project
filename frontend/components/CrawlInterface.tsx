@@ -97,7 +97,15 @@ export default function CrawlInterface() {
   const fetchDbStatus = async () => {
     setIsRefreshing(true)
     try {
-      const response = await axios.get<DbStatus>(`${API_URL}/db/status`)
+      const response = await axios.get<DbStatus>(`${API_URL}/db/status`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+        params: {
+          _t: Date.now()  // 캐시 방지를 위한 타임스탬프 추가
+        }
+      })
       setDbStatus(response.data)
     } catch (error) {
       console.error('Failed to fetch DB status:', error)
