@@ -37,6 +37,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
+      - TZ=Asia/Seoul
     env_file:
       - .env
     depends_on:
@@ -61,6 +62,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
+      - TZ=Asia/Seoul
     env_file:
       - .env
     depends_on:

@@ -1,11 +1,19 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from qdrant_client import QdrantClient
-from config import settings
 from datetime import datetime
+import pytz
+from config import settings
 import structlog
 
-router = APIRouter(prefix="/db", tags=["database"])
 logger = structlog.get_logger()
+router = APIRouter()
+
+# 한국 시간대 설정
+KST = pytz.timezone('Asia/Seoul')
+
+def get_kst_now():
+    """한국 시간으로 현재 시간 반환"""
+    return datetime.now(KST)
 
 
 @router.get("/status")
@@ -102,7 +110,7 @@ async def get_db_status():
             "total_documents": total_points,
             "collection_name": settings.qdrant_collection_name,
             "recent_updates": recent_items[:5],  # 최근 5개만
-            "last_checked": datetime.now().isoformat()
+            "last_checked": get_kst_now().isoformat()
         }
         
     except Exception as e:
@@ -110,5 +118,5 @@ async def get_db_status():
         return {
             "status": "error",
             "error": str(e),
-            "last_checked": datetime.now().isoformat()
+            "last_checked": get_kst_now().isoformat()
         }

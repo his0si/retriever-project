@@ -10,10 +10,18 @@ from qdrant_client.models import Distance, VectorParams, PointStruct
 import uuid
 import hashlib
 from datetime import datetime
+import pytz
 
 from config import settings
 
 logger = structlog.get_logger()
+
+# 한국 시간대 설정
+KST = pytz.timezone('Asia/Seoul')
+
+def get_kst_now():
+    """한국 시간으로 현재 시간 반환"""
+    return datetime.now(KST)
 
 
 class EmbeddingTask(Task):
@@ -80,7 +88,7 @@ def process_url_for_embedding(url: str):
                     "url": url,
                     "chunk_index": idx,
                     "total_chunks": len(chunks),
-                    "updated_at": str(datetime.now())
+                    "updated_at": str(get_kst_now())
                 }
             )
             points.append(point)
@@ -309,7 +317,7 @@ def process_url_for_embedding_smart(url: str):
                     "chunk_index": idx,
                     "total_chunks": len(chunks),
                     "content_hash": content_hash,
-                    "updated_at": str(datetime.now())
+                    "updated_at": str(get_kst_now())
                 }
             )
             points.append(point)

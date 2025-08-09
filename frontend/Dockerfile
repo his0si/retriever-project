@@ -29,6 +29,10 @@ WORKDIR /app
 
 ENV NODE_ENV development
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV TZ=Asia/Seoul
+
+# Install timezone data
+RUN apk add --no-cache tzdata
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

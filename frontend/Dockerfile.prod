@@ -39,6 +39,10 @@ WORKDIR /app
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV TZ=Asia/Seoul
+
+# Install timezone data
+RUN apk add --no-cache tzdata
 
 # 런타임 환경변수 설정
 ARG BACKEND_URL
