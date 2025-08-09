@@ -44,7 +44,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
 
   // 대화 내역/즐겨찾기 클릭 시 해당 대화 불러오기
   useEffect(() => {
-    if (!user?.email || !selectedSessionId || selectedSessionId === 'NEW') {
+    if (!user?.email || !selectedSessionId) {
       setMessages([]);
       sessionIdRef.current = '';
       return;
