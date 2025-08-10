@@ -84,11 +84,11 @@ export default function UrlSearchSection() {
            데이터베이스에 특정 URL이 저장되어 있는지 확인할 수 있습니다.
            <br />
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-              예시: &ldquo;https://cse.ewha.ac.kr&rdquo;를 입력하면 해당 사이트의 모든 페이지를 찾습니다.
+              예시: &ldquo;https://example-school.edu&rdquo;를 입력하면 해당 사이트의 모든 페이지를 찾습니다.
             </span>
          </p>
         
-        <div className="flex gap-2">
+        <div className="flex flex-row gap-2 items-stretch">
           <input
             type="text"
             value={searchUrl}
@@ -98,14 +98,14 @@ export default function UrlSearchSection() {
                 handleSearch()
               }
             }}
-            placeholder="예: https://cse.ewha.ac.kr"
+            placeholder="https://example-school.edu"
                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             disabled={isSearching}
           />
                                            <button
               onClick={handleSearch}
               disabled={isSearching || !searchUrl.trim()}
-              className="h-10 w-10 p-0 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 border border-sky-300 dark:border-sky-600 rounded flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 border border-sky-300 dark:border-sky-600 rounded-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-w-[40px]"
             >
                           {isSearching ? (
                 <svg className="animate-spin h-4 w-4 text-sky-600 dark:text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
