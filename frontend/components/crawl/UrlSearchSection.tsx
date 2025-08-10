@@ -88,25 +88,25 @@ export default function UrlSearchSection() {
             </span>
          </p>
         
-        <div className="flex flex-row gap-2 items-stretch">
-          <input
-            type="text"
-            value={searchUrl}
-            onChange={(e) => setSearchUrl(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !isSearching) {
-                handleSearch()
-              }
-            }}
-            placeholder="https://example-school.edu"
-                         className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            disabled={isSearching}
-          />
-                                           <button
-              onClick={handleSearch}
-              disabled={isSearching || !searchUrl.trim()}
-              className="px-3 py-2 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 border border-sky-300 dark:border-sky-600 rounded-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-w-[40px]"
-            >
+                 <div className="flex flex-row gap-2 items-stretch w-full">
+           <input
+             type="text"
+             value={searchUrl}
+             onChange={(e) => setSearchUrl(e.target.value)}
+             onKeyPress={(e) => {
+               if (e.key === 'Enter' && !isSearching) {
+                 handleSearch()
+               }
+             }}
+             placeholder="https://example-school.edu"
+                          className="flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+             disabled={isSearching}
+           />
+            <button
+               onClick={handleSearch}
+               disabled={isSearching || !searchUrl.trim()}
+               className="flex-shrink-0 px-3 py-2 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 border border-sky-300 dark:border-sky-600 rounded-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed min-w-[40px]"
+             >
                           {isSearching ? (
                 <svg className="animate-spin h-4 w-4 text-sky-600 dark:text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
