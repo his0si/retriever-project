@@ -23,7 +23,7 @@ export default function Button({
   className = '',
   type = 'button'
 }: ButtonProps) {
-  const baseClasses = 'px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed'
+  const baseClasses = 'px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
   
   return (
     <button

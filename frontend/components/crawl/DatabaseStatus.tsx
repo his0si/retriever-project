@@ -51,30 +51,29 @@ export default function DatabaseStatus({
     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-medium text-gray-900 dark:text-gray-100">데이터베이스 상태</h3>
-        <div className="space-x-2 flex">
-          <Button
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="h-7 px-1 text-[11px] sm:h-8 sm:px-2 sm:text-xs"
-          >
-            {isRefreshing ? (
-              <span className="flex items-center gap-1">
-                <ArrowPathIcon className="w-4 h-4 animate-spin" /> 확인 중...
-              </span>
-            ) : (
-              <span className="flex items-center gap-1">
-                <ArrowPathIcon className="w-4 h-4" /> 상태 확인
-              </span>
-            )}
-          </Button>
-          <Button
-            onClick={onToggleShow}
-            variant="secondary"
-            className="h-7 px-1 text-[11px] sm:h-8 sm:px-2 sm:text-xs"
-          >
-            {showDbStatus ? '숨기기' : '상세보기'}
-          </Button>
-        </div>
+                 <div className="space-x-2 flex">
+           <button
+             onClick={onRefresh}
+             disabled={isRefreshing}
+             className="h-8 w-8 p-0 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 border border-sky-300 dark:border-sky-600 rounded flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+             <ArrowPathIcon className={`w-5 h-5 text-sky-600 dark:text-sky-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+           </button>
+           <button
+             onClick={onToggleShow}
+             className="h-8 w-8 p-0 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 border border-sky-300 dark:border-sky-600 rounded flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+           >
+             {showDbStatus ? (
+               <svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+               </svg>
+             ) : (
+               <svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+               </svg>
+             )}
+           </button>
+         </div>
       </div>
 
       {/* 진행중인 작업 정보 */}

@@ -9,6 +9,7 @@ import AutoCrawlSection from '@/components/crawl/AutoCrawlSection'
 import DatabaseStatus from '@/components/crawl/DatabaseStatus'
 import ManualCrawlForm from '@/components/crawl/ManualCrawlForm'
 import CrawlGuidance from '@/components/crawl/CrawlGuidance'
+import UrlSearchSection from '@/components/crawl/UrlSearchSection'
 
 export default function CrawlInterface() {
   // Manual crawl state
@@ -157,6 +158,9 @@ export default function CrawlInterface() {
         onRefresh={fetchDbStatus}
         onToggleShow={() => setShowDbStatus(!showDbStatus)}
       />
+
+      {/* URL 검색 섹션 */}
+      <UrlSearchSection />
 
       <ManualCrawlForm
         rootUrl={rootUrl}

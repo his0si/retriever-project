@@ -5,6 +5,11 @@ import Providers from './providers';
 export const metadata: Metadata = {
   title: 'Retriever Project - 학교 정보 챗봇',
   description: 'your personal pup-assistant that fetches all school info and sniffs out the perfect match for you.',
+  icons: {
+    icon: '/images/logo_black.png',
+    shortcut: '/images/logo_black.png',
+    apple: '/images/logo_black.png',
+  },
 }
 
 export default function RootLayout({
