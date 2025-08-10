@@ -262,10 +262,10 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         )}
       </div>
       {/* 입력란 */}
-      <div className="w-full px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center gap-2">
+      <div className="w-full px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex items-center gap-2" style={{ paddingBottom: `${bottomPad}px` }}>
         <input
           type="text"
-          className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 min-w-0 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="예: 등록금 납부일 알려줘"
@@ -273,9 +273,10 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           ref={inputRef}
           disabled={isLoading}
         />
+        {/* 데스크톱에서만 전송 버튼 표시 */}
         <button
           type="button"
-          className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+          className="hidden sm:block px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           onClick={handleSend}
           disabled={isLoading || !input.trim()}
         >
