@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     tzdata \
     fonts-unifont \
-    fonts-ubuntu \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
