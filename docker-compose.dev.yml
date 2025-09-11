@@ -14,7 +14,10 @@ services:
     restart: unless-stopped
 
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     container_name: rag-api
     ports:
       - "8000:8000"
@@ -32,7 +35,10 @@ services:
     command: python main.py
 
   celery:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     container_name: rag-celery
     volumes:
       - ./backend:/app

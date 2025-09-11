@@ -27,7 +27,10 @@ services:
       retries: 3
 
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     container_name: rag-api
     expose:
       - "8000"
@@ -54,7 +57,10 @@ services:
     restart: unless-stopped
 
   celery:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     container_name: rag-celery
     volumes:
       - ./backend:/app:ro
