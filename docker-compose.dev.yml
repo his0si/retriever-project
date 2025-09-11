@@ -32,7 +32,7 @@ services:
       - rabbitmq
       - redis
       - qdrant
-    command: python main.py
+    command: bash -lc "source activate appenv && python main.py"
 
   celery:
     build:
@@ -51,7 +51,7 @@ services:
       - rabbitmq
       - redis
       - qdrant
-    command: celery -A celery_app worker --loglevel=info --pool=solo
+    command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --pool=solo"
 
   frontend:
     build:
