@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from api.models import CrawlRequest, CrawlResponse, CrawlStatusResponse
 from tasks.crawler import crawl_website, auto_crawl_websites
 from config import settings
+from celery_app import celery_app
 import uuid
 import json
 from pathlib import Path
@@ -38,6 +39,174 @@ async def trigger_crawl(request: CrawlRequest):
     except Exception as e:
         logger.error("Failed to trigger crawl", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to trigger crawl task")
+
+
+@router.get("/queue/status")
+async def get_queue_status():
+    """
+    Get RabbitMQ/Celery queue status and statistics with enhanced details
+    """
+    try:
+        # Get Celery app stats
+        inspect = celery_app.control.inspect()
+
+        # Get active tasks
+        active_tasks = inspect.active()
+        active_count = 0
+        active_details = []
+        if active_tasks:
+            for worker, tasks in active_tasks.items():
+                active_count += len(tasks)
+                for task in tasks:
+                    active_details.append({
+                        "worker": worker,
+                        "task_id": task.get('id', 'unknown'),
+                        "name": task.get('name', 'unknown'),
+                        "args": task.get('args', []),
+                        "kwargs": task.get('kwargs', {}),
+                        "time_start": task.get('time_start'),
+                        "worker_pid": task.get('worker_pid')
+                    })
+
+        # Get scheduled tasks
+        scheduled_tasks = inspect.scheduled()
+        scheduled_count = 0
+        if scheduled_tasks:
+            for worker, tasks in scheduled_tasks.items():
+                scheduled_count += len(tasks)
+
+        # Get reserved tasks (queued but not active)
+        reserved_tasks = inspect.reserved()
+        reserved_count = 0
+        reserved_details = []
+        if reserved_tasks:
+            for worker, tasks in reserved_tasks.items():
+                reserved_count += len(tasks)
+                for task in tasks:
+                    reserved_details.append({
+                        "worker": worker,
+                        "task_id": task.get('id', 'unknown'),
+                        "name": task.get('name', 'unknown'),
+                        "args": task.get('args', [])
+                    })
+
+        # Get worker stats
+        stats = inspect.stats()
+        workers_online = len(stats) if stats else 0
+
+        # Extract task totals and processing stats
+        total_stats = {}
+        processing_stats = {}
+
+        if stats:
+            for worker, worker_stats in stats.items():
+                if 'total' in worker_stats:
+                    total_stats[worker] = worker_stats['total']
+
+                # Calculate processing rate (tasks per minute)
+                uptime = worker_stats.get('uptime', 0)
+                total_tasks = sum(worker_stats.get('total', {}).values())
+                if uptime > 0:
+                    processing_stats[worker] = {
+                        "total_processed": total_tasks,
+                        "uptime_seconds": uptime,
+                        "tasks_per_minute": round((total_tasks / uptime) * 60, 2) if uptime > 0 else 0,
+                        "tasks_per_hour": round((total_tasks / uptime) * 3600, 2) if uptime > 0 else 0
+                    }
+
+        # Check if any crawling is currently happening by looking at logs or task names
+        is_crawling = any(task.get('name', '').startswith('crawl') or 'crawl' in task.get('name', '')
+                         for task_list in active_tasks.values() for task in task_list) if active_tasks else False
+
+        is_processing_embeddings = any(task.get('name', '').find('embedding') != -1
+                                     for task_list in active_tasks.values() for task in task_list) if active_tasks else False
+
+        return {
+            "queue_status": {
+                "active_tasks": active_count,
+                "scheduled_tasks": scheduled_count,
+                "reserved_tasks": reserved_count,
+                "total_pending": active_count + scheduled_count + reserved_count
+            },
+            "workers": {
+                "online": workers_online,
+                "details": stats or {}
+            },
+            "task_details": {
+                "active": active_details,
+                "reserved": reserved_details
+            },
+            "processing_stats": processing_stats,
+            "total_stats": total_stats,
+            "current_activity": {
+                "is_crawling": is_crawling,
+                "is_processing_embeddings": is_processing_embeddings,
+                "has_pending_work": (active_count + scheduled_count + reserved_count) > 0
+            },
+            "timestamp": str(uuid.uuid4())[:8]  # Simple timestamp for cache busting
+        }
+
+    except Exception as e:
+        logger.error("Failed to get queue status", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to get queue status: {str(e)}")
+
+
+@router.post("/queue/purge")
+async def purge_queue():
+    """
+    Purge/reset all queued crawling tasks
+    """
+    try:
+        # Purge the main queues
+        purged_count = 0
+
+        # Try to purge the default queue
+        try:
+            result = celery_app.control.purge()
+            if result:
+                for worker, count in result.items():
+                    purged_count += count
+        except Exception as purge_error:
+            logger.warning("Failed to purge via control.purge", error=str(purge_error))
+
+        # Revoke all active tasks
+        inspect = celery_app.control.inspect()
+        active_tasks = inspect.active()
+        revoked_count = 0
+
+        if active_tasks:
+            for worker, tasks in active_tasks.items():
+                for task in tasks:
+                    try:
+                        celery_app.control.revoke(task['id'], terminate=True)
+                        revoked_count += 1
+                    except Exception:
+                        continue
+
+        # Also revoke scheduled tasks
+        scheduled_tasks = inspect.scheduled()
+        if scheduled_tasks:
+            for worker, tasks in scheduled_tasks.items():
+                for task in tasks:
+                    try:
+                        celery_app.control.revoke(task['id'], terminate=True)
+                        revoked_count += 1
+                    except Exception:
+                        continue
+
+        logger.info("Queue purged", purged_count=purged_count, revoked_count=revoked_count)
+
+        return {
+            "status": "success",
+            "message": "크롤링 큐가 초기화되었습니다",
+            "purged_tasks": purged_count,
+            "revoked_tasks": revoked_count,
+            "total_cleared": purged_count + revoked_count
+        }
+
+    except Exception as e:
+        logger.error("Failed to purge queue", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to purge queue: {str(e)}")
 
 
 @router.get("/{task_id}/status")

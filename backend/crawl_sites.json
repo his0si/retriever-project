@@ -4,12 +4,18 @@
       "name": "이화여대 컴퓨터공학과",
       "url": "https://cse.ewha.ac.kr/cse/index.do",
       "description": "컴퓨터공학과 소개 및 주요 정보",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "이화여대 커뮤니케이션·미디어학부",
       "url": "https://masscomm.ewha.ac.kr/",
       "description": "커뮤니케이션·미디어학부 소개 및 주요 정보",
+      "enabled": false
+    },
+    {
+      "name": "이화여대 융합전자반도체공학부",
+      "url": "https://ee.ewha.ac.kr/ewhaeleca/index.do",
+      "description": "이화여대 전자공학과 일렉카 사이트",
       "enabled": false
     }
   ],
@@ -17,6 +23,6 @@
     "max_depth": 2,
     "update_frequency": "매일 새벽 2시",
     "last_updated": "2025-08-01",
-    "total_sites": 2
+    "total_sites": 3
   }
 }

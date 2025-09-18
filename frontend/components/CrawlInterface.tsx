@@ -10,6 +10,7 @@ import DatabaseStatus from '@/components/crawl/DatabaseStatus'
 import ManualCrawlForm from '@/components/crawl/ManualCrawlForm'
 import CrawlGuidance from '@/components/crawl/CrawlGuidance'
 import UrlSearchSection from '@/components/crawl/UrlSearchSection'
+import QueueMonitor from '@/components/crawl/QueueMonitor'
 
 export default function CrawlInterface() {
   // Manual crawl state
@@ -122,8 +123,11 @@ export default function CrawlInterface() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* 크롤링 큐 상태 모니터링 */}
+      <QueueMonitor onRefreshTrigger={fetchDbStatus} />
+
       {/* 자동 크롤링 사이트 정보 */}
-      <AutoCrawlSection 
+      <AutoCrawlSection
         crawlSites={crawlSites}
         isAutoLoading={isAutoLoading}
         onAutoCrawl={handleAutoCrawl}

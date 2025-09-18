@@ -27,93 +27,121 @@ class CrawlerTask(Task):
 def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
     """
     Crawl a website starting from root_url up to max_depth
+    Optimized to separate crawling from embedding processing
     """
     logger.info("🔵 MANUAL CRAWL STARTED", task_id=task_id, root_url=root_url, max_depth=max_depth)
-    
+
     # Run async crawler
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    
+
     try:
         urls = loop.run_until_complete(
             crawl_async(root_url, max_depth)
         )
-        
-        logger.info(f"Crawl completed, found {len(urls)} URLs", task_id=task_id)
-        
-        # Queue each URL for smart embedding processing (checks content changes)
+
+        logger.info(f"🔵 CRAWL COMPLETED - Found {len(urls)} URLs", task_id=task_id)
+
+        # Queue URLs for embedding processing asynchronously
+        # This separates crawling from embedding for better performance
+        embedding_tasks = []
         for url in urls:
-            process_url_for_embedding_smart.delay(url)
-        
+            embedding_task = process_url_for_embedding_smart.delay(url)
+            embedding_tasks.append(embedding_task.id)
+
+        logger.info(f"🔵 QUEUED {len(embedding_tasks)} EMBEDDING TASKS", task_id=task_id)
+
         return {
             "task_id": task_id,
             "status": "completed",
             "urls_found": len(urls),
-            "urls": list(urls)
+            "urls": list(urls),
+            "embedding_tasks": embedding_tasks
         }
-    
+
+    except Exception as e:
+        logger.error("🔴 CRAWL FAILED", task_id=task_id, error=str(e))
+        raise
     finally:
         loop.close()
 
 
 async def crawl_async(root_url: str, max_depth: int) -> Set[str]:
     """
-    Async crawler using Playwright and BFS
+    Optimized async crawler using Playwright and BFS
+    Focused purely on crawling without embedding processing
     """
     visited_urls = set()
     to_visit = deque([(root_url, 0)])  # (url, depth)
     domain = urlparse(root_url).netloc
-    
+
+    logger.info(f"🌐 Starting crawl of {root_url} (max_depth={max_depth})")
+
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(
+            headless=True,
+            args=['--no-sandbox', '--disable-dev-shm-usage']  # Better Docker compatibility
+        )
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         )
-        
+
         try:
             while to_visit:
                 current_url, depth = to_visit.popleft()
-                
+
                 if current_url in visited_urls or depth > max_depth:
                     continue
-                
+
                 try:
                     page = await context.new_page()
-                    await page.goto(current_url, wait_until="networkidle", timeout=60000)
-                    
+
+                    # Set a more reasonable timeout for faster crawling
+                    await page.goto(current_url, wait_until="domcontentloaded", timeout=30000)
+
                     visited_urls.add(current_url)
-                    logger.info(f"🌐 Crawled: {current_url}", depth=depth)
-                    
+                    logger.info(f"🌐 Crawled: {current_url}", depth=depth, total_found=len(visited_urls))
+
                     if depth < max_depth:
-                        # Extract all links
+                        # Extract all links more efficiently
                         links = await page.evaluate('''
                             () => {
-                                return Array.from(document.querySelectorAll('a[href]'))
-                                    .map(a => a.href)
-                                    .filter(href => href && !href.startsWith('#'))
+                                const links = Array.from(document.querySelectorAll('a[href]'));
+                                return links.map(a => a.href)
+                                    .filter(href => {
+                                        if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
+                                            return false;
+                                        }
+                                        const lower = href.toLowerCase();
+                                        return !lower.match(/\.(pdf|jpg|jpeg|png|gif|zip|doc|docx|xls|xlsx|ppt|pptx)$/)
+                                    });
                             }
                         ''')
-                        
+
                         # Filter and add new URLs
                         for link in links:
-                            absolute_url = urljoin(current_url, link)
-                            parsed = urlparse(absolute_url)
-                            
-                            # Only follow same domain links
-                            if parsed.netloc == domain and absolute_url not in visited_urls:
-                                # Skip certain file types
-                                if not any(absolute_url.lower().endswith(ext) for ext in ['.pdf', '.jpg', '.png', '.gif', '.zip']):
+                            try:
+                                absolute_url = urljoin(current_url, link)
+                                parsed = urlparse(absolute_url)
+
+                                # Only follow same domain links
+                                if (parsed.netloc == domain and
+                                    absolute_url not in visited_urls and
+                                    absolute_url not in [item[0] for item in to_visit]):
                                     to_visit.append((absolute_url, depth + 1))
-                    
+                            except Exception:
+                                continue  # Skip invalid URLs
+
                     await page.close()
-                
+
                 except Exception as e:
-                    logger.error(f"Error crawling {current_url}: {str(e)}")
+                    logger.warning(f"⚠️ Failed to crawl {current_url}: {str(e)}")
                     continue
-        
+
         finally:
             await browser.close()
-    
+
+    logger.info(f"🌐 Crawl completed: {len(visited_urls)} URLs found")
     return visited_urls
 
 
@@ -145,66 +173,80 @@ def get_enabled_sites():
 def auto_crawl_websites():
     """
     Automatically crawl predefined websites for new content
+    Optimized for better performance and error handling
     """
     from config import settings
-    
+
     logger.info("🤖 AUTO CRAWL STARTED - JSON SITES")
-    
+
     # Get enabled sites from crawl_sites.json
     enabled_sites = get_enabled_sites()
-    
+
     if not enabled_sites:
-        logger.warning("No enabled sites found for auto-crawl")
+        logger.warning("⚠️ No enabled sites found for auto-crawl")
         return {
             "status": "completed",
             "total_urls_found": 0,
-            "total_new_urls_queued": 0,
+            "total_embedding_tasks_queued": 0,
             "crawled_sites": [],
             "message": "No enabled sites found"
         }
-    
+
     total_urls_found = 0
-    total_new_urls = 0
-    
+    total_embedding_tasks = 0
+    successful_sites = []
+    failed_sites = []
+
     for root_url in enabled_sites:
         try:
-            logger.info(f"Auto-crawling: {root_url}")
-            
+            logger.info(f"🤖 Auto-crawling: {root_url}")
+
             # Run async crawler
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
+
             try:
                 urls = loop.run_until_complete(
                     crawl_async(root_url, settings.max_crawl_depth)
                 )
-                
-                logger.info(f"Found {len(urls)} URLs from {root_url}")
+
+                logger.info(f"🤖 Found {len(urls)} URLs from {root_url}")
                 total_urls_found += len(urls)
-                
-                # Queue each URL for smart embedding processing
-                new_urls = 0
+
+                # Queue URLs for embedding processing asynchronously
+                embedding_tasks = []
                 for url in urls:
-                    # Use smart processing that checks content changes
-                    result = process_url_for_embedding_smart.delay(url)
-                    new_urls += 1
-                
-                total_new_urls += new_urls
-                logger.info(f"Queued {new_urls} URLs for processing from {root_url}")
-                
+                    task = process_url_for_embedding_smart.delay(url)
+                    embedding_tasks.append(task.id)
+
+                total_embedding_tasks += len(embedding_tasks)
+                successful_sites.append({
+                    "url": root_url,
+                    "urls_found": len(urls),
+                    "embedding_tasks": len(embedding_tasks)
+                })
+
+                logger.info(f"🤖 Queued {len(embedding_tasks)} embedding tasks for {root_url}")
+
             finally:
                 loop.close()
-                
+
         except Exception as e:
-            logger.error(f"Failed to auto-crawl {root_url}: {str(e)}")
+            logger.error(f"🔴 Failed to auto-crawl {root_url}: {str(e)}")
+            failed_sites.append({
+                "url": root_url,
+                "error": str(e)
+            })
             continue
-    
+
     result = {
         "status": "completed",
         "total_urls_found": total_urls_found,
-        "total_new_urls_queued": total_new_urls,
+        "total_embedding_tasks_queued": total_embedding_tasks,
+        "successful_sites": successful_sites,
+        "failed_sites": failed_sites,
         "crawled_sites": enabled_sites
     }
-    
-    logger.info("Auto-crawl completed", **result)
+
+    logger.info("🤖 Auto-crawl completed", **{k: v for k, v in result.items() if k != 'successful_sites' and k != 'failed_sites'})
     return result

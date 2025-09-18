@@ -4,6 +4,7 @@ import { AlertType } from '@/types/crawl'
 interface AlertProps {
   type: AlertType
   children: React.ReactNode
+  className?: string
 }
 
 const alertStyles = {
@@ -12,9 +13,9 @@ const alertStyles = {
   info: 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
 } as const
 
-export default function Alert({ type, children }: AlertProps) {
+export default function Alert({ type, children, className = '' }: AlertProps) {
   return (
-    <div className={`p-4 border rounded-lg ${alertStyles[type]}`}>
+    <div className={`p-4 border rounded-lg ${alertStyles[type]} ${className}`}>
       {children}
     </div>
   )

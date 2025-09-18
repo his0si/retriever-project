@@ -27,8 +27,9 @@ def get_kst_now():
 class EmbeddingTask(Task):
     """Base embedding task with retry configuration"""
     autoretry_for = (Exception,)
-    retry_kwargs = {'max_retries': 3, 'countdown': 10}
+    retry_kwargs = {'max_retries': 2, 'countdown': 5}  # Faster retry
     retry_backoff = True
+    rate_limit = '10/m'  # Rate limiting for API calls
 
 
 # Initialize clients
@@ -128,39 +129,68 @@ def ensure_collection_exists():
 
 
 def fetch_and_extract_text(url: str) -> str:
-    """Fetch URL content and extract text"""
+    """Optimized fetch URL content and extract text"""
     try:
-        # Fetch content
-        response = httpx.get(url, timeout=30, follow_redirects=True)
-        response.raise_for_status()
-        
-        # Parse HTML
+        # Fetch content with better configuration
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+
+        with httpx.Client(
+            timeout=20,  # Faster timeout
+            follow_redirects=True,
+            headers=headers
+        ) as client:
+            response = client.get(url)
+            response.raise_for_status()
+
+        # Parse HTML more efficiently
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Remove script and style elements
-        for script in soup(["script", "style", "nav", "footer", "header"]):
-            script.decompose()
-        
-        # Try to find main content areas
+
+        # Remove unwanted elements more aggressively
+        for element in soup(["script", "style", "nav", "footer", "header", "aside", "noscript", "form"]):
+            element.decompose()
+
+        # Remove comment nodes
+        for comment in soup.find_all(string=lambda text: isinstance(text, str) and text.strip().startswith('<!--')):
+            comment.extract()
+
+        # Try to find main content areas in order of priority
         main_content = None
-        for tag in ['main', 'article', 'div[role="main"]', '.content', '#content']:
-            main_content = soup.select_one(tag)
+        content_selectors = [
+            'main', 'article', '[role="main"]', '.content', '#content',
+            '.post-content', '.entry-content', '.article-content',
+            '.main-content', '.page-content'
+        ]
+
+        for selector in content_selectors:
+            main_content = soup.select_one(selector)
             if main_content:
                 break
-        
+
         # If no main content found, use body
         if not main_content:
             main_content = soup.body if soup.body else soup
-        
-        # Extract text
+
+        # Extract text more efficiently
         text = main_content.get_text(separator="\n", strip=True)
-        
-        # Clean up excessive whitespace
-        lines = [line.strip() for line in text.split('\n') if line.strip()]
+
+        # Clean up text more thoroughly
+        lines = []
+        for line in text.split('\n'):
+            line = line.strip()
+            if line and len(line) > 2:  # Skip very short lines
+                lines.append(line)
+
         text = '\n'.join(lines)
-        
+
+        # Remove excessive whitespace
+        import re
+        text = re.sub(r'\n{3,}', '\n\n', text)  # Max 2 consecutive newlines
+        text = re.sub(r' {2,}', ' ', text)  # Remove multiple spaces
+
         return text
-    
+
     except Exception as e:
         logger.error("Failed to fetch/extract text", url=url, error=str(e))
         raise
