@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { ArrowPathIcon } from '@heroicons/react/24/outline'
 import { API_URL } from '@/constants/crawl'
 import { QueueStatus, PurgeResponse } from '@/types/crawl'
 import Button from '@/components/ui/Button'
@@ -62,31 +63,34 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
 
   useEffect(() => {
     fetchQueueStatus()
-    // Auto refresh every 10 seconds
-    const interval = setInterval(fetchQueueStatus, 10000)
-    return () => clearInterval(interval)
   }, [])
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">크롤링 작업 큐 상태</h3>
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
+        <h3 className="font-medium text-gray-900 dark:text-gray-100">크롤링 작업 큐 상태</h3>
+        <div className="space-x-2 flex">
+          <button
             onClick={fetchQueueStatus}
             disabled={isLoading}
-            className="text-sm"
+            className="h-8 w-8 p-0 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 border border-sky-300 dark:border-sky-600 rounded flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? '새로고침...' : '새로고침'}
-          </Button>
-          <Button
-            variant="secondary"
+            <ArrowPathIcon className={`w-5 h-5 text-sky-600 dark:text-sky-400 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
             onClick={() => setShowDetails(!showDetails)}
-            className="text-sm"
+            className="h-8 w-8 p-0 bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 border border-sky-300 dark:border-sky-600 rounded flex items-center justify-center"
           >
-            {showDetails ? '간단히 보기' : '자세히 보기'}
-          </Button>
+            {showDetails ? (
+              <svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-sky-600 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
 
@@ -104,162 +108,162 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
 
       {queueStatus && (
         <div className="space-y-4">
-          {/* Current Activity Status */}
-          <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border">
-            <h4 className="font-medium text-gray-900 mb-3">🔄 현재 작업 상태</h4>
+          {/* Current Activity Status - Simple View */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">현재 작업 상태</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${queueStatus.current_activity.is_crawling ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                <span className={`text-sm ${queueStatus.current_activity.is_crawling ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
-                  {queueStatus.current_activity.is_crawling ? '크롤링 진행 중' : '크롤링 대기'}
+                <span className={`text-sm font-medium ${queueStatus.current_activity.is_crawling ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                  크롤링 중
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${queueStatus.current_activity.is_processing_embeddings ? 'bg-blue-500 animate-pulse' : 'bg-gray-300'}`}></div>
-                <span className={`text-sm ${queueStatus.current_activity.is_processing_embeddings ? 'text-blue-700 font-medium' : 'text-gray-500'}`}>
-                  {queueStatus.current_activity.is_processing_embeddings ? '임베딩 처리 중' : '임베딩 대기'}
+                <span className={`text-sm font-medium ${queueStatus.current_activity.is_processing_embeddings ? 'text-blue-700 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                  임베딩 중
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${queueStatus.current_activity.has_pending_work ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`}></div>
-                <span className={`text-sm ${queueStatus.current_activity.has_pending_work ? 'text-yellow-700 font-medium' : 'text-green-700 font-medium'}`}>
-                  {queueStatus.current_activity.has_pending_work ? '대기 작업 있음' : '모든 작업 완료'}
+                <div className={`w-3 h-3 rounded-full ${!queueStatus.current_activity.is_crawling && !queueStatus.current_activity.is_processing_embeddings ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <span className={`text-sm font-medium ${!queueStatus.current_activity.is_crawling && !queueStatus.current_activity.is_processing_embeddings ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                  모든 작업 완료
                 </span>
               </div>
             </div>
-          </div>
-
-          {/* Processing Statistics */}
-          {Object.keys(queueStatus.processing_stats).length > 0 && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">📊 처리 통계</h4>
-              {Object.entries(queueStatus.processing_stats).map(([worker, stats]) => (
-                <div key={worker} className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">총 처리:</span>
-                    <div className="font-semibold text-blue-600">{stats.total_processed}개</div>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">분당 처리:</span>
-                    <div className="font-semibold text-green-600">{stats.tasks_per_minute}개</div>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">시간당 처리:</span>
-                    <div className="font-semibold text-purple-600">{stats.tasks_per_hour}개</div>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">가동 시간:</span>
-                    <div className="font-semibold text-gray-600">{Math.floor(stats.uptime_seconds / 60)}분</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Task Type Breakdown */}
-          {Object.keys(queueStatus.total_stats).length > 0 && (
-            <div className="bg-indigo-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">📋 작업 유형별 통계</h4>
-              {Object.entries(queueStatus.total_stats).map(([worker, tasks]) => (
-                <div key={worker} className="space-y-2">
-                  {Object.entries(tasks).map(([taskType, count]) => (
-                    <div key={taskType} className="flex justify-between items-center text-sm">
-                      <span className="text-gray-700">
-                        {taskType === 'crawl_website' ? '🕷️ 웹사이트 크롤링' :
-                         taskType === 'process_url_for_embedding_smart' ? '🧠 스마트 임베딩 처리' :
-                         taskType === 'process_url_for_embedding' ? '📝 일반 임베딩 처리' : taskType}
-                      </span>
-                      <span className="font-semibold text-indigo-600">{count}개 완료</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Main Queue Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="text-sm text-gray-600">실행 중</div>
-              <div className="text-2xl font-bold text-blue-600">
-                {queueStatus.queue_status.active_tasks}
-              </div>
-            </div>
-            <div className="bg-yellow-50 p-3 rounded-lg">
-              <div className="text-sm text-gray-600">예약됨</div>
-              <div className="text-2xl font-bold text-yellow-600">
-                {queueStatus.queue_status.scheduled_tasks}
-              </div>
-            </div>
-            <div className="bg-orange-50 p-3 rounded-lg">
-              <div className="text-sm text-gray-600">대기 중</div>
-              <div className="text-2xl font-bold text-orange-600">
-                {queueStatus.queue_status.reserved_tasks}
-              </div>
-            </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="text-sm text-gray-600">전체 대기</div>
-              <div className="text-2xl font-bold text-purple-600">
-                {queueStatus.queue_status.total_pending}
-              </div>
+            <div className="mt-3 text-sm text-gray-600 dark:text-gray-400 text-center">
+              대기: {queueStatus.queue_status.reserved_tasks}개 | 활성: {queueStatus.queue_status.active_tasks}개
             </div>
           </div>
 
-          {/* Worker Status */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">워커 상태</h4>
+          {/* Worker Status - Always visible */}
+          <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+            <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">워커 상태</h4>
             <div className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${queueStatus.workers.online > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 온라인 워커: {queueStatus.workers.online}개
               </span>
             </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
-            <Button
-              variant="primary"
-              onClick={handlePurgeQueue}
-              disabled={isPurging || queueStatus.queue_status.total_pending === 0}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isPurging ? '초기화 중...' : '큐 초기화'}
-            </Button>
-            {queueStatus.queue_status.total_pending === 0 && (
-              <span className="text-sm text-gray-500 flex items-center">
-                처리할 작업이 없습니다
-              </span>
+            {queueStatus.workers.online === 0 && (
+              <div className="mt-2 text-xs text-red-600 dark:text-red-400">
+                작업을 처리할 수 있는 워커가 없습니다.
+              </div>
             )}
           </div>
 
-          {/* Detailed View */}
+          {/* Detailed View - Only shown when showDetails is true */}
           {showDetails && (
-            <div className="mt-4 space-y-3">
-              <h4 className="font-medium text-gray-900">상세 정보</h4>
+            <div className="space-y-4 border-t pt-4">
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePurgeQueue}
+                  disabled={isPurging}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white disabled:text-gray-500 dark:disabled:text-gray-400 text-sm rounded disabled:cursor-not-allowed"
+                >
+                  {isPurging ? '초기화 중...' : '큐 초기화'}
+                </button>
+              </div>
 
+              {/* Processing Statistics */}
+              <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">처리 통계</h4>
+                {Object.keys(queueStatus.processing_stats).length > 0 ? (
+                  Object.entries(queueStatus.processing_stats).map(([worker, stats]) => (
+                    <div key={worker} className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">총 처리:</span>
+                        <div className="font-semibold text-blue-600 dark:text-blue-400">{stats.total_processed}개</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">분당 처리:</span>
+                        <div className="font-semibold text-green-600 dark:text-green-400">{stats.tasks_per_minute}개</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">시간당 처리:</span>
+                        <div className="font-semibold text-purple-600 dark:text-purple-400">{stats.tasks_per_hour}개</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">가동 시간:</span>
+                        <div className="font-semibold text-gray-600 dark:text-gray-400">{Math.floor(stats.uptime_seconds / 60)}분</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">총 처리:</span>
+                      <div className="font-semibold text-blue-600 dark:text-blue-400">0개</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">분당 처리:</span>
+                      <div className="font-semibold text-green-600 dark:text-green-400">0개</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">시간당 처리:</span>
+                      <div className="font-semibold text-purple-600 dark:text-purple-400">0개</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">가동 시간:</span>
+                      <div className="font-semibold text-gray-600 dark:text-gray-400">0분</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Task Type Breakdown */}
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                <h4 className="font-medium text-indigo-900 dark:text-indigo-100 mb-3">작업 유형별 통계</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-700 dark:text-gray-300">
+                      <span className="font-bold">웹사이트 크롤링</span> - 페이지 구조를 분석하여 모든 링크를 수집
+                    </span>
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                      {Object.values(queueStatus.total_stats).reduce((sum, worker: any) => sum + (worker.crawl_website || 0), 0)}개 완료
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-700 dark:text-gray-300">
+                      <span className="font-bold">스마트 임베딩 처리</span> - 내용 변경 감지 후 기존 데이터 교체
+                    </span>
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                      {Object.values(queueStatus.total_stats).reduce((sum, worker: any) => sum + (worker.process_url_for_embedding_smart || 0), 0)}개 완료
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-700 dark:text-gray-300">
+                      <span className="font-bold">일반 임베딩 처리</span> - 중복 검사 없이 무조건 처리
+                    </span>
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                      {Object.values(queueStatus.total_stats).reduce((sum, worker: any) => sum + (worker.process_url_for_embedding || 0), 0)}개 완료
+                    </span>
+                  </div>
+                </div>
+              </div>
               {/* Active Tasks Details */}
               {queueStatus.task_details.active.length > 0 && (
                 <div className="bg-blue-50 p-3 rounded-lg">
-                  <h5 className="text-sm font-medium text-blue-900 mb-2">🔄 실행 중인 작업</h5>
+                  <h5 className="text-sm font-medium text-blue-900 mb-2">실행 중인 작업</h5>
                   <div className="space-y-2">
                     {queueStatus.task_details.active.map((task, idx) => (
                       <div key={idx} className="text-xs bg-white p-2 rounded border">
                         <div className="font-medium text-blue-800">
-                          {task.name === 'crawl_website' ? '🕷️ 웹사이트 크롤링' :
-                           task.name === 'process_url_for_embedding_smart' ? '🧠 스마트 임베딩' :
+                          {task.name === 'crawl_website' ? '웹사이트 크롤링' :
+                           task.name === 'process_url_for_embedding_smart' ? '스마트 임베딩' :
                            task.name}
                         </div>
-                        <div className="text-gray-600 mt-1">
+                        <div className="text-gray-600 dark:text-gray-400 mt-1">
                           ID: {task.task_id.slice(0, 12)}... | 워커: {task.worker}
                         </div>
                         {task.args && task.args.length > 0 && (
-                          <div className="text-gray-500 mt-1 truncate">
+                          <div className="text-gray-500 dark:text-gray-400 mt-1 truncate">
                             URL: {task.args[0] || '알 수 없음'}
                           </div>
                         )}
                         {task.time_start && (
-                          <div className="text-gray-500 mt-1">
+                          <div className="text-gray-500 dark:text-gray-400 mt-1">
                             시작: {new Date(task.time_start * 1000).toLocaleTimeString('ko-KR')}
                           </div>
                         )}
@@ -272,13 +276,13 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
               {/* Reserved Tasks Details */}
               {queueStatus.task_details.reserved.length > 0 && (
                 <div className="bg-orange-50 p-3 rounded-lg">
-                  <h5 className="text-sm font-medium text-orange-900 mb-2">⏳ 대기 중인 작업</h5>
+                  <h5 className="text-sm font-medium text-orange-900 mb-2">대기 중인 작업</h5>
                   <div className="space-y-2">
                     {queueStatus.task_details.reserved.slice(0, 5).map((task, idx) => (
                       <div key={idx} className="text-xs bg-white p-2 rounded border">
                         <div className="font-medium text-orange-800">
-                          {task.name === 'crawl_website' ? '🕷️ 웹사이트 크롤링' :
-                           task.name === 'process_url_for_embedding_smart' ? '🧠 스마트 임베딩' :
+                          {task.name === 'crawl_website' ? '웹사이트 크롤링' :
+                           task.name === 'process_url_for_embedding_smart' ? '스마트 임베딩' :
                            task.name}
                         </div>
                         <div className="text-gray-600 mt-1">
@@ -303,7 +307,7 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
               {/* Worker Details */}
               {Object.keys(queueStatus.workers.details).length > 0 && (
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <h5 className="text-sm font-medium text-gray-900 mb-2">👷 워커 세부사항</h5>
+                  <h5 className="text-sm font-medium text-gray-900 mb-2">워커 세부사항</h5>
                   <div className="space-y-2">
                     {Object.entries(queueStatus.workers.details).map(([worker, stats]: [string, any]) => (
                       <div key={worker} className="text-xs bg-white p-2 rounded border">
