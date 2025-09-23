@@ -213,30 +213,35 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
               </div>
 
               {/* Task Type Breakdown */}
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-100 dark:border-indigo-800">
-                <h4 className="font-medium text-indigo-900 dark:text-indigo-100 mb-3">작업 유형별 통계</h4>
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">작업 유형별 통계</h4>
+                <div className="bg-blue-100 dark:bg-blue-800/30 p-2 rounded text-xs mb-3 space-y-1">
+                  <div className="text-gray-600 dark:text-gray-300">웹사이트 크롤링: 페이지 구조를 분석하여 모든 링크를 수집</div>
+                  <div className="text-gray-600 dark:text-gray-300">스마트 임베딩 처리: 내용 변경 감지 후 기존 데이터 교체</div>
+                  <div className="text-gray-600 dark:text-gray-300">일반 임베딩 처리: 중복 검사 없이 무조건 처리</div>
+                </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-700 dark:text-gray-300">
-                      <span className="font-bold">웹사이트 크롤링</span> - 페이지 구조를 분석하여 모든 링크를 수집
+                      웹사이트 크롤링
                     </span>
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">
                       {Object.values(queueStatus.total_stats).reduce((sum, worker: any) => sum + (worker.crawl_website || 0), 0)}개 완료
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-700 dark:text-gray-300">
-                      <span className="font-bold">스마트 임베딩 처리</span> - 내용 변경 감지 후 기존 데이터 교체
+                      스마트 임베딩 처리
                     </span>
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">
                       {Object.values(queueStatus.total_stats).reduce((sum, worker: any) => sum + (worker.process_url_for_embedding_smart || 0), 0)}개 완료
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-700 dark:text-gray-300">
-                      <span className="font-bold">일반 임베딩 처리</span> - 중복 검사 없이 무조건 처리
+                      일반 임베딩 처리
                     </span>
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">
                       {Object.values(queueStatus.total_stats).reduce((sum, worker: any) => sum + (worker.process_url_for_embedding || 0), 0)}개 완료
                     </span>
                   </div>

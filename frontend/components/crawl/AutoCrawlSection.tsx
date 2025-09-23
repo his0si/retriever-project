@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { LightBulbIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { LightBulbIcon, ExclamationTriangleIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import { CrawlSites, ToggleSiteResponse } from '@/types/crawl'
 import { API_URL } from '@/constants/crawl'
 import Button from '@/components/ui/Button'
@@ -12,14 +12,15 @@ interface AutoCrawlSectionProps {
   onSitesUpdate?: () => void
 }
 
-export default function AutoCrawlSection({ 
-  crawlSites, 
-  isAutoLoading, 
+export default function AutoCrawlSection({
+  crawlSites,
+  isAutoLoading,
   onAutoCrawl,
   onSitesUpdate
 }: AutoCrawlSectionProps) {
   const [isToggling, setIsToggling] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showSites, setShowSites] = useState(false)
 
   const toggleSite = async (siteName: string) => {
     if (isToggling) return // 이미 토글 중이면 무시
@@ -92,45 +93,62 @@ export default function AutoCrawlSection({
           </div>
         </div>
         
-        <div className="font-medium">활성화된 사이트: {enabledSites.length}개</div>
-        
-        {/* 활성화된 사이트들 */}
-        {enabledSites.map((site, index) => (
-          <div 
-            key={`enabled-${index}`} 
-            className="flex items-center cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/20 p-1 rounded transition-colors"
-            onClick={() => toggleSite(site.name)}
-          >
-            <span className={`w-2 h-2 rounded-full mr-2 bg-blue-500 dark:bg-blue-400 ${
-              isToggling === site.name ? 'animate-pulse' : ''
-            }`}></span>
-            <span className="font-medium">
-              {site.name}
-            </span>
-            {isToggling === site.name && (
-              <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">토글 중...</span>
+        <div
+          className="font-medium flex items-center cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/20 p-1 rounded transition-colors"
+          onClick={() => setShowSites(!showSites)}
+        >
+          <span className="mr-2">
+            {showSites ? (
+              <ChevronUpIcon className="w-4 h-4" />
+            ) : (
+              <ChevronDownIcon className="w-4 h-4" />
             )}
-          </div>
-        ))}
-        
-        {/* 비활성화된 사이트들 */}
-        {disabledSites.map((site, index) => (
-          <div 
-            key={`disabled-${index}`} 
-            className="flex items-center cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/20 p-1 rounded transition-colors"
-            onClick={() => toggleSite(site.name)}
-          >
-            <span className={`w-2 h-2 rounded-full mr-2 bg-gray-300 dark:bg-gray-600 ${
-              isToggling === site.name ? 'animate-pulse' : ''
-            }`}></span>
-            <span className="line-through opacity-50">
-              {site.name}
-            </span>
-            {isToggling === site.name && (
-              <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">토글 중...</span>
-            )}
-          </div>
-        ))}
+          </span>
+          활성화된 사이트: {enabledSites.length}개
+        </div>
+
+        {/* 모든 사이트들 - 접기/펴기 가능 */}
+        {showSites && (
+          <>
+            {/* 활성화된 사이트들 */}
+            {enabledSites.map((site, index) => (
+              <div
+                key={`enabled-${index}`}
+                className="flex items-center cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/20 p-1 rounded transition-colors ml-6"
+                onClick={() => toggleSite(site.name)}
+              >
+                <span className={`w-2 h-2 rounded-full mr-2 bg-blue-500 dark:bg-blue-400 ${
+                  isToggling === site.name ? 'animate-pulse' : ''
+                }`}></span>
+                <span className="font-medium">
+                  {site.name}
+                </span>
+                {isToggling === site.name && (
+                  <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">토글 중...</span>
+                )}
+              </div>
+            ))}
+
+            {/* 비활성화된 사이트들 */}
+            {disabledSites.map((site, index) => (
+              <div
+                key={`disabled-${index}`}
+                className="flex items-center cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/20 p-1 rounded transition-colors ml-6"
+                onClick={() => toggleSite(site.name)}
+              >
+                <span className={`w-2 h-2 rounded-full mr-2 bg-gray-300 dark:bg-gray-600 ${
+                  isToggling === site.name ? 'animate-pulse' : ''
+                }`}></span>
+                <span className="line-through opacity-50">
+                  {site.name}
+                </span>
+                {isToggling === site.name && (
+                  <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">토글 중...</span>
+                )}
+              </div>
+            ))}
+          </>
+        )}
         
         {crawlSites.sites.length === 0 && (
           <div className="text-gray-500 dark:text-gray-400 text-sm">
