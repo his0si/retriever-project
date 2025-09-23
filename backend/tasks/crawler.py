@@ -173,11 +173,11 @@ def get_enabled_sites():
 def auto_crawl_websites():
     """
     Automatically crawl predefined websites for new content
-    Optimized for better performance and error handling
+    Uses batch processing to handle large numbers of sites efficiently
     """
     from config import settings
 
-    logger.info("🤖 AUTO CRAWL STARTED - JSON SITES")
+    logger.info("🤖 AUTO CRAWL STARTED - JSON SITES (BATCH MODE)")
 
     # Get enabled sites from crawl_sites.json
     enabled_sites = get_enabled_sites()
@@ -186,20 +186,59 @@ def auto_crawl_websites():
         logger.warning("⚠️ No enabled sites found for auto-crawl")
         return {
             "status": "completed",
-            "total_urls_found": 0,
-            "total_embedding_tasks_queued": 0,
-            "crawled_sites": [],
+            "total_sites": 0,
+            "batch_tasks_queued": 0,
             "message": "No enabled sites found"
         }
+
+    # Split sites into batches for parallel processing
+    BATCH_SIZE = 10  # Process 10 sites per batch
+    site_batches = [enabled_sites[i:i + BATCH_SIZE] for i in range(0, len(enabled_sites), BATCH_SIZE)]
+
+    logger.info(f"🤖 Splitting {len(enabled_sites)} sites into {len(site_batches)} batches of {BATCH_SIZE}")
+
+    batch_tasks = []
+
+    # Queue each batch as a separate task
+    for batch_index, batch_sites in enumerate(site_batches):
+        try:
+            task = auto_crawl_batch.delay(batch_sites, batch_index + 1, len(site_batches))
+            batch_tasks.append(task.id)
+            logger.info(f"🤖 Queued batch {batch_index + 1}/{len(site_batches)} with {len(batch_sites)} sites")
+        except Exception as e:
+            logger.error(f"🔴 Failed to queue batch {batch_index + 1}: {str(e)}")
+            continue
+
+    result = {
+        "status": "completed",
+        "total_sites": len(enabled_sites),
+        "total_batches": len(site_batches),
+        "batch_tasks_queued": len(batch_tasks),
+        "batch_task_ids": batch_tasks,
+        "message": f"Queued {len(batch_tasks)} batch tasks for {len(enabled_sites)} sites"
+    }
+
+    logger.info("🤖 Auto-crawl batch scheduling completed", **{k: v for k, v in result.items() if k != 'batch_task_ids'})
+    return result
+
+
+@celery_app.task(base=CrawlerTask, name="auto_crawl_batch")
+def auto_crawl_batch(site_urls: List[str], batch_number: int, total_batches: int):
+    """
+    Process a batch of sites for auto-crawling
+    """
+    from config import settings
+
+    logger.info(f"🤖 BATCH {batch_number}/{total_batches} STARTED - {len(site_urls)} sites")
 
     total_urls_found = 0
     total_embedding_tasks = 0
     successful_sites = []
     failed_sites = []
 
-    for root_url in enabled_sites:
+    for site_index, root_url in enumerate(site_urls, 1):
         try:
-            logger.info(f"🤖 Auto-crawling: {root_url}")
+            logger.info(f"🤖 Batch {batch_number}/{total_batches} - Site {site_index}/{len(site_urls)}: {root_url}")
 
             # Run async crawler
             loop = asyncio.new_event_loop()
@@ -210,7 +249,7 @@ def auto_crawl_websites():
                     crawl_async(root_url, settings.max_crawl_depth)
                 )
 
-                logger.info(f"🤖 Found {len(urls)} URLs from {root_url}")
+                logger.info(f"🤖 Batch {batch_number} - Found {len(urls)} URLs from {root_url}")
                 total_urls_found += len(urls)
 
                 # Queue URLs for embedding processing asynchronously
@@ -226,13 +265,13 @@ def auto_crawl_websites():
                     "embedding_tasks": len(embedding_tasks)
                 })
 
-                logger.info(f"🤖 Queued {len(embedding_tasks)} embedding tasks for {root_url}")
+                logger.info(f"🤖 Batch {batch_number} - Queued {len(embedding_tasks)} embedding tasks for {root_url}")
 
             finally:
                 loop.close()
 
         except Exception as e:
-            logger.error(f"🔴 Failed to auto-crawl {root_url}: {str(e)}")
+            logger.error(f"🔴 Batch {batch_number} - Failed to crawl {root_url}: {str(e)}")
             failed_sites.append({
                 "url": root_url,
                 "error": str(e)
@@ -240,13 +279,23 @@ def auto_crawl_websites():
             continue
 
     result = {
+        "batch_number": batch_number,
+        "total_batches": total_batches,
         "status": "completed",
+        "sites_processed": len(site_urls),
         "total_urls_found": total_urls_found,
         "total_embedding_tasks_queued": total_embedding_tasks,
-        "successful_sites": successful_sites,
-        "failed_sites": failed_sites,
-        "crawled_sites": enabled_sites
+        "successful_sites": len(successful_sites),
+        "failed_sites": len(failed_sites),
+        "successful_site_details": successful_sites,
+        "failed_site_details": failed_sites
     }
 
-    logger.info("🤖 Auto-crawl completed", **{k: v for k, v in result.items() if k != 'successful_sites' and k != 'failed_sites'})
+    logger.info(f"🤖 BATCH {batch_number}/{total_batches} COMPLETED",
+                sites_processed=len(site_urls),
+                successful=len(successful_sites),
+                failed=len(failed_sites),
+                total_urls=total_urls_found,
+                total_tasks=total_embedding_tasks)
+
     return result
