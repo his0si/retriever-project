@@ -27,7 +27,7 @@ class CrawlerTask(Task):
 def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
     """
     Crawl a website starting from root_url up to max_depth
-    Optimized to separate crawling from embedding processing
+    크롤링 후 임베딩 작업을 제한된 배치로 큐에 추가
     """
     logger.info("🔵 MANUAL CRAWL STARTED", task_id=task_id, root_url=root_url, max_depth=max_depth)
 
@@ -42,21 +42,28 @@ def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
 
         logger.info(f"🔵 CRAWL COMPLETED - Found {len(urls)} URLs", task_id=task_id)
 
-        # Queue URLs for embedding processing asynchronously
-        # This separates crawling from embedding for better performance
+        # 배치 크기 제한하여 임베딩 작업 큐에 추가
+        BATCH_SIZE = 50
         embedding_tasks = []
-        for url in urls:
-            embedding_task = process_url_for_embedding_smart.delay(url)
-            embedding_tasks.append(embedding_task.id)
 
-        logger.info(f"🔵 QUEUED {len(embedding_tasks)} EMBEDDING TASKS", task_id=task_id)
+        for i in range(0, len(urls), BATCH_SIZE):
+            batch = list(urls)[i:i + BATCH_SIZE]
+            for url in batch:
+                try:
+                    task = process_url_for_embedding_smart.delay(url)
+                    embedding_tasks.append(task.id)
+                except Exception as e:
+                    logger.warning(f"Failed to queue {url}: {str(e)}")
+                    continue
+
+        logger.info(f"🔵 QUEUED {len(embedding_tasks)} EMBEDDING TASKS in batches", task_id=task_id)
 
         return {
             "task_id": task_id,
             "status": "completed",
             "urls_found": len(urls),
-            "urls": list(urls),
-            "embedding_tasks": embedding_tasks
+            "embedding_tasks_queued": len(embedding_tasks),
+            "urls": list(urls)
         }
 
     except Exception as e:
@@ -159,7 +166,7 @@ def get_enabled_sites():
         with open(config_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        enabled_sites = [site["url"] for site in data["sites"] if site.get("enabled", True)]
+        enabled_sites = [site["url"] for site in data["sites"] if site.get("enabled") == True]
         logger.info(f"Found {len(enabled_sites)} enabled sites for auto-crawl")
         
         return enabled_sites
@@ -173,11 +180,11 @@ def get_enabled_sites():
 def auto_crawl_websites():
     """
     Automatically crawl predefined websites for new content
-    Uses batch processing to handle large numbers of sites efficiently
+    각 사이트를 크롤링하고 임베딩 작업을 제한된 큐로 처리
     """
     from config import settings
 
-    logger.info("🤖 AUTO CRAWL STARTED - JSON SITES (BATCH MODE)")
+    logger.info("🤖 AUTO CRAWL STARTED - JSON SITES")
 
     # Get enabled sites from crawl_sites.json
     enabled_sites = get_enabled_sites()
@@ -187,38 +194,84 @@ def auto_crawl_websites():
         return {
             "status": "completed",
             "total_sites": 0,
-            "batch_tasks_queued": 0,
             "message": "No enabled sites found"
         }
 
-    # Split sites into batches for parallel processing
-    BATCH_SIZE = 10  # Process 10 sites per batch
-    site_batches = [enabled_sites[i:i + BATCH_SIZE] for i in range(0, len(enabled_sites), BATCH_SIZE)]
+    logger.info(f"🤖 Processing {len(enabled_sites)} enabled sites")
 
-    logger.info(f"🤖 Splitting {len(enabled_sites)} sites into {len(site_batches)} batches of {BATCH_SIZE}")
+    total_urls_found = 0
+    total_embedding_tasks = 0
+    successful_sites = []
+    failed_sites = []
+    BATCH_SIZE = 50  # 한 번에 50개씩만 큐에 추가
 
-    batch_tasks = []
-
-    # Queue each batch as a separate task
-    for batch_index, batch_sites in enumerate(site_batches):
+    # 모든 사이트를 순차적으로 크롤링
+    for site_index, root_url in enumerate(enabled_sites, 1):
         try:
-            task = auto_crawl_batch.delay(batch_sites, batch_index + 1, len(site_batches))
-            batch_tasks.append(task.id)
-            logger.info(f"🤖 Queued batch {batch_index + 1}/{len(site_batches)} with {len(batch_sites)} sites")
+            logger.info(f"🤖 Site {site_index}/{len(enabled_sites)}: {root_url}")
+
+            # Run async crawler
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            try:
+                urls = loop.run_until_complete(
+                    crawl_async(root_url, settings.max_crawl_depth)
+                )
+
+                logger.info(f"🤖 Found {len(urls)} URLs from {root_url}")
+                total_urls_found += len(urls)
+
+                # 배치로 임베딩 작업 큐에 추가
+                embedding_tasks = []
+                for i in range(0, len(urls), BATCH_SIZE):
+                    batch = list(urls)[i:i + BATCH_SIZE]
+                    for url in batch:
+                        try:
+                            task = process_url_for_embedding_smart.delay(url)
+                            embedding_tasks.append(task.id)
+                        except Exception as e:
+                            logger.warning(f"Failed to queue {url}: {str(e)}")
+                            continue
+
+                total_embedding_tasks += len(embedding_tasks)
+                successful_sites.append({
+                    "url": root_url,
+                    "urls_found": len(urls),
+                    "embedding_tasks_queued": len(embedding_tasks)
+                })
+
+                logger.info(f"🤖 Queued {len(embedding_tasks)} embedding tasks for {root_url}")
+
+            finally:
+                loop.close()
+
         except Exception as e:
-            logger.error(f"🔴 Failed to queue batch {batch_index + 1}: {str(e)}")
+            logger.error(f"🔴 Failed to crawl {root_url}: {str(e)}")
+            failed_sites.append({
+                "url": root_url,
+                "error": str(e)
+            })
             continue
 
     result = {
         "status": "completed",
         "total_sites": len(enabled_sites),
-        "total_batches": len(site_batches),
-        "batch_tasks_queued": len(batch_tasks),
-        "batch_task_ids": batch_tasks,
-        "message": f"Queued {len(batch_tasks)} batch tasks for {len(enabled_sites)} sites"
+        "total_urls_found": total_urls_found,
+        "total_embedding_tasks_queued": total_embedding_tasks,
+        "successful_sites": len(successful_sites),
+        "failed_sites": len(failed_sites),
+        "successful_site_details": successful_sites,
+        "failed_site_details": failed_sites
     }
 
-    logger.info("🤖 Auto-crawl batch scheduling completed", **{k: v for k, v in result.items() if k != 'batch_task_ids'})
+    logger.info("🤖 AUTO CRAWL COMPLETED",
+                sites=len(enabled_sites),
+                successful=len(successful_sites),
+                failed=len(failed_sites),
+                total_urls=total_urls_found,
+                total_tasks=total_embedding_tasks)
+
     return result
 
 
@@ -226,13 +279,13 @@ def auto_crawl_websites():
 def auto_crawl_batch(site_urls: List[str], batch_number: int, total_batches: int):
     """
     Process a batch of sites for auto-crawling
+    각 사이트를 크롤링만 하고, 임베딩은 사이트별로 하나의 배치 작업으로 처리
     """
     from config import settings
 
     logger.info(f"🤖 BATCH {batch_number}/{total_batches} STARTED - {len(site_urls)} sites")
 
     total_urls_found = 0
-    total_embedding_tasks = 0
     successful_sites = []
     failed_sites = []
 
@@ -252,20 +305,24 @@ def auto_crawl_batch(site_urls: List[str], batch_number: int, total_batches: int
                 logger.info(f"🤖 Batch {batch_number} - Found {len(urls)} URLs from {root_url}")
                 total_urls_found += len(urls)
 
-                # Queue URLs for embedding processing asynchronously
-                embedding_tasks = []
+                # 각 URL마다 임베딩 작업을 만드는 대신, 동기적으로 처리
+                processed_count = 0
                 for url in urls:
-                    task = process_url_for_embedding_smart.delay(url)
-                    embedding_tasks.append(task.id)
+                    try:
+                        # 동기적으로 임베딩 처리 (큐에 쌓지 않음)
+                        process_url_for_embedding_smart(url)
+                        processed_count += 1
+                    except Exception as e:
+                        logger.warning(f"Failed to process {url}: {str(e)}")
+                        continue
 
-                total_embedding_tasks += len(embedding_tasks)
                 successful_sites.append({
                     "url": root_url,
                     "urls_found": len(urls),
-                    "embedding_tasks": len(embedding_tasks)
+                    "urls_processed": processed_count
                 })
 
-                logger.info(f"🤖 Batch {batch_number} - Queued {len(embedding_tasks)} embedding tasks for {root_url}")
+                logger.info(f"🤖 Batch {batch_number} - Processed {processed_count}/{len(urls)} URLs from {root_url}")
 
             finally:
                 loop.close()
@@ -284,7 +341,6 @@ def auto_crawl_batch(site_urls: List[str], batch_number: int, total_batches: int
         "status": "completed",
         "sites_processed": len(site_urls),
         "total_urls_found": total_urls_found,
-        "total_embedding_tasks_queued": total_embedding_tasks,
         "successful_sites": len(successful_sites),
         "failed_sites": len(failed_sites),
         "successful_site_details": successful_sites,
@@ -295,7 +351,6 @@ def auto_crawl_batch(site_urls: List[str], batch_number: int, total_batches: int
                 sites_processed=len(site_urls),
                 successful=len(successful_sites),
                 failed=len(failed_sites),
-                total_urls=total_urls_found,
-                total_tasks=total_embedding_tasks)
+                total_urls=total_urls_found)
 
     return result

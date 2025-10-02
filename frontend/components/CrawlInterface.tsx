@@ -68,17 +68,15 @@ export default function CrawlInterface() {
 
     try {
       const response = await axios.post<AutoCrawlResponse>(`${API_URL}/crawl/auto`)
-      
+
       setAutoTaskId(response.data.task_id)
-      const sitesList = response.data.sites.map((site) => `• ${site}`).join('\n')
-      setAutoError(`JSON 파일 사이트 크롤링이 시작되었습니다!\n크롤링 대상:\n${sitesList}`)
-      
+
       // Refresh DB status after delay
       setTimeout(fetchDbStatus, CRAWL_CONSTANTS.AUTO_CRAWL_REFRESH_DELAY)
     } catch (error) {
       console.error('Auto crawl error:', error)
       if (axios.isAxiosError(error)) {
-        setAutoError(error.response?.data?.message || '자동 크롤링 시작에 실패했습니다.')
+        setAutoError(error.response?.data?.message || error.response?.data?.detail || '자동 크롤링 시작에 실패했습니다.')
       } else {
         setAutoError('자동 크롤링 시작에 실패했습니다.')
       }
@@ -134,14 +132,15 @@ export default function CrawlInterface() {
         onSitesUpdate={fetchCrawlSites}
       />
 
-      {/* 자동 크롤링 결과 */}
+      {/* 자동 크롤링 에러 */}
       {autoError && (
-        <Alert type="info">
+        <Alert type="error">
           <p>{autoError}</p>
         </Alert>
       )}
 
-      {autoTaskId && (
+      {/* 자동 크롤링 성공 */}
+      {autoTaskId && !autoError && (
         <Alert type="success">
           <p className="font-medium">자동 크롤링 작업이 시작되었습니다!</p>
           <p className="text-sm mt-1 opacity-90">Task ID: {autoTaskId}</p>

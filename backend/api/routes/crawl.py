@@ -153,8 +153,8 @@ async def get_queue_status():
         is_processing_embeddings = any(task.get('name', '').find('embedding') != -1
                                      for task in active_details) if active_details else False
 
-        # If we have queued messages and workers online, assume work is happening
-        if celery_queue_messages > 0 and workers_online > 0:
+        # Only show embedding processing if crawling is NOT active and we have embedding tasks
+        if not is_crawling and celery_queue_messages > 0 and workers_online > 0:
             is_processing_embeddings = True
 
         return {
@@ -191,105 +191,38 @@ async def get_queue_status():
 @router.post("/queue/purge")
 async def purge_queue():
     """
-    Purge/reset all queued crawling tasks and restart celery worker
+    Completely purge all tasks from RabbitMQ queue using RabbitMQ Management API
     """
     try:
-        import subprocess
-        import asyncio
+        import httpx
 
-        # Get initial task counts for reporting
-        inspect = celery_app.control.inspect()
+        # RabbitMQ Management API to purge queue
+        rabbitmq_url = f"http://{settings.rabbitmq_host}:15672/api/queues/%2F/celery/contents"
+        auth = (settings.rabbitmq_user, settings.rabbitmq_pass)
 
-        # Get all task IDs to revoke (but don't terminate workers)
-        all_task_ids = []
+        with httpx.Client() as client:
+            # DELETE all messages from the queue
+            response = client.delete(rabbitmq_url, auth=auth, timeout=5.0)
 
-        # Collect active task IDs
-        active_tasks = inspect.active()
-        if active_tasks:
-            for worker, tasks in active_tasks.items():
-                for task in tasks:
-                    all_task_ids.append(task['id'])
+            if response.status_code not in [200, 204]:
+                logger.error(f"Failed to purge RabbitMQ queue: {response.status_code} - {response.text}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"RabbitMQ 큐 초기화 실패: {response.status_code}"
+                )
 
-        # Collect scheduled task IDs
-        scheduled_tasks = inspect.scheduled()
-        if scheduled_tasks:
-            for worker, tasks in scheduled_tasks.items():
-                for task in tasks:
-                    all_task_ids.append(task['id'])
-
-        # Collect reserved task IDs
-        reserved_tasks = inspect.reserved()
-        if reserved_tasks:
-            for worker, tasks in reserved_tasks.items():
-                for task in tasks:
-                    all_task_ids.append(task['id'])
-
-        # Revoke all tasks but don't terminate workers
-        revoked_count = 0
-        for task_id in all_task_ids:
-            try:
-                celery_app.control.revoke(task_id, terminate=False)
-                revoked_count += 1
-            except Exception as e:
-                logger.warning(f"Failed to revoke task {task_id}: {e}")
-
-        # Purge RabbitMQ queues directly
-        purged_count = 0
-        try:
-            # Use docker exec to purge RabbitMQ queues
-            subprocess.run([
-                "docker", "exec", "rag-rabbitmq",
-                "rabbitmqctl", "purge_queue", "celery"
-            ], check=False, capture_output=True)
-
-            # Also purge other possible queue names
-            for queue_name in ["celery", "rag_chatbot"]:
-                try:
-                    subprocess.run([
-                        "docker", "exec", "rag-rabbitmq",
-                        "rabbitmqctl", "purge_queue", queue_name
-                    ], check=False, capture_output=True)
-                except Exception:
-                    pass
-
-            # Get purged count from Celery control
-            result = celery_app.control.purge()
-            if result:
-                for worker, count in result.items():
-                    purged_count += count
-
-        except Exception as purge_error:
-            logger.warning("Failed to purge queues", error=str(purge_error))
-
-        # Restart celery worker using docker compose
-        try:
-            subprocess.run([
-                "docker", "compose", "-f", "/home/his0si/retriever-project/docker-compose.prod.yml",
-                "restart", "celery"
-            ], check=False, capture_output=True)
-            logger.info("Celery worker restarted via docker compose")
-        except Exception as e:
-            logger.warning(f"Failed to restart celery worker: {e}")
-
-        total_cleared = revoked_count + purged_count
-
-        logger.info("Queue reset and worker restart completed",
-                   revoked_count=revoked_count,
-                   purged_count=purged_count,
-                   total_cleared=total_cleared)
+        logger.info("RabbitMQ queue completely purged via Management API")
 
         return {
             "status": "success",
-            "message": f"크롤링 큐가 초기화되고 워커가 재시작되었습니다 (총 {total_cleared}개 작업 정리)",
-            "purged_tasks": purged_count,
-            "revoked_tasks": revoked_count,
-            "total_cleared": total_cleared,
-            "worker_restarted": True
+            "message": "RabbitMQ 큐가 완전히 초기화되었습니다"
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Failed to purge queue", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to purge queue: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"큐 초기화 실패: {str(e)}")
 
 
 @router.get("/{task_id}/status")
@@ -388,31 +321,16 @@ async def trigger_auto_crawl():
     Manually trigger automatic crawling of predefined websites
     """
     try:
-        # 활성화된 사이트만 필터링
-        config_path = Path(__file__).parent.parent.parent / "crawl_sites.json"
-        enabled_sites = []
-        
-        if config_path.exists():
-            with open(config_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            
-            enabled_sites = [site["url"] for site in data["sites"] if site.get("enabled", True)]
-            logger.info(f"Auto-crawl will process {len(enabled_sites)} enabled sites")
-        
-        if not enabled_sites:
-            raise HTTPException(status_code=400, detail="No enabled sites found for auto-crawl")
-        
         task = auto_crawl_websites.delay()
-        
-        logger.info("Manual auto-crawl triggered", task_id=task.id, enabled_sites=enabled_sites)
-        
+
+        logger.info("Manual auto-crawl triggered", task_id=task.id)
+
         return {
             "task_id": task.id,
             "status": "triggered",
-            "message": "Auto-crawl task started",
-            "sites": enabled_sites
+            "message": "Auto-crawl task started"
         }
-    
+
     except Exception as e:
         logger.error("Failed to trigger auto-crawl", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to trigger auto-crawl")

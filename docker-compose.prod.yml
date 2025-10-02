@@ -75,7 +75,7 @@ services:
       - rabbitmq
       - redis
       - qdrant
-    command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --pool=solo"
+    command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --concurrency=4 --pool=prefork"
     deploy:
       resources:
         limits:
