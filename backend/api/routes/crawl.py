@@ -191,12 +191,32 @@ async def get_queue_status():
 @router.post("/queue/purge")
 async def purge_queue():
     """
-    Completely purge all tasks from RabbitMQ queue using RabbitMQ Management API
+    Completely purge all tasks from RabbitMQ queue and revoke active tasks
     """
     try:
         import httpx
 
-        # RabbitMQ Management API to purge queue
+        revoked_count = 0
+        purged_count = 0
+
+        # Step 1: Revoke all active tasks
+        try:
+            inspect = celery_app.control.inspect()
+            active_tasks = inspect.active()
+
+            if active_tasks:
+                for worker, tasks in active_tasks.items():
+                    for task in tasks:
+                        task_id = task.get('id')
+                        if task_id:
+                            # Revoke task with terminate=True to kill the worker process
+                            celery_app.control.revoke(task_id, terminate=True, signal='SIGKILL')
+                            revoked_count += 1
+                            logger.info(f"Revoked active task: {task_id}")
+        except Exception as revoke_error:
+            logger.warning(f"Failed to revoke some active tasks: {revoke_error}")
+
+        # Step 2: Purge RabbitMQ queue
         rabbitmq_url = f"http://{settings.rabbitmq_host}:15672/api/queues/%2F/celery/contents"
         auth = (settings.rabbitmq_user, settings.rabbitmq_pass)
 
@@ -211,11 +231,22 @@ async def purge_queue():
                     detail=f"RabbitMQ 큐 초기화 실패: {response.status_code}"
                 )
 
-        logger.info("RabbitMQ queue completely purged via Management API")
+            # Try to get purged count from response
+            try:
+                result = response.json()
+                purged_count = result.get('message_count', 0)
+            except:
+                purged_count = 0
+
+        total_cleared = revoked_count + purged_count
+        logger.info(f"Queue purged: {revoked_count} active tasks revoked, {purged_count} queued messages deleted")
 
         return {
             "status": "success",
-            "message": "RabbitMQ 큐가 완전히 초기화되었습니다"
+            "message": f"모든 작업이 중지되었습니다",
+            "total_cleared": total_cleared,
+            "active_revoked": revoked_count,
+            "queued_purged": purged_count
         }
 
     except HTTPException:

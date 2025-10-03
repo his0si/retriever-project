@@ -247,14 +247,15 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
                   </div>
                 </div>
               </div>
+
               {/* Active Tasks Details */}
               {queueStatus.task_details.active.length > 0 && (
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <h5 className="text-sm font-medium text-blue-900 mb-2">실행 중인 작업</h5>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
+                  <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">실행 중인 작업</h5>
                   <div className="space-y-2">
                     {queueStatus.task_details.active.map((task, idx) => (
-                      <div key={idx} className="text-xs bg-white p-2 rounded border">
-                        <div className="font-medium text-blue-800">
+                      <div key={idx} className="text-xs bg-white dark:bg-gray-700 p-2 rounded border border-blue-200 dark:border-blue-600">
+                        <div className="font-medium text-blue-800 dark:text-blue-300">
                           {task.name === 'crawl_website' ? '웹사이트 크롤링' :
                            task.name === 'process_url_for_embedding_smart' ? '스마트 임베딩' :
                            task.name}

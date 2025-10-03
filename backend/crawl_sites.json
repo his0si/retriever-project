@@ -16,7 +16,7 @@
       "name": "경영대학(국문)",
       "url": "https://cmsfox.ewha.ac.kr/biz/index.do",
       "description": "경영대학 국문 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "경영대학(영문)",
@@ -28,13 +28,13 @@
       "name": "데이터사이언스학과",
       "url": "https://cmsfox.ewha.ac.kr/deptai/index.do",
       "description": "데이터사이언스학과 공식 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "자연과학대학(국문)",
       "url": "https://cmsfox.ewha.ac.kr/naturea/index.do",
       "description": "자연과학대학 국문 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "자연과학대학(영문)",
@@ -46,7 +46,7 @@
       "name": "북한학과",
       "url": "https://cmsfox.ewha.ac.kr/nk/index.do",
       "description": "북한학과 공식 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "특수교육과",
@@ -142,31 +142,31 @@
       "name": "디자인대학원",
       "url": "https://cmsfox.ewha.ac.kr/ewhagsd/index.do",
       "description": "디자인대학원 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "식품생명공학전공",
       "url": "https://cmsfox.ewha.ac.kr/foodbiotech/index.do",
       "description": "식품생명공학전공 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "사회복지학과",
       "url": "https://cmsfox.ewha.ac.kr/sw/index.do",
       "description": "사회복지학과 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "정치외교학과",
       "url": "https://cmsfox.ewha.ac.kr/politics/index.do",
       "description": "정치외교학과 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "국제사무학과",
       "url": "https://cmsfox.ewha.ac.kr/ioa/index.do",
       "description": "국제사무학과 국문 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "국제사무학과(영문)",
