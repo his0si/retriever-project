@@ -26,7 +26,8 @@ def get_kst_now():
 
 class EmbeddingTask(Task):
     """Base embedding task with retry configuration"""
-    autoretry_for = (Exception,)
+    # Only retry on temporary errors, not permanent HTTP errors
+    autoretry_for = (ConnectionError, TimeoutError)
     retry_kwargs = {'max_retries': 2, 'countdown': 5}  # Faster retry
     retry_backoff = True
     rate_limit = '10/m'  # Rate limiting for API calls
@@ -286,18 +287,27 @@ def process_url_for_embedding_smart(url: str):
     try:
         # Always fetch content first to check if it changed
         text_content = fetch_and_extract_text(url)
-        
+
         if not text_content or len(text_content.strip()) < 50:
             logger.warning("Insufficient content", url=url, length=len(text_content))
             return {"status": "skipped", "url": url, "reason": "insufficient_content"}
-        
+
         # Check if content actually changed
         if not content_changed_since_last_crawl(url, text_content):
             logger.info("Content unchanged, skipping", url=url)
             return {"status": "skipped", "url": url, "reason": "content_unchanged"}
-        
+
         # Content changed or new URL - process it
         logger.info("Content changed or new URL, processing", url=url)
+    except httpx.HTTPStatusError as e:
+        # Handle permanent HTTP errors (4xx client errors)
+        if 400 <= e.response.status_code < 500:
+            logger.error("Permanent HTTP error, skipping", url=url, status_code=e.response.status_code)
+            return {"status": "failed", "url": url, "reason": f"http_{e.response.status_code}"}
+        # Re-raise for 5xx server errors (might be temporary)
+        raise
+
+    try:
         
         # Ensure collection exists
         ensure_collection_exists()
