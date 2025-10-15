@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: rag-nginx-dev
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - api
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
+    container_name: rag-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Seoul
+    env_file:
+      - .env.local
+    depends_on:
+      - rabbitmq
+      - redis
+      - qdrant
+    command: bash -lc "source activate appenv && python main.py"
+
+  celery:
+    build:
+      context: ./backend
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
+    container_name: rag-celery
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Seoul
+    env_file:
+      - .env.local
+    depends_on:
+      - rabbitmq
+      - redis
+      - qdrant
+    command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --pool=solo"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_KEY: ${NEXT_PUBLIC_SUPABASE_KEY}
+        NEXTAUTH_URL: ${NEXTAUTH_URL}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+        GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+        GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+        KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+        KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+        BACKEND_URL: ${BACKEND_URL}
+    container_name: rag-frontend
+    expose:
+      - "3000"
+    environment:
+      - BACKEND_URL=http://api:8000
+      - NODE_ENV=development
+      - TZ=Asia/Seoul
+    env_file:
+      - .env.local
+    # 프로덕션 환경에서는 빌드된 파일만 사용하므로 volumes 제거
+    depends_on:
+      - api
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rag-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: rag-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rag-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__LOG_LEVEL: INFO
+
+volumes:
+  rabbitmq_data:
+  redis_data:
+  qdrant_data:
