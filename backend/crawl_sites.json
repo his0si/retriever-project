@@ -142,31 +142,31 @@
       "name": "디자인대학원",
       "url": "https://cmsfox.ewha.ac.kr/ewhagsd/index.do",
       "description": "디자인대학원 공식 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "식품생명공학전공",
       "url": "https://cmsfox.ewha.ac.kr/foodbiotech/index.do",
       "description": "식품생명공학전공 공식 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "사회복지학과",
       "url": "https://cmsfox.ewha.ac.kr/sw/index.do",
       "description": "사회복지학과 공식 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "정치외교학과",
       "url": "https://cmsfox.ewha.ac.kr/politics/index.do",
       "description": "정치외교학과 공식 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "국제사무학과",
       "url": "https://cmsfox.ewha.ac.kr/ioa/index.do",
       "description": "국제사무학과 국문 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "국제사무학과(영문)",
@@ -394,13 +394,13 @@
       "name": "학생상담센터(국문)",
       "url": "https://cmsfox.ewha.ac.kr/escc/index.do",
       "description": "학생상담센터 국문 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "학생상담센터(영문)",
       "url": "https://cmsfox.ewha.ac.kr/efcc/index.do",
       "description": "학생상담센터 영문 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "신학대학원",

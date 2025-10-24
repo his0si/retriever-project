@@ -2,7 +2,7 @@
 
 학교 웹사이트의 분산된 정보를 자동으로 크롤링하고, RAG(Retrieval-Augmented Generation) 기반 챗봇을 제공합니다.
 
-배포 링크: https://retrieverproject.duckdns.org
+배포 링크: https://retrieverproject.duckdns.org:9443
 
 ## 시스템 구성
 
@@ -13,6 +13,20 @@
 - **Frontend**: Next.js
 - **LLM**: OpenAI GPT-4
 - **Reverse Proxy**: Nginx
+
+## 포트 구성
+
+### 외부 접근 가능 포트
+- **9090**: HTTP (자동으로 HTTPS로 리다이렉트)
+- **9443**: HTTPS (메인 웹사이트)
+- **15672**: RabbitMQ Management UI
+- **6333-6334**: Qdrant API & Dashboard
+- **6379**: Redis
+- **5672**: RabbitMQ AMQP
+
+### 내부 전용 포트 (Docker 네트워크)
+- **3000**: Frontend (Next.js)
+- **8000**: Backend API (FastAPI)
 
 ## 시작하기
 
@@ -60,14 +74,14 @@ docker compose --env-file .env.local -f docker-compose.dev.yml up -d
 ## 프로덕션 배포
 
 ```bash
-cd retriever
+cd retriever-project
 # SSL 인증서 발급
 chmod +x setup-ssl.sh && ./setup-ssl.sh
 # 배포
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-접속: https://your-domain.com
+접속: https://retrieverproject.duckdns.org:9443
 
 ## API 사용법
 
@@ -80,7 +94,7 @@ curl -X POST http://localhost:8000/crawl \
   -d '{"root_url": "https://example-school.edu", "max_depth": 2}'
 
 # 프로덕션
-curl -X POST https://your-domain.com/backend/crawl \
+curl -X POST https://retrieverproject.duckdns.org:9443/backend/crawl \
   -H "Content-Type: application/json" \
   -d '{"root_url": "https://example-school.edu", "max_depth": 2}'
 ```
@@ -94,16 +108,22 @@ curl -X POST http://localhost:8000/chat \
   -d '{"question": "입학 절차는 어떻게 되나요?"}'
 
 # 프로덕션
-curl -X POST https://your-domain.com/backend/chat \
+curl -X POST https://retrieverproject.duckdns.org:9443/backend/chat \
   -H "Content-Type: application/json" \
   -d '{"question": "입학 절차는 어떻게 되나요?"}'
 ```
 
 ## 모니터링
 
+### 로컬 개발 환경
 - RabbitMQ Management: http://localhost:15672
 - Qdrant Dashboard: http://localhost:6333/dashboard
 - API Docs: http://localhost:8000/docs
+
+### 프로덕션 환경
+- RabbitMQ Management: https://retrieverproject.duckdns.org:9443/rabbitmq/
+- Qdrant Dashboard: http://retrieverproject.duckdns.org:6333/dashboard
+- API Docs: https://retrieverproject.duckdns.org:9443/backend/docs
 
 ## 자동 크롤링 사이트 관리
 

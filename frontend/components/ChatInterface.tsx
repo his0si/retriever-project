@@ -136,8 +136,13 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           console.error('chat_history insert error:', error);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        response: error?.response?.data,
+        status: error?.response?.status
+      });
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
