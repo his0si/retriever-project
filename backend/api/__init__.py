@@ -9,7 +9,11 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="School RAG Chatbot API",
         description="API for crawling school websites and providing RAG-based Q&A",
-        version="1.0.0"
+        version="1.0.0",
+        root_path="/backend",  # nginx proxy prefix
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json"
     )
 
     # Configure CORS
