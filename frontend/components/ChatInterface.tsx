@@ -296,7 +296,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       )}
       {/* 대화 영역 */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto px-8 sm:pb-4 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent bg-white dark:bg-gray-900"
+        className="flex-1 min-h-0 overflow-y-auto px-8 sm:pb-4 pt-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent bg-white dark:bg-gray-900"
         style={{
           paddingBottom: isMobile && inputBarHeight > 0 ? `${inputBarHeight + 16}px` : undefined
         }}
@@ -521,9 +521,9 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
 
       {/* 모바일 전용 하단 입력란 - 첫 채팅 시 표시 */}
       {messages.length === 0 && (
-        <div ref={bottomBarRef} className="sm:hidden fixed bottom-0 left-0 right-0 z-40 w-full px-0 py-0 border-t border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-900" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
-          <div className="w-full">
-            <div className="bg-white dark:bg-gray-800 rounded-none border-t border-gray-100 dark:border-gray-700/50 shadow-sm p-3 min-h-[56px] flex items-center">
+        <div ref={bottomBarRef} className="sm:hidden fixed bottom-0 left-0 right-0 z-40 w-full px-0 py-0" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
+          <div className="w-full px-4 pb-2">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-3 min-h-[56px] flex items-center">
               <div className="flex items-center gap-3 flex-1">
                 <div className="flex items-center gap-2">
                   <div
@@ -582,9 +582,9 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       )}
       {/* 입력란 - 메시지가 있을 때만 표시 */}
       {messages.length > 0 && (
-        <div ref={bottomBarRef} className="w-full sm:static fixed bottom-0 left-0 right-0 z-40 sm:px-4 px-0 sm:py-4 py-0 border-t border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-900" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
+        <div ref={bottomBarRef} className="w-full sm:static fixed bottom-0 left-0 right-0 z-40 sm:px-4 sm:py-4 px-4 pb-2 sm:border-t border-gray-100 dark:border-gray-700/50 sm:bg-white sm:dark:bg-gray-900" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
           <div className="sm:max-w-4xl sm:mx-auto">
-            <div className="bg-white dark:bg-gray-800 sm:rounded-2xl rounded-none border border-gray-100 dark:border-gray-700/50 shadow-sm p-3 sm:p-4 min-h-[56px] sm:min-h-[60px] flex items-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl sm:border border-gray-100 dark:border-gray-700/50 sm:shadow-sm p-3 sm:p-4 min-h-[56px] sm:min-h-[60px] flex items-center">
               <div className="flex items-center gap-3 flex-1">
                 {/* 왼쪽 아이콘들 */}
                 <div className="flex items-center gap-2">
