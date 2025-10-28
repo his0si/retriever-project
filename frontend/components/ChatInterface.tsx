@@ -397,7 +397,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           }
         `}</style>
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center sm:h-full h-auto sm:pt-0 pt-8">
+          <div className="flex flex-col items-center justify-center h-full">
             {/* 로고 영역 (모바일 숨김) */}
             <div className="hidden sm:flex flex-col items-center mb-8">
               <div className="flex items-center gap-2 mb-2">
@@ -425,7 +425,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
             )}
 
             {/* 모바일 전용 인트로 메시지 */}
-            <div className="sm:hidden flex items-center justify-center px-6 w-full mb-8">
+            <div className="sm:hidden flex flex-1 items-center justify-center px-6 w-full">
               <div className="text-xl font-semibold text-gray-800 dark:text-gray-100 text-center leading-snug">
                 리트리버가 기다리고 있어요.
                 <br />
