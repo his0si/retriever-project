@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useSession } from 'next-auth/react'
 import { supabase } from '@/lib/supabaseClient'
 import { v4 as uuidv4 } from 'uuid';
@@ -235,11 +236,31 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] rounded-2xl px-5 py-3 text-base break-words whitespace-pre-line ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'}`}
+                className={`max-w-[70%] rounded-2xl px-5 py-3 text-base break-words ${message.type === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'}`}
               >
-                <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-pre-line">
-                  {message.content}
-                </ReactMarkdown>
+                {message.type === 'user' ? (
+                  <div className="whitespace-pre-wrap">{message.content}</div>
+                ) : (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    className="prose prose-sm dark:prose-invert max-w-none break-words"
+                    components={{
+                      table: ({node, ...props}) => (
+                        <div className="overflow-x-auto my-2">
+                          <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-600" {...props} />
+                        </div>
+                      ),
+                      th: ({node, ...props}) => (
+                        <th className="px-3 py-2 text-left text-xs font-semibold bg-gray-50 dark:bg-gray-700" {...props} />
+                      ),
+                      td: ({node, ...props}) => (
+                        <td className="px-3 py-2 text-sm border-t border-gray-200 dark:border-gray-600" {...props} />
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                )}
                 {/* 출처 링크 표시 */}
                 {message.type === 'assistant' && message.sources && message.sources.length > 0 && (
                   <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
