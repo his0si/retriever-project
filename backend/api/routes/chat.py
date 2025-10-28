@@ -17,16 +17,20 @@ async def chat(request: ChatRequest):
     """
     try:
         # Get answer from RAG service
-        answer, sources = await rag_service.get_answer(request.question)
-        
+        answer, sources = await rag_service.get_answer(
+            question=request.question,
+            mode=request.mode
+        )
+
         logger.info(
             "Chat response generated",
             question=request.question,
+            mode=request.mode,
             sources_count=len(sources)
         )
-        
+
         return ChatResponse(answer=answer, sources=sources)
-    
+
     except Exception as e:
         logger.error("Failed to generate answer", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to generate answer")

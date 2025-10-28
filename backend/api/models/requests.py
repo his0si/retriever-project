@@ -8,3 +8,4 @@ class CrawlRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     question: str
+    mode: str = "filter"  # "filter" or "expand"

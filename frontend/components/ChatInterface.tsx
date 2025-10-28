@@ -136,7 +136,10 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       }
       const response = await axios.post(
         '/api/chat',
-        { question: userMessage.content }
+        {
+          question: userMessage.content,
+          mode: aiSearchMode
+        }
       );
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -372,14 +375,20 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                                 <button
                                   type="button"
                                   className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'filter' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`}
-                                  onClick={() => setAiSearchMode('filter')}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAiSearchMode('filter');
+                                  }}
                                 >
                                   필터 모드
                                 </button>
                                 <button
                                   type="button"
                                   className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'expand' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`}
-                                  onClick={() => setAiSearchMode('expand')}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAiSearchMode('expand');
+                                  }}
                                 >
                                   확장 모드
                                 </button>
@@ -533,8 +542,8 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                             <span className="font-semibold">필터 모드</span>에서는 데이터베이스 기준으로 일치 항목만 표시하며, <span className="font-semibold">확장 모드</span>에서는 AI가 의미적 유사도를 분석해 관련 결과를 함께 제공합니다.
                           </div>
                           <div className="flex items-center gap-2">
-                            <button type="button" className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'filter' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`} onClick={() => setAiSearchMode('filter')}>필터 모드</button>
-                            <button type="button" className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'expand' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`} onClick={() => setAiSearchMode('expand')}>확장 모드</button>
+                            <button type="button" className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'filter' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`} onClick={(e) => { e.stopPropagation(); setAiSearchMode('filter'); }}>필터 모드</button>
+                            <button type="button" className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'expand' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`} onClick={(e) => { e.stopPropagation(); setAiSearchMode('expand'); }}>확장 모드</button>
                           </div>
                         </div>
                         <div className={`absolute -bottom-2 w-4 h-4 bg-sky-50 dark:bg-sky-900/20 border-r border-b border-sky-300 dark:border-sky-700 rotate-45 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-4' : 'right-4'}`}></div>
@@ -599,14 +608,20 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                             <button
                               type="button"
                               className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'filter' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`}
-                              onClick={() => setAiSearchMode('filter')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAiSearchMode('filter');
+                              }}
                             >
                               필터 모드
                             </button>
                             <button
                               type="button"
                               className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'expand' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`}
-                              onClick={() => setAiSearchMode('expand')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAiSearchMode('expand');
+                              }}
                             >
                               확장 모드
                             </button>
