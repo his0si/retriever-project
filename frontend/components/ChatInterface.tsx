@@ -42,6 +42,8 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   const [tooltipPlacement, setTooltipPlacement] = useState<'center' | 'pushRight' | 'pushLeft'>('center')
   const [tooltipOffsetPx, setTooltipOffsetPx] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
+  const bottomBarRef = useRef<HTMLDivElement>(null)
+  const [inputBarHeight, setInputBarHeight] = useState(0)
   const sessionIdRef = useRef<string>(selectedSessionId ? selectedSessionId : '')
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const router = useRouter();
@@ -242,9 +244,19 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
     window.addEventListener('resize', updateIsMobile);
     updatePad();
     updateIsMobile();
+    const measure = () => {
+      const h = bottomBarRef.current?.offsetHeight || 0;
+      setInputBarHeight(h);
+    };
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (bottomBarRef.current && ro) ro.observe(bottomBarRef.current);
+    window.addEventListener('resize', measure);
+    measure();
     return () => {
       window.removeEventListener('resize', updatePad);
       window.removeEventListener('resize', updateIsMobile);
+      window.removeEventListener('resize', measure);
+      if (bottomBarRef.current && ro) ro.disconnect();
     };
   }, []);
 
@@ -280,7 +292,12 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         </button>
       )}
       {/* 대화 영역 */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-8 pb-4 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent bg-white dark:bg-gray-900" style={{ minHeight: 0 }}>
+      <div
+        className="flex-1 min-h-0 overflow-y-auto px-8 sm:pb-4 pt-12 sm:pt-8 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent bg-white dark:bg-gray-900"
+        style={{
+          paddingBottom: isMobile && inputBarHeight > 0 ? `${inputBarHeight + 16}px` : undefined
+        }}
+      >
         <style jsx>{`
           div::-webkit-scrollbar {
             width: 6px;
@@ -292,7 +309,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
           }
         `}</style>
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full min-h-[60vh]">
+          <div className="flex flex-col items-center justify-center h-full">
             {/* 로고 영역 (모바일 숨김) */}
             <div className="hidden sm:flex flex-col items-center mb-8">
               <div className="flex items-center gap-2 mb-2">
@@ -320,7 +337,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
             )}
 
             {/* 모바일 전용 인트로 메시지 */}
-            <div className="sm:hidden flex items-center justify-center py-24 px-6">
+            <div className="sm:hidden flex flex-1 items-center justify-center px-6 w-full">
               <div className="text-xl font-semibold text-gray-800 dark:text-gray-100 text-center leading-snug">
                 리트리버가 기다리고 있어요.
                 <br />
@@ -491,73 +508,74 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
             </div>
           </div>
         )}
-        {/* 모바일 전용 하단 입력란 - 첫 채팅 시 표시 */}
-        {messages.length === 0 && (
-          <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 w-full px-0 py-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
-            <div className="w-full">
-              <div className="bg-white dark:bg-gray-800 rounded-none border-t border-gray-200 dark:border-gray-700 shadow-sm p-3 min-h-[56px] flex items-center">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="relative p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 cursor-pointer"
-                      onClick={(e) => handleToggleTooltip('search', e)}
-                      data-search-tooltip-trigger
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      {openTooltip === 'search' && (
-                        <div className={`absolute bottom-full mb-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`}>
-                          <div className="p-4">
-                            <div className="text-gray-900 dark:text-gray-100 font-semibold mb-2">AI 검색 모드 전환</div>
-                            <div className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed mb-3">
-                              <span className="font-semibold">필터 모드</span>에서는 데이터베이스 기준으로 일치 항목만 표시하며, <span className="font-semibold">확장 모드</span>에서는 AI가 의미적 유사도를 분석해 관련 결과를 함께 제공합니다.
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button type="button" className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'filter' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`} onClick={() => setAiSearchMode('filter')}>필터 모드</button>
-                              <button type="button" className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'expand' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`} onClick={() => setAiSearchMode('expand')}>확장 모드</button>
-                            </div>
+      </div>
+
+      {/* 모바일 전용 하단 입력란 - 첫 채팅 시 표시 */}
+      {messages.length === 0 && (
+        <div ref={bottomBarRef} className="sm:hidden fixed bottom-0 left-0 right-0 z-40 w-full px-0 py-0 border-t border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-900" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
+          <div className="w-full">
+            <div className="bg-white dark:bg-gray-800 rounded-none border-t border-gray-100 dark:border-gray-700/50 shadow-sm p-3 min-h-[56px] flex items-center">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="relative p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 cursor-pointer"
+                    onClick={(e) => handleToggleTooltip('search', e)}
+                    data-search-tooltip-trigger
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    {openTooltip === 'search' && (
+                      <div className={`absolute bottom-full mb-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`}>
+                        <div className="p-4">
+                          <div className="text-gray-900 dark:text-gray-100 font-semibold mb-2">AI 검색 모드 전환</div>
+                          <div className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed mb-3">
+                            <span className="font-semibold">필터 모드</span>에서는 데이터베이스 기준으로 일치 항목만 표시하며, <span className="font-semibold">확장 모드</span>에서는 AI가 의미적 유사도를 분석해 관련 결과를 함께 제공합니다.
                           </div>
-                          <div className={`absolute -bottom-2 w-4 h-4 bg-sky-50 dark:bg-sky-900/20 border-r border-b border-sky-300 dark:border-sky-700 rotate-45 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-4' : 'right-4'}`}></div>
-                        </div>
-                      )}
-                    </div>
-                    <div
-                      className="relative p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
-                      onClick={(e) => handleToggleTooltip('major', e)}
-                      data-tooltip-trigger
-                    >
-                      <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {openTooltip === 'major' && (
-                        <div className={`absolute bottom-full mb-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`} style={{ left: tooltipPlacement === 'pushRight' ? `${tooltipOffsetPx}px` as any : undefined }}>
-                          <div className="p-4">
-                            <div className="flex items-center gap-2 mb-3"><span className="text-gray-900 dark:text-gray-100 font-semibold">전공 맞춤형 검색 결과 제공</span></div>
-                            <div className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed">선택한 전공에 관련된 콘텐츠를 자동으로 우선 검색합니다.</div>
+                          <div className="flex items-center gap-2">
+                            <button type="button" className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'filter' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`} onClick={() => setAiSearchMode('filter')}>필터 모드</button>
+                            <button type="button" className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'expand' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`} onClick={() => setAiSearchMode('expand')}>확장 모드</button>
                           </div>
-                          <div className={`absolute -bottom-2 w-4 h-4 bg-sky-50 dark:bg-sky-900/20 border-r border-b border-sky-300 dark:border-sky-700 rotate-45 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-4' : 'right-4'}`}></div>
                         </div>
-                      )}
-                    </div>
+                        <div className={`absolute -bottom-2 w-4 h-4 bg-sky-50 dark:bg-sky-900/20 border-r border-b border-sky-300 dark:border-sky-700 rotate-45 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-4' : 'right-4'}`}></div>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1 mx-2">
-                    <input type="text" className="w-full bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none text-base" placeholder="리트리버에게 물어보기" value={centerInput} onChange={(e) => setCenterInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCenterSend(); } }} ref={centerInputRef} disabled={isLoading} />
+                  <div
+                    className="relative p-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
+                    onClick={(e) => handleToggleTooltip('major', e)}
+                    data-tooltip-trigger
+                  >
+                    <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {openTooltip === 'major' && (
+                      <div className={`absolute bottom-full mb-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`} style={{ left: tooltipPlacement === 'pushRight' ? `${tooltipOffsetPx}px` as any : undefined }}>
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-3"><span className="text-gray-900 dark:text-gray-100 font-semibold">전공 맞춤형 검색 결과 제공</span></div>
+                          <div className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed">선택한 전공에 관련된 콘텐츠를 자동으로 우선 검색합니다.</div>
+                        </div>
+                        <div className={`absolute -bottom-2 w-4 h-4 bg-sky-50 dark:bg-sky-900/20 border-r border-b border-sky-300 dark:border-sky-700 rotate-45 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-4' : 'right-4'}`}></div>
+                      </div>
+                    )}
                   </div>
-                  <button type="button" className="p-2 rounded-lg bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 text-sky-600 dark:text-sky-400 border border-sky-300 dark:border-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleCenterSend} disabled={isLoading || !centerInput.trim()}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                  </button>
                 </div>
+                <div className="flex-1 mx-2">
+                  <input type="text" className="w-full bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none text-base" placeholder="리트리버에게 물어보기" value={centerInput} onChange={(e) => setCenterInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCenterSend(); } }} ref={centerInputRef} disabled={isLoading} />
+                </div>
+                <button type="button" className="p-2 rounded-lg bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-800/50 text-sky-600 dark:text-sky-400 border border-sky-300 dark:border-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleCenterSend} disabled={isLoading || !centerInput.trim()}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       {/* 입력란 - 메시지가 있을 때만 표시 */}
       {messages.length > 0 && (
-        <div className="w-full sm:static fixed bottom-0 left-0 right-0 z-40 sm:px-4 px-0 sm:py-4 py-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
+        <div ref={bottomBarRef} className="w-full sm:static fixed bottom-0 left-0 right-0 z-40 sm:px-4 px-0 sm:py-4 py-0 border-t border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-900" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
           <div className="sm:max-w-4xl sm:mx-auto">
-            <div className="bg-white dark:bg-gray-800 sm:rounded-2xl rounded-none border border-gray-200 dark:border-gray-700 shadow-sm p-3 sm:p-4 min-h-[56px] sm:min-h-[60px] flex items-center">
+            <div className="bg-white dark:bg-gray-800 sm:rounded-2xl rounded-none border border-gray-100 dark:border-gray-700/50 shadow-sm p-3 sm:p-4 min-h-[56px] sm:min-h-[60px] flex items-center">
               <div className="flex items-center gap-3 flex-1">
                 {/* 왼쪽 아이콘들 */}
                 <div className="flex items-center gap-2">
