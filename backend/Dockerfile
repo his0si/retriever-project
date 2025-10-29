@@ -55,8 +55,14 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN source activate appenv \
-    && pip install --no-cache-dir -r requirements.txt \
-    && playwright install chromium
+    && pip install --no-cache-dir -r requirements.txt
+
+# Install Playwright system dependencies
+RUN playwright install-deps chromium || true
+
+# Try to install Playwright chromium, but don't fail if network issues
+RUN source activate appenv \
+    && (playwright install chromium || echo "Playwright install skipped - will retry at runtime")
 
 # Copy application code
 COPY . .

@@ -26,19 +26,24 @@ def load_crawl_sites() -> List[str]:
 
 
 class Settings(BaseSettings):
-    # OpenAI
-    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
-    
+    # OpenAI (Optional - for comparison)
+    openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
+
+    # Ollama
+    ollama_host: str = Field(default="http://localhost:11434", env="OLLAMA_HOST")
+    ollama_model: str = Field(default="llama3.2", env="OLLAMA_MODEL")
+    ollama_embedding_model: str = Field(default="nomic-embed-text", env="OLLAMA_EMBEDDING_MODEL")
+
     # RabbitMQ
     rabbitmq_host: str = Field(default="localhost", env="RABBITMQ_HOST")
     rabbitmq_port: int = Field(default=5672, env="RABBITMQ_PORT")
     rabbitmq_user: str = Field(default="admin", env="RABBITMQ_USER")
     rabbitmq_pass: str = Field(default="admin123", env="RABBITMQ_PASS")
-    
+
     # Qdrant
     qdrant_host: str = Field(default="localhost", env="QDRANT_HOST")
     qdrant_port: int = Field(default=6333, env="QDRANT_PORT")
-    qdrant_collection_name: str = Field(default="school_documents", env="QDRANT_COLLECTION_NAME")
+    qdrant_collection_name: str = Field(default="retriever_project_db", env="QDRANT_COLLECTION_NAME")
     qdrant_api_key: str = Field(default="", env="QDRANT_API_KEY")
     
     # Redis

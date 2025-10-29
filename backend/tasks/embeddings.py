@@ -4,14 +4,13 @@ import httpx
 from bs4 import BeautifulSoup
 import structlog
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings, ChatOllama
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 import uuid
 import hashlib
 from datetime import datetime
 import pytz
-from openai import OpenAI
 
 from config import settings
 
@@ -39,14 +38,18 @@ qdrant_client = QdrantClient(
     api_key=settings.qdrant_api_key
 )
 
-# OpenAI 임베딩 클라이언트
-embeddings = OpenAIEmbeddings(
-    model=settings.embedding_model,
-    openai_api_key=settings.openai_api_key
+# Ollama 임베딩 클라이언트
+embeddings = OllamaEmbeddings(
+    model=settings.ollama_embedding_model,
+    base_url=settings.ollama_host
 )
 
-# GPT API 클라이언트 (마크다운 포맷팅용)
-openai_client = OpenAI(api_key=settings.openai_api_key)
+# Ollama LLM 클라이언트 (마크다운 포맷팅용)
+ollama_client = ChatOllama(
+    model=settings.ollama_model,
+    base_url=settings.ollama_host,
+    temperature=0.3
+)
 
 # 텍스트 분할기
 text_splitter = RecursiveCharacterTextSplitter(
@@ -127,7 +130,7 @@ def ensure_collection_exists():
         qdrant_client.create_collection(
             collection_name=settings.qdrant_collection_name,
             vectors_config=VectorParams(
-                size=1536,  # OpenAI 임베딩 차원
+                size=768,  # nomic-embed-text 임베딩 차원
                 distance=Distance.COSINE
             )
         )
@@ -151,16 +154,13 @@ def format_content_to_markdown(url: str, html_content: str) -> str:
         if len(text_content) > 30000:
             text_content = text_content[:30000] + "\n...(content truncated)"
 
-        # GPT API 호출하여 콘텐츠 포맷팅
-        logger.info("Formatting content with GPT API", url=url)
+        # Ollama API 호출하여 콘텐츠 포맷팅
+        logger.info("Formatting content with Ollama API", url=url)
 
-        response = openai_client.chat.completions.create(
-            model=settings.llm_model,
-            temperature=0.3,
-            messages=[
-                {
-                    "role": "system",
-                    "content": """You are a content curator that transforms web page content into clean, well-organized markdown format.
+        from langchain.schema import SystemMessage, HumanMessage
+
+        messages = [
+            SystemMessage(content="""You are a content curator that transforms web page content into clean, well-organized markdown format.
 
 Your task:
 1. Extract and organize the main content from the provided text
@@ -176,23 +176,19 @@ Your task:
 6. If content is in Korean, keep it in Korean
 7. Do not add your own commentary - only restructure existing content
 
-Output only the formatted markdown content, nothing else."""
-                },
-                {
-                    "role": "user",
-                    "content": f"URL: {url}\n\nContent to format:\n\n{text_content}"
-                }
-            ]
-        )
+Output only the formatted markdown content, nothing else."""),
+            HumanMessage(content=f"URL: {url}\n\nContent to format:\n\n{text_content}")
+        ]
 
-        markdown_content = response.choices[0].message.content
+        response = ollama_client.invoke(messages)
+        markdown_content = response.content
         logger.info("Successfully formatted content to markdown", url=url, length=len(markdown_content))
 
         return markdown_content
 
     except Exception as e:
-        logger.error("Failed to format content with GPT", url=url, error=str(e))
-        # GPT 포맷팅 실패 시 단순 텍스트 추출로 대체
+        logger.error("Failed to format content with Ollama", url=url, error=str(e))
+        # Ollama 포맷팅 실패 시 단순 텍스트 추출로 대체
         logger.warning("Falling back to simple text extraction", url=url)
         return fetch_and_extract_text_simple(url, html_content)
 

@@ -32,6 +32,8 @@ services:
       - rabbitmq
       - redis
       - qdrant
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: bash -lc "source activate appenv && python main.py"
 
   celery:
@@ -51,6 +53,8 @@ services:
       - rabbitmq
       - redis
       - qdrant
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --pool=solo"
 
   frontend:

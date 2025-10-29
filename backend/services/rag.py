@@ -1,9 +1,8 @@
 from typing import List, Tuple
 import structlog
-from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain.schema import SystemMessage, HumanMessage
 from qdrant_client import QdrantClient
-import openai
 
 from config import settings
 
@@ -12,20 +11,23 @@ logger = structlog.get_logger()
 
 class RAGService:
     """RAG service for question answering"""
-    
+
     def __init__(self):
         self.qdrant_client = QdrantClient(
             url=settings.qdrant_host,
             api_key=settings.qdrant_api_key
         )
-        
-        self.llm = ChatOpenAI(
-            model=settings.llm_model,
-            temperature=settings.llm_temperature,
-            openai_api_key=settings.openai_api_key
+
+        self.llm = ChatOllama(
+            model=settings.ollama_model,
+            base_url=settings.ollama_host,
+            temperature=settings.llm_temperature
         )
-        
-        self.embeddings_client = openai.OpenAI(api_key=settings.openai_api_key)
+
+        self.embeddings_client = OllamaEmbeddings(
+            model=settings.ollama_embedding_model,
+            base_url=settings.ollama_host
+        )
     
     async def get_answer(self, question: str, mode: str = "filter") -> Tuple[str, List[str]]:
         """
@@ -90,11 +92,7 @@ class RAGService:
     
     def _get_embedding(self, text: str) -> List[float]:
         """Get embedding for text"""
-        response = self.embeddings_client.embeddings.create(
-            model=settings.embedding_model,
-            input=text
-        )
-        return response.data[0].embedding
+        return self.embeddings_client.embed_query(text)
     
     async def _generate_answer(self, context: str, question: str, mode: str = "filter") -> str:
         """Generate answer using GPT"""

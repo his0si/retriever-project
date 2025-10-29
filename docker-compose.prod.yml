@@ -46,6 +46,8 @@ services:
       - rabbitmq
       - redis
       - qdrant
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: bash -lc "source activate appenv && python main.py"
     deploy:
       resources:
@@ -74,6 +76,8 @@ services:
       - rabbitmq
       - redis
       - qdrant
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --concurrency=4 --pool=prefork"
     deploy:
       resources:
