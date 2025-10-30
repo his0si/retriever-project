@@ -123,6 +123,7 @@ function ChatPageContent() {
             <ChatInterface
               selectedSessionId={selectedSessionId}
               isGuestMode={isGuestMode}
+              sidebarOpen={isLoggedIn && !isGuestMode ? sidebarOpen : undefined}
             />
           </div>
         </div>

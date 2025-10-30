@@ -21,6 +21,7 @@ interface ChatInterfaceProps {
   isGuestMode?: boolean
   selectedSessionId?: string
   onSessionCreated?: (sessionId: string) => void
+  sidebarOpen?: boolean
 }
 // 세션 타입 확장
 interface ExtendedSessionUser {
@@ -30,7 +31,7 @@ interface ExtendedSessionUser {
   image?: string | null
 }
 
-export default function ChatInterface({ isGuestMode = false, selectedSessionId, onSessionCreated }: ChatInterfaceProps) {
+export default function ChatInterface({ isGuestMode = false, selectedSessionId, onSessionCreated, sidebarOpen }: ChatInterfaceProps) {
   const { data: session } = useSession()
   const user = session?.user as ExtendedSessionUser | undefined
   const [messages, setMessages] = useState<Message[]>([])
@@ -519,8 +520,16 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         )}
       </div>
 
-      {/* 통합된 하단 입력란 - 모바일 전용 */}
-      <div ref={bottomBarRef} className="w-full sm:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-2 bg-white dark:bg-gray-900" style={{ paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))` }}>
+      {/* 통합된 하단 입력란 - 대화 시작 후에는 모든 화면에 표시 */}
+      <div
+        ref={bottomBarRef}
+        className={`fixed bottom-0 z-40 px-4 pb-2 bg-white dark:bg-gray-900 transition-all duration-300 ${messages.length === 0 ? 'sm:hidden' : ''}`}
+        style={{
+          paddingBottom: `max(${bottomPad}px, env(safe-area-inset-bottom))`,
+          left: isMobile ? 0 : (sidebarOpen === true ? '320px' : sidebarOpen === false ? '64px' : 0),
+          right: 0
+        }}
+      >
         <div className="sm:max-w-4xl sm:mx-auto">
           <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700/50 sm:shadow-sm p-3 min-h-[56px] flex items-center">
             <div className="flex items-center gap-3 flex-1">
