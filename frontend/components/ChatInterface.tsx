@@ -297,9 +297,9 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
       )}
       {/* 대화 영역 */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto px-8 sm:pb-4 pt-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent bg-white dark:bg-gray-900"
+        className="flex-1 min-h-0 overflow-y-auto px-8 pt-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent bg-white dark:bg-gray-900"
         style={{
-          paddingBottom: isMobile && inputBarHeight > 0 ? `${inputBarHeight + 16}px` : undefined
+          paddingBottom: messages.length > 0 && inputBarHeight > 0 ? `${inputBarHeight + 16}px` : '16px'
         }}
       >
         <style jsx>{`
