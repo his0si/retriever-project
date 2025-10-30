@@ -4,79 +4,79 @@
       "name": "호크마교양대학(국문)",
       "url": "https://cmsfox.ewha.ac.kr/hokma/index.do",
       "description": "호크마교양대학 국문 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "호크마교양대학(영문)",
       "url": "https://cmsfox.ewha.ac.kr/hokmaeng/index.do",
       "description": "호크마교양대학 영문 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "경영대학(국문)",
       "url": "https://cmsfox.ewha.ac.kr/biz/index.do",
       "description": "경영대학 국문 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "경영대학(영문)",
       "url": "https://cmsfox.ewha.ac.kr/bizeng/index.do",
       "description": "경영대학 영문 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "데이터사이언스학과",
       "url": "https://cmsfox.ewha.ac.kr/deptai/index.do",
       "description": "데이터사이언스학과 공식 홈페이지",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "자연과학대학(국문)",
       "url": "https://cmsfox.ewha.ac.kr/naturea/index.do",
       "description": "자연과학대학 국문 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "자연과학대학(영문)",
       "url": "https://cmsfox.ewha.ac.kr/natureeng/index.do",
       "description": "자연과학대학 영문 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "북한학과",
       "url": "https://cmsfox.ewha.ac.kr/nk/index.do",
       "description": "북한학과 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "특수교육과",
       "url": "https://cmsfox.ewha.ac.kr/sped/index.do",
       "description": "특수교육과 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "경제학과",
       "url": "https://cmsfox.ewha.ac.kr/econ/index.do",
       "description": "경제학과 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "인공지능대학",
       "url": "https://cmsfox.ewha.ac.kr/ai/index.do",
       "description": "인공지능대학 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "문헌정보학과",
       "url": "https://cmsfox.ewha.ac.kr/elis1959/index.do",
       "description": "문헌정보학과 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "초등교육과",
       "url": "https://cmsfox.ewha.ac.kr/eee/index.do",
       "description": "초등교육과 공식 홈페이지",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "행정학과",
