@@ -71,8 +71,8 @@ def process_url_for_embedding(url: str):
         # 컬렉션 존재 확인
         ensure_collection_exists()
 
-        # 텍스트 가져오기 및 GPT로 마크다운 포맷팅
-        text_content = fetch_and_extract_text(url)
+        # 텍스트 가져오기 (원본 그대로, 마크다운 변환 없이)
+        text_content = fetch_and_extract_text_simple(url)
 
         if not text_content or len(text_content.strip()) < 50:
             logger.warning("Insufficient content", url=url, length=len(text_content))
@@ -130,7 +130,7 @@ def ensure_collection_exists():
         qdrant_client.create_collection(
             collection_name=settings.qdrant_collection_name,
             vectors_config=VectorParams(
-                size=768,  # nomic-embed-text 임베딩 차원
+                size=1024,  # bge-m3 임베딩 차원
                 distance=Distance.COSINE
             )
         )
@@ -376,8 +376,8 @@ def process_url_for_embedding_smart(url: str):
     logger.info("Processing URL with smart duplicate detection", url=url)
     
     try:
-        # 콘텐츠가 변경되었는지 확인하기 위해 항상 먼저 가져오기
-        text_content = fetch_and_extract_text(url)
+        # 콘텐츠가 변경되었는지 확인하기 위해 항상 먼저 가져오기 (원본 그대로)
+        text_content = fetch_and_extract_text_simple(url)
 
         if not text_content or len(text_content.strip()) < 50:
             logger.warning("Insufficient content", url=url, length=len(text_content))

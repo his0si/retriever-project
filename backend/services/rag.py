@@ -44,12 +44,12 @@ class RAGService:
             # Adjust search parameters based on mode
             if mode == "expand":
                 # Expand mode: retrieve more documents for broader context
-                limit = settings.top_k * 2
-                score_threshold = 0.3  # Lower threshold for more flexible matching
+                limit = settings.top_k * 3
+                score_threshold = 0.2  # Very low threshold for maximum coverage
             else:
-                # Filter mode: strict matching with fewer documents
-                limit = settings.top_k
-                score_threshold = 0.5  # Higher threshold for precise matching
+                # Filter mode: still relaxed for Korean text matching
+                limit = settings.top_k * 2
+                score_threshold = 0.3  # Lower threshold to handle Korean embedding issues
 
             # Search similar documents
             search_results = self.qdrant_client.search(
@@ -100,6 +100,7 @@ class RAGService:
         # Adjust system prompt based on mode
         if mode == "expand":
             system_prompt = """당신은 학교 웹사이트 정보를 안내하는 Q&A 챗봇입니다.
+**중요: 사용자가 질문한 언어와 동일한 언어로 답변하세요. 한국어 질문에는 한국어로, 영어 질문에는 영어로 답변하세요.**
 주어진 '컨텍스트'를 기반으로 사용자의 '질문'에 답변하되, 보다 유연하고 포괄적으로 답변하세요.
 컨텍스트의 정보를 바탕으로 합리적인 추론과 일반적인 대학 정보를 활용하여 답변할 수 있습니다.
 다만, 추론이나 일반적 정보를 사용할 때는 "일반적으로", "보통", "추측하자면" 등의 표현을 사용하여 명확히 구분하세요.
@@ -137,6 +138,7 @@ class RAGService:
 답변은 친절하고 명확하게 작성하되, 학생들에게 유용한 정보를 제공하는 것을 목표로 하세요."""
         else:
             system_prompt = """당신은 학교 웹사이트 정보를 안내하는 Q&A 챗봇입니다.
+**중요: 사용자가 질문한 언어와 동일한 언어로 답변하세요. 한국어 질문에는 한국어로, 영어 질문에는 영어로 답변하세요.**
 반드시 주어진 '컨텍스트' 내용만을 사용하여 사용자의 '질문'에 답변해야 합니다.
 컨텍스트에 없는 내용은 '죄송합니다. 해당 정보를 찾을 수 없습니다.'라고 답변하세요.
 
