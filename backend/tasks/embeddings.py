@@ -238,6 +238,33 @@ def fetch_and_extract_text_simple(url: str, html_content: str = None) -> str:
         if not main_content:
             main_content = soup.body if soup.body else soup
 
+        # 테이블을 읽기 쉬운 텍스트로 변환
+        for table in main_content.find_all('table'):
+            table_text = []
+            for tr in table.find_all('tr'):
+                cells = []
+                for cell in tr.find_all(['th', 'td']):
+                    cell_text = cell.get_text(separator=' ', strip=True)
+                    if cell_text:
+                        cells.append(cell_text)
+                if cells:
+                    table_text.append(' | '.join(cells))
+
+            if table_text:
+                # 테이블을 구조화된 텍스트로 교체
+                table.string = '\n' + '\n'.join(table_text) + '\n'
+
+        # 리스트 아이템을 bullet point로 변환
+        for ul in main_content.find_all(['ul', 'ol']):
+            list_items = []
+            for li in ul.find_all('li', recursive=False):
+                li_text = li.get_text(separator=' ', strip=True)
+                if li_text:
+                    list_items.append(f'- {li_text}')
+
+            if list_items:
+                ul.string = '\n' + '\n'.join(list_items) + '\n'
+
         # 텍스트 추출
         text = main_content.get_text(separator="\n", strip=True)
 
