@@ -8,7 +8,6 @@ interface DatabaseStatusProps {
   showDbStatus: boolean
   isRefreshing: boolean
   isLoading: boolean
-  isAutoLoading: boolean
   rootUrl: string
   onRefresh: () => void
   onToggleShow: () => void
@@ -19,7 +18,6 @@ export default function DatabaseStatus({
   showDbStatus,
   isRefreshing,
   isLoading,
-  isAutoLoading,
   rootUrl,
   onRefresh,
   onToggleShow
@@ -77,15 +75,10 @@ export default function DatabaseStatus({
       </div>
 
       {/* 진행중인 작업 정보 */}
-      {(isLoading || isAutoLoading) && (
+      {isLoading && (
         <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
           <p className="text-blue-800 dark:text-blue-200 font-medium">진행중인 작업:</p>
-          {isLoading && (
-            <p className="text-blue-700 dark:text-blue-300 text-sm">수동 크롤링: {rootUrl}</p>
-          )}
-          {isAutoLoading && (
-            <p className="text-blue-700 dark:text-blue-300 text-sm">자동 크롤링: JSON 파일 사이트들</p>
-          )}
+          <p className="text-blue-700 dark:text-blue-300 text-sm">수동 크롤링: {rootUrl}</p>
           <p className="text-blue-600 dark:text-blue-400 text-xs mt-1">
             작업 완료 후 아래 상태가 업데이트됩니다
           </p>

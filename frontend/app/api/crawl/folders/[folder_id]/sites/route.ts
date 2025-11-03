@@ -2,28 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // 환경에 따라 백엔드 URL 결정
 const getBackendUrl = () => {
-  // Docker 환경에서는 컨테이너 내부 주소 사용
-  return process.env.BACKEND_URL || 'http://api:8000'
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.BACKEND_URL || 'http://api:8000'
+  }
+  return process.env.BACKEND_URL || 'http://localhost:8000'
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { folder_id: string } }
+) {
   try {
-    let body = {}
-    
-    // Request body가 있는지 확인
-    const contentLength = request.headers.get('content-length')
-    if (contentLength && parseInt(contentLength) > 0) {
-      try {
-        body = await request.json()
-      } catch (e) {
-        // 빈 body이거나 파싱 오류 시 빈 객체 사용
-        body = {}
-      }
-    }
-    
+    const body = await request.json()
     const backendUrl = getBackendUrl()
-    
-    const response = await fetch(`${backendUrl}/crawl/auto`, {
+    const response = await fetch(`${backendUrl}/crawl/folders/${params.folder_id}/sites`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -35,7 +27,7 @@ export async function POST(request: NextRequest) {
       const error = await response.text()
       console.error('Backend response error:', error)
       return NextResponse.json(
-        { error: 'Failed to start auto crawl' },
+        { error: 'Failed to add site to folder' },
         { status: response.status }
       )
     }
@@ -43,7 +35,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json()
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Auto crawl API error:', error)
+    console.error('Add site to folder API error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

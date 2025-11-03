@@ -1,21 +1,3 @@
-export interface CrawlSite {
-  name: string
-  url: string
-  description: string
-  enabled: boolean
-}
-
-export interface CrawlSites {
-  sites: CrawlSite[]
-  settings: {
-    max_depth: number
-    update_frequency: string
-    last_updated: string
-    total_sites: number
-  }
-  schedule: string
-}
-
 export interface DbStatusUpdate {
   url: string
   updated_at: string
@@ -31,16 +13,6 @@ export interface DbStatus {
 
 export interface CrawlResponse {
   task_id: string
-}
-
-export interface AutoCrawlResponse extends CrawlResponse {
-  sites: string[]
-}
-
-export interface ToggleSiteResponse {
-  site_name: string
-  enabled: boolean
-  message: string
 }
 
 export interface TaskDetail {
@@ -95,3 +67,66 @@ export interface PurgeResponse {
 
 export type AlertType = 'success' | 'error' | 'info'
 export type ButtonVariant = 'primary' | 'secondary'
+
+// ============================================================================
+// Scheduled Crawling Types (Supabase-based)
+// ============================================================================
+
+export type ScheduleType = 'daily' | 'weekly' | 'monthly'
+
+export interface CrawlFolder {
+  id: string
+  name: string
+  schedule_type: ScheduleType
+  schedule_time: string  // "HH:MM:SS" format
+  schedule_day: number | null  // 0=Sunday, 6=Saturday (null for daily/monthly)
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ScheduledCrawlSite {
+  id: string
+  folder_id: string
+  name: string
+  url: string
+  description: string | null
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface FolderWithSites extends CrawlFolder {
+  sites: ScheduledCrawlSite[]
+}
+
+export interface CreateFolderRequest {
+  name: string
+  schedule_type: ScheduleType
+  schedule_time: string
+  schedule_day?: number | null
+  enabled?: boolean
+}
+
+export interface UpdateFolderRequest {
+  name?: string
+  schedule_type?: ScheduleType
+  schedule_time?: string
+  schedule_day?: number | null
+  enabled?: boolean
+}
+
+export interface CreateSiteRequest {
+  folder_id: string
+  name: string
+  url: string
+  description?: string
+  enabled?: boolean
+}
+
+export interface UpdateSiteRequest {
+  name?: string
+  url?: string
+  description?: string
+  enabled?: boolean
+}

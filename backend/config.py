@@ -1,28 +1,7 @@
 import os
-import json
-from pathlib import Path
 from pydantic_settings import BaseSettings
 from pydantic import Field
 from typing import List, Optional
-
-
-def load_crawl_sites() -> List[str]:
-    """Load crawl sites from JSON configuration file"""
-    try:
-        config_path = Path(__file__).parent / "crawl_sites.json"
-        with open(config_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        # Extract enabled URLs only
-        enabled_urls = [
-            site["url"] for site in data["sites"] 
-            if site.get("enabled", True)
-        ]
-        return enabled_urls
-    except Exception as e:
-        # JSON 파일 읽기 실패 시 빈 리스트 반환
-        print(f"Error: Could not load crawl_sites.json: {e}")
-        return []
 
 
 class Settings(BaseSettings):
@@ -78,12 +57,10 @@ class Settings(BaseSettings):
     
     # RAG
     top_k: int = Field(default=5, env="TOP_K")
-    
-    # Auto Crawling Configuration
-    auto_crawl_enabled: bool = Field(default=True, env="AUTO_CRAWL_ENABLED")
-    crawl_schedule: str = Field(default="0 2 * * *", env="CRAWL_SCHEDULE")  # 매일 새벽 2시
+
+    # Crawling Configuration
     max_crawl_depth: int = Field(default=2, env="MAX_CRAWL_DEPTH")
-    
+
     # CORS Configuration
     cors_origins: str = Field(default="http://localhost:3000", env="CORS_ORIGINS")
     
@@ -91,11 +68,6 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""
         return [origin.strip() for origin in self.cors_origins.split(",")]
-    
-    @property
-    def crawl_urls(self) -> List[str]:
-        """Load crawl URLs from configuration file"""
-        return load_crawl_sites()
 
     class Config:
         # 로컬 환경 파일이 있으면 우선 로드, 없으면 기본 .env 로드

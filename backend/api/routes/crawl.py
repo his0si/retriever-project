@@ -1,12 +1,23 @@
 from fastapi import APIRouter, HTTPException
 from api.models import CrawlRequest, CrawlResponse, CrawlStatusResponse
-from tasks.crawler import crawl_website, auto_crawl_websites
+from api.models.crawl_schedule import (
+    CrawlFolderCreate,
+    CrawlFolderUpdate,
+    CrawlFolderResponse,
+    ScheduledCrawlSiteCreate,
+    ScheduledCrawlSiteUpdate,
+    ScheduledCrawlSiteResponse,
+    FolderWithSitesResponse
+)
+from tasks.crawler import crawl_website
 from config import settings
 from celery_app import celery_app
+from supabase_client import supabase
 import uuid
 import json
 from pathlib import Path
 import structlog
+from typing import List
 
 router = APIRouter(prefix="/crawl", tags=["crawl"])
 logger = structlog.get_logger()
@@ -269,99 +280,267 @@ async def get_crawl_status(task_id: str):
     )
 
 
-@router.get("/sites")
-async def get_crawl_sites():
-    """
-    Get list of configured crawl sites
-    """
-    try:
-        config_path = Path(__file__).parent.parent.parent / "crawl_sites.json"
-        
-        # 파일 존재 여부 확인 및 로깅
-        if not config_path.exists():
-            logger.error("crawl_sites.json not found", path=str(config_path))
-            raise HTTPException(status_code=404, detail="crawl_sites.json file not found")
-        
-        # 파일을 매번 새로 읽음 (캐싱 방지)
-        with open(config_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        logger.info("Loaded crawl sites", 
-                   path=str(config_path), 
-                   sites_count=len(data.get("sites", [])))
-        
-        return {
-            "sites": data["sites"],
-            "settings": data["settings"],
-            "schedule": settings.crawl_schedule
-        }
-    
-    except json.JSONDecodeError as e:
-        logger.error("Invalid JSON in crawl_sites.json", error=str(e))
-        raise HTTPException(status_code=500, detail="Invalid JSON format in crawl_sites.json")
-    except Exception as e:
-        logger.error("Failed to load crawl sites", error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to load crawl sites configuration")
+# ============================================================================
+# Supabase 기반 스케줄 크롤링 API
+# ============================================================================
 
-
-@router.post("/sites/{site_name}/toggle")
-async def toggle_site(site_name: str):
+@router.get("/folders", response_model=List[FolderWithSitesResponse])
+async def get_crawl_folders():
     """
-    Toggle the enabled status of a specific site
+    Get all crawl folders with their sites
     """
     try:
-        config_path = Path(__file__).parent.parent.parent / "crawl_sites.json"
-        
-        if not config_path.exists():
-            raise HTTPException(status_code=404, detail="crawl_sites.json file not found")
-        
-        # 파일 읽기
-        with open(config_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        # 사이트 찾기 및 토글
-        site_found = False
-        for site in data["sites"]:
-            if site["name"] == site_name:
-                site["enabled"] = not site.get("enabled", True)
-                site_found = True
-                logger.info(f"Toggled site {site_name} to {site['enabled']}")
-                break
-        
-        if not site_found:
-            raise HTTPException(status_code=404, detail=f"Site '{site_name}' not found")
-        
-        # 파일에 다시 쓰기
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        
-        return {
-            "site_name": site_name,
-            "enabled": next(site["enabled"] for site in data["sites"] if site["name"] == site_name),
-            "message": f"Site '{site_name}' toggled successfully"
-        }
-    
+        # 모든 폴더 조회
+        folders_response = supabase.table("crawl_folders").select("*").order("created_at", desc=False).execute()
+
+        if not folders_response.data:
+            return []
+
+        # 각 폴더에 대한 사이트 조회
+        result = []
+        for folder in folders_response.data:
+            sites_response = supabase.table("scheduled_crawl_sites").select("*").eq("folder_id", folder["id"]).order("created_at", desc=False).execute()
+
+            folder_data = {
+                **folder,
+                "sites": sites_response.data or []
+            }
+            result.append(folder_data)
+
+        logger.info(f"Retrieved {len(result)} folders")
+        return result
+
     except Exception as e:
-        logger.error(f"Failed to toggle site {site_name}", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to toggle site: {str(e)}")
+        logger.error("Failed to get folders", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to get folders: {str(e)}")
 
 
-@router.post("/auto", response_model=dict)
-async def trigger_auto_crawl():
+@router.post("/folders", response_model=CrawlFolderResponse)
+async def create_crawl_folder(folder: CrawlFolderCreate):
     """
-    Manually trigger automatic crawling of predefined websites
+    Create a new crawl folder
     """
     try:
-        task = auto_crawl_websites.delay()
+        folder_data = folder.model_dump()
 
-        logger.info("Manual auto-crawl triggered", task_id=task.id)
+        # 이름 중복 체크
+        existing = supabase.table("crawl_folders").select("*").eq("name", folder.name).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail=f"Folder with name '{folder.name}' already exists")
 
-        return {
-            "task_id": task.id,
-            "status": "triggered",
-            "message": "Auto-crawl task started"
-        }
+        # 폴더 생성
+        result = supabase.table("crawl_folders").insert(folder_data).execute()
 
+        logger.info(f"Created folder: {folder.name}")
+        return result.data[0]
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Failed to trigger auto-crawl", error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to trigger auto-crawl")
+        logger.error("Failed to create folder", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to create folder: {str(e)}")
+
+
+@router.patch("/folders/{folder_id}", response_model=CrawlFolderResponse)
+async def update_crawl_folder(folder_id: str, folder: CrawlFolderUpdate):
+    """
+    Update an existing crawl folder
+    """
+    try:
+        # 폴더 존재 확인
+        existing = supabase.table("crawl_folders").select("*").eq("id", folder_id).execute()
+        if not existing.data:
+            raise HTTPException(status_code=404, detail=f"Folder with ID '{folder_id}' not found")
+
+        # 업데이트할 데이터만 추출
+        update_data = folder.model_dump(exclude_unset=True)
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        # 이름 중복 체크 (이름 변경 시)
+        if "name" in update_data:
+            name_check = supabase.table("crawl_folders").select("*").eq("name", update_data["name"]).neq("id", folder_id).execute()
+            if name_check.data:
+                raise HTTPException(status_code=400, detail=f"Folder with name '{update_data['name']}' already exists")
+
+        # 폴더 업데이트
+        result = supabase.table("crawl_folders").update(update_data).eq("id", folder_id).execute()
+
+        logger.info(f"Updated folder: {folder_id}")
+        return result.data[0]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to update folder", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to update folder: {str(e)}")
+
+
+@router.delete("/folders/{folder_id}")
+async def delete_crawl_folder(folder_id: str):
+    """
+    Delete a crawl folder (and all its sites via CASCADE)
+    """
+    try:
+        # 폴더 존재 확인
+        existing = supabase.table("crawl_folders").select("*").eq("id", folder_id).execute()
+        if not existing.data:
+            raise HTTPException(status_code=404, detail=f"Folder with ID '{folder_id}' not found")
+
+        folder_name = existing.data[0]["name"]
+
+        # 폴더 삭제 (CASCADE로 관련 사이트도 자동 삭제)
+        supabase.table("crawl_folders").delete().eq("id", folder_id).execute()
+
+        logger.info(f"Deleted folder: {folder_name} (ID: {folder_id})")
+        return {"message": f"Folder '{folder_name}' deleted successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to delete folder", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to delete folder: {str(e)}")
+
+
+@router.post("/folders/{folder_id}/sites", response_model=ScheduledCrawlSiteResponse)
+async def create_crawl_site(folder_id: str, site: ScheduledCrawlSiteCreate):
+    """
+    Add a new site to a folder
+    """
+    try:
+        # 폴더 존재 확인
+        folder_check = supabase.table("crawl_folders").select("*").eq("id", folder_id).execute()
+        if not folder_check.data:
+            raise HTTPException(status_code=404, detail=f"Folder with ID '{folder_id}' not found")
+
+        # folder_id 설정
+        site_data = site.model_dump()
+        site_data["folder_id"] = folder_id
+
+        # URL 중복 체크 (같은 폴더 내)
+        existing = supabase.table("scheduled_crawl_sites").select("*").eq("folder_id", folder_id).eq("url", site.url).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail=f"Site with URL '{site.url}' already exists in this folder")
+
+        # 사이트 생성
+        result = supabase.table("scheduled_crawl_sites").insert(site_data).execute()
+
+        logger.info(f"Created site: {site.name} in folder {folder_id}")
+        return result.data[0]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to create site", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to create site: {str(e)}")
+
+
+@router.patch("/sites/{site_id}", response_model=ScheduledCrawlSiteResponse)
+async def update_crawl_site(site_id: str, site: ScheduledCrawlSiteUpdate):
+    """
+    Update an existing crawl site
+    """
+    try:
+        # 사이트 존재 확인
+        existing = supabase.table("scheduled_crawl_sites").select("*").eq("id", site_id).execute()
+        if not existing.data:
+            raise HTTPException(status_code=404, detail=f"Site with ID '{site_id}' not found")
+
+        # 업데이트할 데이터만 추출
+        update_data = site.model_dump(exclude_unset=True)
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        # URL 중복 체크 (URL 변경 시)
+        if "url" in update_data:
+            folder_id = existing.data[0]["folder_id"]
+            url_check = supabase.table("scheduled_crawl_sites").select("*").eq("folder_id", folder_id).eq("url", update_data["url"]).neq("id", site_id).execute()
+            if url_check.data:
+                raise HTTPException(status_code=400, detail=f"Site with URL '{update_data['url']}' already exists in this folder")
+
+        # 사이트 업데이트
+        result = supabase.table("scheduled_crawl_sites").update(update_data).eq("id", site_id).execute()
+
+        logger.info(f"Updated site: {site_id}")
+        return result.data[0]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to update site", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to update site: {str(e)}")
+
+
+@router.delete("/sites/{site_id}")
+async def delete_crawl_site(site_id: str):
+    """
+    Delete a crawl site
+    """
+    try:
+        # 사이트 존재 확인
+        existing = supabase.table("scheduled_crawl_sites").select("*").eq("id", site_id).execute()
+        if not existing.data:
+            raise HTTPException(status_code=404, detail=f"Site with ID '{site_id}' not found")
+
+        site_name = existing.data[0]["name"]
+
+        # 사이트 삭제
+        supabase.table("scheduled_crawl_sites").delete().eq("id", site_id).execute()
+
+        logger.info(f"Deleted site: {site_name} (ID: {site_id})")
+        return {"message": f"Site '{site_name}' deleted successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to delete site", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to delete site: {str(e)}")
+
+
+@router.post("/folders/{folder_id}/execute", response_model=CrawlResponse)
+async def execute_folder_crawl(folder_id: str):
+    """
+    Execute immediate crawl for all enabled sites in a folder
+    """
+    try:
+        # 폴더 확인
+        folder = supabase.table("crawl_folders").select("*").eq("id", folder_id).execute()
+        if not folder.data:
+            raise HTTPException(status_code=404, detail=f"Folder with ID '{folder_id}' not found")
+
+        folder_name = folder.data[0]["name"]
+
+        # 해당 폴더의 활성화된 사이트들만 가져오기
+        sites = supabase.table("scheduled_crawl_sites").select("*").eq("folder_id", folder_id).eq("enabled", True).execute()
+
+        if not sites.data:
+            raise HTTPException(status_code=400, detail=f"No enabled sites found in folder '{folder_name}'")
+
+        task_id = str(uuid.uuid4())
+
+        # 각 사이트를 크롤링 태스크로 추가
+        for site in sites.data:
+            crawl_website.delay(
+                task_id=f"{task_id}_{site['id']}",
+                root_url=site["url"],
+                max_depth=2  # 기본 depth 2
+            )
+            logger.info(f"Queued crawl for site: {site['name']} ({site['url']})")
+
+        logger.info(
+            "Folder crawl tasks triggered",
+            folder_id=folder_id,
+            folder_name=folder_name,
+            task_id=task_id,
+            site_count=len(sites.data)
+        )
+
+        return CrawlResponse(task_id=task_id)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to execute folder crawl", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to execute folder crawl: {str(e)}")

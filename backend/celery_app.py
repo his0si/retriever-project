@@ -6,7 +6,7 @@ celery_app = Celery(
     "rag_chatbot",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["tasks.crawler", "tasks.embeddings"]
+    include=["tasks.crawler", "tasks.embeddings", "tasks.scheduled_crawler"]
 )
 
 # Configure Celery
