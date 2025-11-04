@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import {
   FolderIcon,
   PlusIcon,
@@ -54,36 +55,21 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
     enabled: true
   })
 
-  // Load folders
+  // Load folders - 한 번만 정렬하고 그 순서를 계속 유지
   const loadFolders = async () => {
     setIsLoading(true)
     setError(null)
 
     try {
       const response = await axios.get<FolderWithSites[]>(`${API_URL}/crawl/folders`)
-      // 폴더 정렬: 활성화된 것을 위로, 각 그룹 내에서는 가나다순
-      const sortedFolders = response.data.sort((a, b) => {
-        // 활성화 상태가 다르면 활성화된 것을 위로
-        if (a.enabled !== b.enabled) {
-          return a.enabled ? -1 : 1
-        }
-        // 활성화 상태가 같으면 이름순 정렬
-        return a.name.localeCompare(b.name, 'ko')
+
+      // 초기 로드 시에만 정렬하고, 이후에는 이 순서를 절대 바꾸지 않음
+      const sortedData = response.data.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+      sortedData.forEach(folder => {
+        folder.sites.sort((a, b) => a.name.localeCompare(b.name, 'ko'))
       })
 
-      // 각 폴더 내 사이트 정렬: 활성화된 것을 위로, 각 그룹 내에서는 가나다순
-      sortedFolders.forEach(folder => {
-        folder.sites.sort((a, b) => {
-          // 활성화 상태가 다르면 활성화된 것을 위로
-          if (a.enabled !== b.enabled) {
-            return a.enabled ? -1 : 1
-          }
-          // 활성화 상태가 같으면 이름순 정렬
-          return a.name.localeCompare(b.name, 'ko')
-        })
-      })
-
-      setFolders(sortedFolders)
+      setFolders(sortedData)
     } catch (err) {
       console.error('Failed to load folders:', err)
       setError('폴더 목록을 불러오는데 실패했습니다')
@@ -234,67 +220,75 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
     }
   }
 
-  // Toggle site enabled - 낙관적 업데이트로 즉각 반영
+  // Toggle site enabled - 스크롤 위치 절대 유지
   const handleToggleSite = async (siteId: string, currentEnabled: boolean) => {
-    // 낙관적 업데이트: UI를 즉시 변경
-    setFolders(prevFolders => {
-      const newFolders = prevFolders.map(folder => ({
-        ...folder,
-        sites: folder.sites.map(site =>
-          site.id === siteId
-            ? { ...site, enabled: !currentEnabled }
-            : site
-        ).sort((a, b) => {
-          // 활성화 상태가 다르면 활성화된 것을 위로
-          if (a.enabled !== b.enabled) {
-            return a.enabled ? -1 : 1
-          }
-          // 활성화 상태가 같으면 이름순 정렬
-          return a.name.localeCompare(b.name, 'ko')
-        })
-      }))
-      return newFolders
+    // 현재 스크롤 위치 저장
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop
+
+    // 상태 업데이트
+    flushSync(() => {
+      setFolders(prevFolders =>
+        prevFolders.map(folder => ({
+          ...folder,
+          sites: folder.sites.map(site =>
+            site.id === siteId ? { ...site, enabled: !currentEnabled } : site
+          )
+        }))
+      )
     })
 
+    // 스크롤 위치 강제 고정
+    window.scrollTo(0, scrollY)
+
+    // API 호출
     try {
       await axios.patch(`${API_URL}/crawl/sites/${siteId}`, {
         enabled: !currentEnabled
       })
-      // 낙관적 업데이트로 이미 정렬되었으므로 reload 불필요
     } catch (err: any) {
       // 실패 시 원래대로 복구
-      await loadFolders()
+      flushSync(() => {
+        setFolders(prevFolders =>
+          prevFolders.map(folder => ({
+            ...folder,
+            sites: folder.sites.map(site =>
+              site.id === siteId ? { ...site, enabled: currentEnabled } : site
+            )
+          }))
+        )
+      })
+      window.scrollTo(0, scrollY)
       alert(err.response?.data?.detail || '사이트 상태 변경에 실패했습니다')
     }
   }
 
   // Toggle folder enabled
   const handleToggleFolder = async (folderId: string, currentEnabled: boolean) => {
-    // 낙관적 업데이트
-    setFolders(prevFolders => {
-      const newFolders = prevFolders.map(folder =>
-        folder.id === folderId
-          ? { ...folder, enabled: !currentEnabled }
-          : folder
-      ).sort((a, b) => {
-        // 활성화 상태가 다르면 활성화된 것을 위로
-        if (a.enabled !== b.enabled) {
-          return a.enabled ? -1 : 1
-        }
-        // 활성화 상태가 같으면 이름순 정렬
-        return a.name.localeCompare(b.name, 'ko')
-      })
-      return newFolders
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop
+
+    flushSync(() => {
+      setFolders(prevFolders =>
+        prevFolders.map(folder =>
+          folder.id === folderId ? { ...folder, enabled: !currentEnabled } : folder
+        )
+      )
     })
+
+    window.scrollTo(0, scrollY)
 
     try {
       await axios.patch(`${API_URL}/crawl/folders/${folderId}`, {
         enabled: !currentEnabled
       })
-      // 낙관적 업데이트로 이미 정렬되었으므로 reload 불필요
     } catch (err: any) {
-      // 실패 시 원래대로 복구
-      await loadFolders()
+      flushSync(() => {
+        setFolders(prevFolders =>
+          prevFolders.map(folder =>
+            folder.id === folderId ? { ...folder, enabled: currentEnabled } : folder
+          )
+        )
+      })
+      window.scrollTo(0, scrollY)
       alert(err.response?.data?.detail || '폴더 상태 변경에 실패했습니다')
     }
   }
@@ -327,36 +321,31 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
     const folder = folders.find(f => f.id === folderId)
     if (!folder) return
 
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop
     const enabledCount = folder.sites.filter(s => s.enabled).length
-    const newEnabledState = enabledCount < folder.sites.length // 전체가 활성화되지 않았으면 활성화, 모두 활성화되어 있으면 비활성화
+    const newEnabledState = enabledCount < folder.sites.length
 
-    // 낙관적 업데이트
-    setFolders(prevFolders => {
-      return prevFolders.map(f =>
-        f.id === folderId
-          ? {
-              ...f,
-              sites: f.sites.map(site => ({ ...site, enabled: newEnabledState })).sort((a, b) => {
-                if (a.enabled !== b.enabled) return a.enabled ? -1 : 1
-                return a.name.localeCompare(b.name, 'ko')
-              })
-            }
-          : f
+    flushSync(() => {
+      setFolders(prevFolders =>
+        prevFolders.map(f =>
+          f.id === folderId
+            ? { ...f, sites: f.sites.map(site => ({ ...site, enabled: newEnabledState })) }
+            : f
+        )
       )
     })
 
-    // 모든 사이트 업데이트 요청
+    window.scrollTo(0, scrollY)
+
     try {
       await Promise.all(
         folder.sites.map(site =>
-          axios.patch(`${API_URL}/crawl/sites/${site.id}`, {
-            enabled: newEnabledState
-          })
+          axios.patch(`${API_URL}/crawl/sites/${site.id}`, { enabled: newEnabledState })
         )
       )
     } catch (err: any) {
-      // 실패 시 복구
       await loadFolders()
+      window.scrollTo(0, scrollY)
       alert(err.response?.data?.detail || '사이트 상태 변경에 실패했습니다')
     }
   }
@@ -387,7 +376,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
   const enabledFolders = folders.filter(f => f.enabled)
 
   return (
-    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800" style={{ scrollBehavior: 'auto' }}>
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
         <h3 className="font-medium text-blue-900 dark:text-blue-100">
           스케줄 크롤링 폴더
@@ -460,7 +449,13 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                   {/* 첫 번째 줄: 접기 버튼 + 폴더 아이콘 + 폴더 이름 + 활성화 여부 */}
                   <div className="flex items-center gap-2 mb-1">
                     <button
-                      onClick={() => toggleFolder(folder.id)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        e.currentTarget.blur()
+                        toggleFolder(folder.id)
+                      }}
                       className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex-shrink-0"
                       aria-label={isExpanded ? '접기' : '펼치기'}
                     >
@@ -478,8 +473,11 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                     </h4>
 
                     <button
+                      type="button"
                       onClick={(e) => {
+                        e.preventDefault()
                         e.stopPropagation()
+                        e.currentTarget.blur()
                         handleToggleAllSites(folder.id)
                       }}
                       className={`text-xs px-2 py-0.5 rounded whitespace-nowrap transition-all hover:opacity-80 ${
@@ -507,7 +505,13 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                   {/* 세 번째 줄: 아이콘 버튼들 (오른쪽 정렬) */}
                   <div className="flex items-center justify-end gap-1">
                     <button
-                      onClick={() => handleToggleFolder(folder.id, folder.enabled)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        e.currentTarget.blur()
+                        handleToggleFolder(folder.id, folder.enabled)
+                      }}
                       className="p-1.5 hover:bg-sky-200 dark:hover:bg-sky-800/50 rounded transition-colors"
                       title={folder.enabled ? '비활성화' : '활성화'}
                     >
@@ -515,7 +519,13 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                     </button>
 
                     <button
-                      onClick={() => handleExecuteFolderCrawl(folder.id, folder.name)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        e.currentTarget.blur()
+                        handleExecuteFolderCrawl(folder.id, folder.name)
+                      }}
                       className="p-1.5 hover:bg-sky-200 dark:hover:bg-sky-800/50 rounded transition-colors"
                       title="활성화된 사이트 즉시 크롤링"
                       disabled={enabledSitesCount === 0}
@@ -524,7 +534,13 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                     </button>
 
                     <button
-                      onClick={() => openEditFolderModal(folder)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        e.currentTarget.blur()
+                        openEditFolderModal(folder)
+                      }}
                       className="p-1.5 hover:bg-sky-200 dark:hover:bg-sky-800/50 rounded transition-colors"
                       title="폴더 수정"
                     >
@@ -532,7 +548,11 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                     </button>
 
                     <button
-                      onClick={() => {
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        e.currentTarget.blur()
                         setSelectedFolderId(folder.id)
                         setShowCreateSiteModal(true)
                       }}
@@ -543,7 +563,13 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                     </button>
 
                     <button
-                      onClick={() => handleDeleteFolder(folder.id, folder.name)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        e.currentTarget.blur()
+                        handleDeleteFolder(folder.id, folder.name)
+                      }}
                       className="p-1.5 hover:bg-sky-200 dark:hover:bg-sky-800/50 rounded transition-colors"
                       title="폴더 삭제"
                     >
@@ -563,6 +589,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                       folder.sites.map((site) => (
                         <div
                           key={site.id}
+                          id={`site-${site.id}`}
                           className={`flex items-center gap-2 p-2 rounded text-xs transition-all ${
                             site.enabled
                               ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700'
@@ -570,7 +597,13 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                           }`}
                         >
                           <button
-                            onClick={() => handleToggleSite(site.id, site.enabled)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              e.currentTarget.blur()
+                              handleToggleSite(site.id, site.enabled)
+                            }}
                             className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                               site.enabled
                                 ? 'bg-blue-500 border-blue-500'
@@ -607,7 +640,13 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                           </div>
 
                           <button
-                            onClick={() => handleDeleteSite(site.id, site.name)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              e.currentTarget.blur()
+                              handleDeleteSite(site.id, site.name)
+                            }}
                             className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors flex-shrink-0"
                             title="사이트 삭제"
                           >
