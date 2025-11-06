@@ -80,6 +80,7 @@ export interface CrawlFolder {
   schedule_type: ScheduleType
   schedule_time: string  // "HH:MM:SS" format
   schedule_day: number | null  // 0=Sunday, 6=Saturday (null for daily/monthly)
+  max_depth: number  // Maximum crawl depth (1-5)
   enabled: boolean
   created_at: string
   updated_at: string
@@ -105,6 +106,7 @@ export interface CreateFolderRequest {
   schedule_type: ScheduleType
   schedule_time: string
   schedule_day?: number | null
+  max_depth?: number
   enabled?: boolean
 }
 
@@ -113,6 +115,7 @@ export interface UpdateFolderRequest {
   schedule_type?: ScheduleType
   schedule_time?: string
   schedule_day?: number | null
+  max_depth?: number
   enabled?: boolean
 }
 

@@ -44,6 +44,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
     schedule_type: 'daily',
     schedule_time: '02:00',
     schedule_day: null,
+    max_depth: 2,
     enabled: true
   })
 
@@ -110,6 +111,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
         schedule_type: 'daily',
         schedule_time: '02:00',
         schedule_day: null,
+        max_depth: 2,
         enabled: true
       })
       loadFolders()
@@ -131,6 +133,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
         schedule_type: folderForm.schedule_type,
         schedule_time: `${folderForm.schedule_time}:00`,  // HH:MM:SS format
         schedule_day: folderForm.schedule_day,
+        max_depth: folderForm.max_depth,
         enabled: folderForm.enabled
       }
 
@@ -142,6 +145,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
         schedule_type: 'daily',
         schedule_time: '02:00',
         schedule_day: null,
+        max_depth: 2,
         enabled: true
       })
       await loadFolders()
@@ -159,6 +163,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
       schedule_type: folder.schedule_type,
       schedule_time: folder.schedule_time.substring(0, 5), // HH:MM:SS -> HH:MM
       schedule_day: folder.schedule_day,
+      max_depth: folder.max_depth,
       enabled: folder.enabled
     })
     setShowEditFolderModal(true)
@@ -399,7 +404,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
               <LightBulbIcon className="w-3 h-3 mr-1" />설명:
             </span>
             <span className="text-gray-600 dark:text-gray-300 font-normal flex-1">
-              폴더에 등록된 사이트를 설정된 주기마다 자동으로 크롤링합니다.
+              폴더에 등록된 사이트를 설정된 주기마다 자동으로 크롤링 및 스마트 임베딩 처리합니다.
               <br />
               폴더별 또는 사이트별로 활성화 여부(<ClockIcon className="w-3 h-3 inline" />)를 설정할 수 있으며, 필요한 경우 원하는 사이트만 수동으로 즉시 크롤링(<BoltIcon className="w-3 h-3 inline" />) 가능합니다.
             </span>
@@ -581,6 +586,151 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                 {/* Sites List */}
                 {isExpanded && (
                   <div className="border-t border-gray-200 dark:border-gray-700 p-2 space-y-2">
+                    {/* 최대 깊이 설정 */}
+                    <div className="bg-blue-100 dark:bg-blue-800/30 p-2 rounded text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <label className="text-gray-700 dark:text-gray-300 font-medium">
+                            최대 크롤링 깊이:
+                          </label>
+                          <p className="text-gray-600 dark:text-gray-400 mt-1">
+                            루트 URL에서 시작하여 탐색할 링크의 최대 깊이
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="relative flex items-center">
+                            <input
+                              type="number"
+                              min={1}
+                              max={5}
+                              value={folder.max_depth}
+                              onChange={async (e) => {
+                                const newDepth = parseInt(e.target.value)
+                                if (newDepth >= 1 && newDepth <= 5) {
+                                  const scrollY = window.pageYOffset || document.documentElement.scrollTop
+                                  const oldDepth = folder.max_depth
+
+                                  flushSync(() => {
+                                    setFolders(prevFolders =>
+                                      prevFolders.map(f =>
+                                        f.id === folder.id ? { ...f, max_depth: newDepth } : f
+                                      )
+                                    )
+                                  })
+
+                                  window.scrollTo(0, scrollY)
+
+                                  try {
+                                    await axios.patch(`${API_URL}/crawl/folders/${folder.id}`, {
+                                      max_depth: newDepth
+                                    })
+                                  } catch (err: any) {
+                                    flushSync(() => {
+                                      setFolders(prevFolders =>
+                                        prevFolders.map(f =>
+                                          f.id === folder.id ? { ...f, max_depth: oldDepth } : f
+                                        )
+                                      )
+                                    })
+                                    window.scrollTo(0, scrollY)
+                                    alert(err.response?.data?.detail || '최대 깊이 변경에 실패했습니다')
+                                  }
+                                }
+                              }}
+                              className="w-16 p-1 pr-5 text-xs border-2 border-blue-300 dark:border-blue-600 rounded bg-blue-100 dark:bg-blue-800/30 text-gray-900 dark:text-white text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <div className="absolute right-0.5 flex flex-col">
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const newDepth = Math.min(5, folder.max_depth + 1)
+                                  if (newDepth !== folder.max_depth) {
+                                    const scrollY = window.pageYOffset || document.documentElement.scrollTop
+                                    const oldDepth = folder.max_depth
+
+                                    flushSync(() => {
+                                      setFolders(prevFolders =>
+                                        prevFolders.map(f =>
+                                          f.id === folder.id ? { ...f, max_depth: newDepth } : f
+                                        )
+                                      )
+                                    })
+
+                                    window.scrollTo(0, scrollY)
+
+                                    try {
+                                      await axios.patch(`${API_URL}/crawl/folders/${folder.id}`, {
+                                        max_depth: newDepth
+                                      })
+                                    } catch (err: any) {
+                                      flushSync(() => {
+                                        setFolders(prevFolders =>
+                                          prevFolders.map(f =>
+                                            f.id === folder.id ? { ...f, max_depth: oldDepth } : f
+                                          )
+                                        )
+                                      })
+                                      window.scrollTo(0, scrollY)
+                                      alert(err.response?.data?.detail || '최대 깊이 변경에 실패했습니다')
+                                    }
+                                  }
+                                }}
+                                className="h-2.5 w-4 flex items-center justify-center bg-blue-100 dark:bg-blue-800/30 hover:bg-blue-200 dark:hover:bg-blue-700/30 border-b border-blue-300 dark:border-blue-600 rounded-tr"
+                              >
+                                <svg className="w-2 h-2 text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const newDepth = Math.max(1, folder.max_depth - 1)
+                                  if (newDepth !== folder.max_depth) {
+                                    const scrollY = window.pageYOffset || document.documentElement.scrollTop
+                                    const oldDepth = folder.max_depth
+
+                                    flushSync(() => {
+                                      setFolders(prevFolders =>
+                                        prevFolders.map(f =>
+                                          f.id === folder.id ? { ...f, max_depth: newDepth } : f
+                                        )
+                                      )
+                                    })
+
+                                    window.scrollTo(0, scrollY)
+
+                                    try {
+                                      await axios.patch(`${API_URL}/crawl/folders/${folder.id}`, {
+                                        max_depth: newDepth
+                                      })
+                                    } catch (err: any) {
+                                      flushSync(() => {
+                                        setFolders(prevFolders =>
+                                          prevFolders.map(f =>
+                                            f.id === folder.id ? { ...f, max_depth: oldDepth } : f
+                                          )
+                                        )
+                                      })
+                                      window.scrollTo(0, scrollY)
+                                      alert(err.response?.data?.detail || '최대 깊이 변경에 실패했습니다')
+                                    }
+                                  }
+                                }}
+                                className="h-2.5 w-4 flex items-center justify-center bg-blue-100 dark:bg-blue-800/30 hover:bg-blue-200 dark:hover:bg-blue-700/30 rounded-br"
+                              >
+                                <svg className="w-2 h-2 text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          <span className="text-gray-500 dark:text-gray-400">
+                            (1-5)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
                     {folder.sites.length === 0 ? (
                       <div className="text-center py-2 text-gray-500 dark:text-gray-400 text-xs">
                         사이트가 없습니다. 사이트를 추가해보세요.
@@ -728,6 +878,22 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium mb-1">최대 깊이</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={folderForm.max_depth}
+                  onChange={(e) => setFolderForm({ ...folderForm, max_depth: parseInt(e.target.value) })}
+                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  required
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  루트 URL에서 시작하여 탐색할 링크의 최대 깊이 (1-5)
+                </p>
+              </div>
+
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -823,6 +989,22 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
                   className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">최대 깊이</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={folderForm.max_depth}
+                  onChange={(e) => setFolderForm({ ...folderForm, max_depth: parseInt(e.target.value) })}
+                  className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  required
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  루트 URL에서 시작하여 탐색할 링크의 최대 깊이 (1-5)
+                </p>
               </div>
 
               <div className="flex items-center space-x-2">

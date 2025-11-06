@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS crawl_folders (
     schedule_type TEXT NOT NULL CHECK (schedule_type IN ('daily', 'weekly', 'monthly')),
     schedule_time TIME NOT NULL,
     schedule_day INTEGER CHECK (schedule_day IS NULL OR (schedule_day >= 0 AND schedule_day <= 6)),
+    max_depth INTEGER NOT NULL DEFAULT 2 CHECK (max_depth >= 1 AND max_depth <= 5),
     enabled BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

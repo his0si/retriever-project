@@ -22,9 +22,9 @@ export default function ManualCrawlForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4 border border-blue-200 dark:border-blue-800">
-        <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">수동 URL 크롤링</h4>
+        <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">수동 크롤링</h4>
         <p className="text-xs text-blue-700 dark:text-blue-300">
-          아래에 직접 입력한 URL을 크롤링합니다. 위의 &ldquo;JSON 파일 사이트 크롤링&rdquo;과는 별도의 기능입니다.
+          아래에 직접 입력한 URL을 크롤링합니다. 크롤링 후 자동으로 스마트 임베딩 처리가 진행됩니다.
         </p>
       </div>
 
@@ -68,7 +68,7 @@ export default function ManualCrawlForm({
         disabled={isLoading || !rootUrl.trim()}
         className="w-full"
       >
-        {isLoading ? '입력 URL 크롤링 중...' : '입력한 URL 크롤링 시작'}
+        {isLoading ? '수동 크롤링 중...' : '수동 크롤링 시작'}
       </Button>
     </form>
   )

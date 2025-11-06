@@ -76,7 +76,7 @@ services:
       - qdrant
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --concurrency=4 --pool=prefork"
+    command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --concurrency=1 --pool=prefork"
     deploy:
       resources:
         limits:

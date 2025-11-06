@@ -10,9 +10,10 @@ import Alert from '@/components/ui/Alert'
 
 interface QueueMonitorProps {
   onRefreshTrigger?: () => void
+  refreshTrigger?: number  // 외부에서 새로고침을 트리거하기 위한 prop
 }
 
-export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
+export default function QueueMonitor({ onRefreshTrigger, refreshTrigger }: QueueMonitorProps) {
   const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isPurging, setIsPurging] = useState(false)
@@ -64,6 +65,30 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
   useEffect(() => {
     fetchQueueStatus()
   }, [])
+
+  // refreshTrigger가 변경될 때마다 새로고침
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      fetchQueueStatus()
+    }
+  }, [refreshTrigger])
+
+  // 자동 폴링: 작업이 있을 때만 2초마다 새로고침
+  useEffect(() => {
+    if (!queueStatus) return
+
+    const hasPendingWork = queueStatus.current_activity.has_pending_work ||
+                          queueStatus.current_activity.is_crawling ||
+                          queueStatus.current_activity.is_processing_embeddings
+
+    if (hasPendingWork) {
+      const intervalId = setInterval(() => {
+        fetchQueueStatus()
+      }, 2000) // 2초마다 새로고침
+
+      return () => clearInterval(intervalId)
+    }
+  }, [queueStatus])
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -216,14 +241,14 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
                 <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">작업 유형별 통계</h4>
                 <div className="bg-blue-100 dark:bg-blue-800/30 p-2 rounded text-xs mb-3 space-y-1">
-                  <div className="text-gray-600 dark:text-gray-300">웹사이트 크롤링: 페이지 구조를 분석하여 모든 링크를 수집</div>
+                  <div className="text-gray-600 dark:text-gray-300">크롤링: 페이지 구조를 분석하여 모든 링크를 수집</div>
                   <div className="text-gray-600 dark:text-gray-300">스마트 임베딩 처리: 내용 변경 감지 후 기존 데이터 교체</div>
                   <div className="text-gray-600 dark:text-gray-300">일반 임베딩 처리: 중복 검사 없이 무조건 처리</div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-700 dark:text-gray-300">
-                      웹사이트 크롤링
+                      크롤링
                     </span>
                     <span className="font-semibold text-blue-600 dark:text-blue-400">
                       {Object.values(queueStatus.total_stats).reduce((sum, worker: any) => sum + (worker.crawl_website || 0), 0)}개 완료
@@ -256,7 +281,7 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
                     {queueStatus.task_details.active.map((task, idx) => (
                       <div key={idx} className="text-xs bg-white dark:bg-gray-700 p-2 rounded border border-blue-200 dark:border-blue-600">
                         <div className="font-medium text-blue-800 dark:text-blue-300">
-                          {task.name === 'crawl_website' ? '웹사이트 크롤링' :
+                          {task.name === 'crawl_website' ? '크롤링' :
                            task.name === 'process_url_for_embedding_smart' ? '스마트 임베딩' :
                            task.name}
                         </div>
@@ -287,7 +312,7 @@ export default function QueueMonitor({ onRefreshTrigger }: QueueMonitorProps) {
                     {queueStatus.task_details.reserved.slice(0, 5).map((task, idx) => (
                       <div key={idx} className="text-xs bg-white p-2 rounded border">
                         <div className="font-medium text-orange-800">
-                          {task.name === 'crawl_website' ? '웹사이트 크롤링' :
+                          {task.name === 'crawl_website' ? '크롤링' :
                            task.name === 'process_url_for_embedding_smart' ? '스마트 임베딩' :
                            task.name}
                         </div>

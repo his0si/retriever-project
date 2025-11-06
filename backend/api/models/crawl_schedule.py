@@ -13,6 +13,7 @@ class CrawlFolderCreate(BaseModel):
     schedule_type: str = Field(..., pattern="^(daily|weekly|monthly)$", description="Schedule type")
     schedule_time: str = Field(..., pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$", description="Schedule time (HH:MM or HH:MM:SS)")
     schedule_day: Optional[int] = Field(None, ge=0, le=6, description="Day of week (0=Sunday, 6=Saturday)")
+    max_depth: int = Field(default=2, ge=1, le=5, description="Maximum crawl depth (1-5)")
     enabled: bool = Field(default=True, description="Whether the folder is enabled")
 
     @field_validator("schedule_day")
@@ -33,6 +34,7 @@ class CrawlFolderUpdate(BaseModel):
     schedule_type: Optional[str] = Field(None, pattern="^(daily|weekly|monthly)$")
     schedule_time: Optional[str] = Field(None, pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$")
     schedule_day: Optional[int] = Field(None, ge=0, le=6)
+    max_depth: Optional[int] = Field(None, ge=1, le=5)
     enabled: Optional[bool] = None
 
 
@@ -43,6 +45,7 @@ class CrawlFolderResponse(BaseModel):
     schedule_type: str
     schedule_time: str
     schedule_day: Optional[int]
+    max_depth: int = 2  # Default value for backward compatibility
     enabled: bool
     created_at: str
     updated_at: str
@@ -84,6 +87,7 @@ class FolderWithSitesResponse(BaseModel):
     schedule_type: str
     schedule_time: str
     schedule_day: Optional[int]
+    max_depth: int = 2  # Default value for backward compatibility
     enabled: bool
     created_at: str
     updated_at: str

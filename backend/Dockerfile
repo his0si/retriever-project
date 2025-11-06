@@ -12,7 +12,7 @@ SHELL ["/bin/bash", "-lc"]
 # Configurable Python version via build-arg
 ARG PYTHON_VERSION=3.11
 
-# Install system dependencies for Playwright
+# Install system dependencies for Playwright and Chromium
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -20,7 +20,12 @@ RUN apt-get update && apt-get install -y \
     tzdata \
     fonts-unifont \
     fonts-liberation \
-    # Playwright dependencies
+    fonts-ipafont-gothic \
+    fonts-wqy-zenhei \
+    fonts-tlwg-loma-otf \
+    fonts-freefont-ttf \
+    fonts-noto-color-emoji \
+    # Playwright/Chromium dependencies
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
@@ -43,6 +48,12 @@ RUN apt-get update && apt-get install -y \
     libasound2 \
     libatspi2.0-0 \
     libgtk-3-0 \
+    libglib2.0-0 \
+    libxshmfence1 \
+    libgl1 \
+    xvfb \
+    xfonts-scalable \
+    xfonts-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Create dedicated conda environment
@@ -57,12 +68,14 @@ COPY requirements.txt .
 RUN source activate appenv \
     && pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright system dependencies
-RUN playwright install-deps chromium || true
-
-# Try to install Playwright chromium, but don't fail if network issues
+# Install Playwright browsers
 RUN source activate appenv \
-    && (playwright install chromium || echo "Playwright install skipped - will retry at runtime")
+    && playwright install chromium \
+    && echo "Playwright Chromium installed successfully"
+
+# Verify Playwright installation
+RUN source activate appenv \
+    && python -c "from playwright.sync_api import sync_playwright; print('Playwright verification successful')"
 
 # Copy application code
 COPY . .

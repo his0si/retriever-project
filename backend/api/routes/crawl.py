@@ -134,6 +134,7 @@ async def get_queue_status():
                         })
 
             # Get worker stats
+            worker_details = {}
             stats = inspect.stats()
             if stats:
                 workers_online = len(stats)
@@ -152,6 +153,13 @@ async def get_queue_status():
                             "tasks_per_hour": round((total_tasks / uptime) * 3600, 2) if uptime > 0 else 0
                         }
 
+                    # Worker details
+                    worker_details[worker] = {
+                        "pid": worker_stats.get('pid', 'unknown'),
+                        "uptime": uptime,
+                        "pool": worker_stats.get('pool', {})
+                    }
+
         except Exception as celery_error:
             logger.warning(f"Failed to get Celery stats, using fallback: {celery_error}")
             # Use fallback values from Docker/RabbitMQ
@@ -164,9 +172,20 @@ async def get_queue_status():
         is_processing_embeddings = any(task.get('name', '').find('embedding') != -1
                                      for task in active_details) if active_details else False
 
-        # Only show embedding processing if crawling is NOT active and we have embedding tasks
-        if not is_crawling and celery_queue_messages > 0 and workers_online > 0:
+        # 크롤링이 없고 큐에 메시지가 있으면 임베딩 처리 중일 가능성이 높음
+        if not is_crawling and not is_processing_embeddings and celery_queue_messages > 0 and workers_online > 0:
             is_processing_embeddings = True
+
+        # 로깅 추가 (디버깅용)
+        logger.info(
+            "Queue status check",
+            active_count=active_count,
+            active_details_count=len(active_details),
+            is_crawling=is_crawling,
+            is_processing_embeddings=is_processing_embeddings,
+            celery_queue_messages=celery_queue_messages,
+            active_task_names=[task.get('name', 'unknown') for task in active_details[:3]]
+        )
 
         return {
             "queue_status": {
@@ -178,7 +197,7 @@ async def get_queue_status():
             },
             "workers": {
                 "online": workers_online,
-                "details": {}
+                "details": worker_details
             },
             "task_details": {
                 "active": active_details,
@@ -520,14 +539,17 @@ async def execute_folder_crawl(folder_id: str):
 
         task_id = str(uuid.uuid4())
 
+        # 폴더의 max_depth 가져오기 (기본값 2)
+        folder_max_depth = folder.data[0].get("max_depth", 2)
+
         # 각 사이트를 크롤링 태스크로 추가
         for site in sites.data:
             crawl_website.delay(
                 task_id=f"{task_id}_{site['id']}",
                 root_url=site["url"],
-                max_depth=2  # 기본 depth 2
+                max_depth=folder_max_depth
             )
-            logger.info(f"Queued crawl for site: {site['name']} ({site['url']})")
+            logger.info(f"Queued crawl for site: {site['name']} ({site['url']}) with max_depth={folder_max_depth}")
 
         logger.info(
             "Folder crawl tasks triggered",

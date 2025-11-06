@@ -29,6 +29,9 @@ export default function CrawlInterface() {
   const [showDbStatus, setShowDbStatus] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
+  // Queue monitor refresh trigger
+  const [queueRefreshTrigger, setQueueRefreshTrigger] = useState(0)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!rootUrl.trim() || isLoading) return
@@ -44,7 +47,19 @@ export default function CrawlInterface() {
       })
 
       setTaskId(response.data.task_id)
-      
+
+      // Trigger queue monitor refresh
+      setQueueRefreshTrigger(prev => prev + 1)
+
+      // 큐에 작업이 추가되는 지연을 고려하여 추가 새로고침
+      setTimeout(() => {
+        setQueueRefreshTrigger(prev => prev + 1)
+      }, 500)
+
+      setTimeout(() => {
+        setQueueRefreshTrigger(prev => prev + 1)
+      }, 1500)
+
       // Refresh DB status after delay
       setTimeout(fetchDbStatus, CRAWL_CONSTANTS.DB_STATUS_REFRESH_DELAY)
     } catch (error) {
@@ -83,14 +98,33 @@ export default function CrawlInterface() {
     fetchDbStatus()
   }, [])
 
+  // 스케줄 크롤링 시작 핸들러
+  const handleScheduledTaskId = (taskId: string) => {
+    setScheduledTaskId(taskId)
+    // QueueMonitor를 즉시 새로고침
+    setQueueRefreshTrigger(prev => prev + 1)
+
+    // 큐에 작업이 추가되는 지연을 고려하여 추가 새로고침
+    setTimeout(() => {
+      setQueueRefreshTrigger(prev => prev + 1)
+    }, 500)
+
+    setTimeout(() => {
+      setQueueRefreshTrigger(prev => prev + 1)
+    }, 1500)
+  }
+
   return (
     <div className="space-y-6 p-6">
       {/* 크롤링 큐 상태 모니터링 */}
-      <QueueMonitor onRefreshTrigger={fetchDbStatus} />
+      <QueueMonitor
+        onRefreshTrigger={fetchDbStatus}
+        refreshTrigger={queueRefreshTrigger}
+      />
 
       {/* Supabase 기반 스케줄 크롤링 관리 */}
       <ScheduledCrawlSection
-        onScheduledTaskId={setScheduledTaskId}
+        onScheduledTaskId={handleScheduledTaskId}
         onScheduledError={setScheduledError}
       />
 

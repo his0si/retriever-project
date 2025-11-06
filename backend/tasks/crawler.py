@@ -26,10 +26,10 @@ class CrawlerTask(Task):
 @celery_app.task(base=CrawlerTask, name="crawl_website")
 def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
     """
-    Crawl a website starting from root_url up to max_depth
-    크롤링 후 임베딩 작업을 제한된 배치로 큐에 추가
+    웹사이트 크롤링: 지정된 루트 URL에서 시작하여 최대 깊이까지 링크를 수집합니다.
+    크롤링 후 스마트 임베딩 처리 작업을 큐에 추가합니다.
     """
-    logger.info("🔵 MANUAL CRAWL STARTED", task_id=task_id, root_url=root_url, max_depth=max_depth)
+    logger.info("🔵 웹사이트 크롤링 시작", task_id=task_id, root_url=root_url, max_depth=max_depth)
 
     # Run async crawler
     loop = asyncio.new_event_loop()
@@ -40,9 +40,9 @@ def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
             crawl_async(root_url, max_depth)
         )
 
-        logger.info(f"🔵 CRAWL COMPLETED - Found {len(urls)} URLs", task_id=task_id)
+        logger.info(f"🔵 웹사이트 크롤링 완료 - {len(urls)}개 URL 발견", task_id=task_id)
 
-        # 배치 크기 제한하여 임베딩 작업 큐에 추가
+        # 배치 크기 제한하여 스마트 임베딩 처리 작업 큐에 추가
         BATCH_SIZE = 50
         embedding_tasks = []
 
@@ -53,10 +53,10 @@ def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
                     task = process_url_for_embedding_smart.delay(url)
                     embedding_tasks.append(task.id)
                 except Exception as e:
-                    logger.warning(f"Failed to queue {url}: {str(e)}")
+                    logger.warning(f"스마트 임베딩 처리 큐 추가 실패 {url}: {str(e)}")
                     continue
 
-        logger.info(f"🔵 QUEUED {len(embedding_tasks)} EMBEDDING TASKS in batches", task_id=task_id)
+        logger.info(f"🔵 {len(embedding_tasks)}개의 스마트 임베딩 처리 작업을 큐에 추가", task_id=task_id)
 
         return {
             "task_id": task_id,
@@ -67,7 +67,7 @@ def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
         }
 
     except Exception as e:
-        logger.error("🔴 CRAWL FAILED", task_id=task_id, error=str(e))
+        logger.error("🔴 웹사이트 크롤링 실패", task_id=task_id, error=str(e))
         raise
     finally:
         loop.close()
@@ -108,6 +108,9 @@ async def crawl_async(root_url: str, max_depth: int) -> Set[str]:
 
                     visited_urls.add(current_url)
                     logger.info(f"🌐 Crawled: {current_url}", depth=depth, total_found=len(visited_urls))
+
+                    # 요청 사이에 지연 추가 (너무 많은 동시 요청 방지)
+                    await asyncio.sleep(2.0)  # 2초 지연으로 크롤링 속도 제한
 
                     if depth < max_depth:
                         # Extract all links more efficiently
