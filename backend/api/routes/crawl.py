@@ -7,7 +7,8 @@ from api.models.crawl_schedule import (
     ScheduledCrawlSiteCreate,
     ScheduledCrawlSiteUpdate,
     ScheduledCrawlSiteResponse,
-    FolderWithSitesResponse
+    FolderWithSitesResponse,
+    BatchUpdateSitesRequest
 )
 from tasks.crawler import crawl_website
 from config import settings
@@ -566,3 +567,60 @@ async def execute_folder_crawl(folder_id: str):
     except Exception as e:
         logger.error("Failed to execute folder crawl", error=str(e))
         raise HTTPException(status_code=500, detail=f"Failed to execute folder crawl: {str(e)}")
+
+
+@router.patch("/folders/{folder_id}/sites/batch-update")
+async def batch_update_sites(folder_id: str, request: BatchUpdateSitesRequest):
+    """
+    Batch update all sites in a folder with the same enabled state
+    """
+    try:
+        # 폴더 존재 확인
+        folder = supabase.table("crawl_folders").select("*").eq("id", folder_id).execute()
+        if not folder.data:
+            raise HTTPException(status_code=404, detail=f"Folder with ID '{folder_id}' not found")
+
+        folder_name = folder.data[0]["name"]
+
+        # 해당 폴더의 모든 사이트 조회
+        sites = supabase.table("scheduled_crawl_sites").select("id").eq("folder_id", folder_id).execute()
+
+        if not sites.data:
+            logger.info(f"No sites found in folder '{folder_name}', nothing to update")
+            return {
+                "folder_id": folder_id,
+                "folder_name": folder_name,
+                "updated_count": 0,
+                "total_count": 0,
+                "success": True
+            }
+
+        # Supabase에서 한 번에 업데이트
+        result = supabase.table("scheduled_crawl_sites").update({
+            "enabled": request.enabled
+        }).eq("folder_id", folder_id).execute()
+
+        updated_count = len(result.data) if result.data else 0
+        total_count = len(sites.data)
+
+        logger.info(
+            f"Batch updated sites in folder '{folder_name}'",
+            folder_id=folder_id,
+            enabled=request.enabled,
+            updated_count=updated_count,
+            total_count=total_count
+        )
+
+        return {
+            "folder_id": folder_id,
+            "folder_name": folder_name,
+            "updated_count": updated_count,
+            "total_count": total_count,
+            "success": True
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to batch update sites", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to batch update sites: {str(e)}")

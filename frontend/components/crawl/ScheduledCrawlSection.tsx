@@ -330,6 +330,7 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
     const enabledCount = folder.sites.filter(s => s.enabled).length
     const newEnabledState = enabledCount < folder.sites.length
 
+    // Optimistic update
     flushSync(() => {
       setFolders(prevFolders =>
         prevFolders.map(f =>
@@ -343,12 +344,12 @@ export default function ScheduledCrawlSection({ onScheduledTaskId, onScheduledEr
     window.scrollTo(0, scrollY)
 
     try {
-      await Promise.all(
-        folder.sites.map(site =>
-          axios.patch(`${API_URL}/crawl/sites/${site.id}`, { enabled: newEnabledState })
-        )
-      )
+      // Use batch update API for better reliability
+      await axios.patch(`${API_URL}/crawl/folders/${folderId}/sites/batch-update`, {
+        enabled: newEnabledState
+      })
     } catch (err: any) {
+      // Rollback on error
       await loadFolders()
       window.scrollTo(0, scrollY)
       alert(err.response?.data?.detail || '사이트 상태 변경에 실패했습니다')

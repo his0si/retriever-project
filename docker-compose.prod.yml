@@ -45,8 +45,7 @@ services:
       - rabbitmq
       - redis
       - qdrant
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - ollama
     command: bash -lc "source activate appenv && python main.py"
     deploy:
       resources:
@@ -74,8 +73,7 @@ services:
       - rabbitmq
       - redis
       - qdrant
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - ollama
     command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --concurrency=1 --pool=prefork"
     deploy:
       resources:
@@ -196,7 +194,24 @@ services:
           memory: 512M
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: rag-ollama
+    expose:
+      - "11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
 volumes:
   rabbitmq_data:
   redis_data:
   qdrant_data:
+  ollama_data:

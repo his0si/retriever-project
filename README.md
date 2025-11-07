@@ -51,25 +51,17 @@
 └────────────────┘ └────────────────┘ └────────────────┘
 
 
-════════════════════════════════════════════════════════════════
-                    Docker Container Layer
-════════════════════════════════════════════════════════════════
-                              ▲
-                              │ HTTP API (172.17.0.1:11434)
-                              │
-════════════════════════════════════════════════════════════════
-                       Host Machine Layer
-════════════════════════════════════════════════════════════════
-                              │
-                              ▼
-                    ┌────────────────────────┐
-                    │      Ollama Server     │
-                    │         (:11434)       │
-                    │------------------------│
-                    │ - qwen2.5:7b   (4.7GB) │  ← RAG LLM
-                    │ - nomic-embed  (274MB) │  ← Embedding
-                    │ - qwen-coder   (9.0GB) │  ← Coding
-                    └────────────────────────┘
+           ┌──────────────┼──────────────┐
+           │              │              │
+           ▼              ▼              ▼
+┌────────────────┐ ┌────────────────┐ ┌────────────────┐
+│     Ollama     │ │   RabbitMQ     │ │    Redis       │
+│   (11434)      │ │ (5672 / 15672) │ │    (6379)      │
+│----------------│ │----------------│ │----------------│
+│ GPU 가속 LLM    │ │  Celery Queue  │ │     Cache      │
+│ qwen2.5:7b     │ └────────────────┘ └────────────────┘
+│ bge-m3         │
+└────────────────┘
 
 ```
 
@@ -80,10 +72,9 @@
 - **Message Queue**: RabbitMQ
 - **Cache**: Redis
 - **Frontend**: Next.js + Supabase
-- **LLM**: Ollama (호스트 머신에서 실행)
+- **LLM**: Ollama (Docker 컨테이너, GPU 가속)
   - **qwen2.5:7b** (4.7GB): RAG 질의응답용 메인 LLM
-  - **nomic-embed-text** (274MB): 텍스트 임베딩 생성
-  - **qwen2.5-coder:14b** (9.0GB): 코드 관련 작업용
+  - **bge-m3** (1.2GB): 텍스트 임베딩 생성
 - **Reverse Proxy**: Nginx + Let's Encrypt SSL
 - **Database**: Supabase (채팅 히스토리, 즐겨찾기, 스케줄 크롤링 관리)
 
@@ -108,123 +99,60 @@
 | Backend API | 8000 | FastAPI (nginx를 통해 외부 접근) |
 | Celery      | -    | 백그라운드 작업자                 |
 
-### 호스트 머신 전용
-
-| 서비스    | 포트    | 용도                                    |
-|--------|-------|---------------------------------------|
-| Ollama | 11434 | LLM API (Docker에서 172.17.0.1:11434로 접근) |
+| Ollama   | 11434 | LLM API (Docker 내부 네트워크)         |
 
 ## Ollama 기반 LLM 아키텍처
 
-이 프로젝트는 **Ollama**를 사용하여 로컬에서 LLM을 실행합니다.
+이 프로젝트는 **Ollama**를 Docker 컨테이너로 실행하여 GPU 가속 LLM을 사용합니다.
 
 ### 아키텍처 특징
 
-#### Docker 컨테이너 외부 실행
+#### Docker 컨테이너 내부 실행 (GPU 가속)
 ```
 사용자 질문
   → Frontend (컨테이너)
     → Backend (컨테이너)
-      → http://172.17.0.1:11434 (호스트의 Ollama)
-        → qwen2.5:7b 모델로 답변 생성
+      → http://ollama:11434 (Ollama 컨테이너)
+        → GPU 가속 qwen2.5:7b 모델로 답변 생성
 ```
 
-- **Docker 컨테이너**: Backend, Frontend, DB 등 애플리케이션 서비스
-- **호스트 머신**: Ollama 서버 및 LLM 모델들
-- **연결 방식**: Docker 브릿지 네트워크를 통해 `172.17.0.1:11434`로 접근
+- **모든 서비스 컨테이너화**: Backend, Frontend, Ollama, DB 등 모든 서비스가 Docker로 실행
+- **GPU 직접 활용**: NVIDIA Docker를 통해 컨테이너에서 GPU 직접 사용
+- **연결 방식**: Docker 내부 네트워크를 통해 `ollama:11434`로 접근
 
 ### 사용 모델
 
 | 모델명                   | 크기    | 용도              | 비고                    |
 |----------------------|-------|-----------------|------------------------|
 | qwen2.5:7b           | 4.7GB | RAG 질의응답       | 메인 대화 LLM             |
-| nomic-embed-text     | 274MB | 텍스트 임베딩       | 벡터 DB 저장용            |
-| qwen2.5-coder:14b    | 9.0GB | 코드 생성/분석      | 선택적 사용                |
+| bge-m3               | 1.2GB | 텍스트 임베딩       | 벡터 DB 저장용            |
 
 ### 주요 장점
 
-#### 1. 비용 절감
+#### 1. 완전 자동화된 배포
+- Docker Compose만으로 모든 서비스 실행
+- 초기화 스크립트로 모델 자동 다운로드
+- 별도 설치 과정 불필요
+
+#### 2. GPU 활용 최적화
+- NVIDIA Docker를 통한 GPU 직접 접근
+- 컨테이너 내부에서 GPU 가속 사용
+- 빠른 추론 속도
+
+#### 3. 비용 절감
 - API 호출 비용 없음 (OpenAI GPT-4 대비 100% 절감)
 - 무제한 쿼리 가능
 - 데이터가 외부로 전송되지 않음
 
-#### 2. GPU 활용 최적화
-- 호스트 머신의 GPU 직접 활용
-- Docker 컨테이너보다 낮은 오버헤드
-- 더 빠른 추론 속도
-
-#### 3. 프라이버시 보호
+#### 4. 프라이버시 보호
 - 모든 데이터가 로컬에서 처리
 - 외부 API 의존성 없음
 - GDPR 및 개인정보 보호 규정 준수 용이
 
-#### 4. 유연한 아키텍처
-- 필요시 GPU 서버로 쉽게 확장 가능
-- 모델 변경 및 실험 용이
-- OpenAI API와 병행 사용 가능
-
-#### 5. 서비스 격리
-- 애플리케이션 서비스는 Docker로 격리
-- LLM은 호스트에서 안정적으로 실행
-- 각 레이어의 독립적인 관리 및 배포
-
-### Ollama 설치 및 설정
-
-#### 1. Ollama 설치 (호스트 머신)
-```bash
-# Linux
-curl -fsSL https://ollama.com/install.sh | sh
-
-# 서버 시작
-ollama serve
-```
-
-#### 2. 모델 다운로드
-```bash
-# RAG용 LLM
-ollama pull qwen2.5:7b
-
-# 임베딩 모델
-ollama pull nomic-embed-text
-
-# (선택) 코딩용 모델
-ollama pull qwen2.5-coder:14b
-```
-
-#### 3. 환경 변수 설정
-```bash
-# .env 파일에 추가
-OLLAMA_HOST=http://172.17.0.1:11434
-OLLAMA_MODEL=qwen2.5:7b
-OLLAMA_EMBEDDING_MODEL=nomic-embed-text
-```
-
-#### 4. 모델 확인
-```bash
-# 설치된 모델 목록
-ollama list
-
-# 모델 테스트
-ollama run qwen2.5:7b
-```
-
-### 다른 LLM 사용하기
-
-Ollama는 다양한 오픈소스 모델을 지원합니다:
-
-```bash
-# Llama 3.2 (Meta)
-ollama pull llama3.2
-
-# Mistral
-ollama pull mistral
-
-# Gemma 2 (Google)
-ollama pull gemma2
-
-# 환경 변수 변경으로 모델 교체
-OLLAMA_MODEL=llama3.2
-```
+#### 5. 간편한 관리
+- 모든 서비스가 Docker로 격리
+- 통합된 배포 및 관리
+- 환경 변수로 모델 교체 가능
 
 ## 크롤링 시스템 상세
 
@@ -445,9 +373,9 @@ touch .env
 필요한 환경 변수:
 
 **Ollama 설정**
-- `OLLAMA_HOST`: Ollama 서버 주소 (기본값: http://172.17.0.1:11434)
+- `OLLAMA_HOST`: Ollama 서버 주소 (기본값: http://ollama:11434)
 - `OLLAMA_MODEL`: 사용할 LLM 모델 (기본값: qwen2.5:7b)
-- `OLLAMA_EMBEDDING_MODEL`: 임베딩 모델 (기본값: nomic-embed-text)
+- `OLLAMA_EMBEDDING_MODEL`: 임베딩 모델 (기본값: bge-m3)
 
 **Supabase 설정**
 - `NEXT_PUBLIC_SUPABASE_URL`: Supabase 프로젝트 URL
@@ -479,15 +407,36 @@ docker compose --env-file .env.local -f docker-compose.dev.yml up -d
 
 ## 프로덕션 배포
 
+### 1. 서비스 시작
+
 ```bash
 cd retriever-project
-# SSL 인증서 발급
+
+# SSL 인증서 발급 (처음 한 번만)
 chmod +x setup-ssl.sh && ./setup-ssl.sh
-# 배포
+
+# Docker Compose로 모든 서비스 시작
 docker compose -f docker-compose.prod.yml up -d
 ```
 
+### 2. Ollama 모델 초기화 (필수!)
+
+서비스가 시작된 후, 반드시 Ollama 모델을 다운로드해야 합니다:
+
+```bash
+# 초기화 스크립트 실행 (약 5-7분 소요)
+./scripts/init-ollama.sh
+```
+
+이 스크립트는 다음 모델을 자동으로 다운로드합니다:
+- **bge-m3** (1.2GB): 임베딩 모델
+- **qwen2.5:7b** (4.7GB): LLM 모델
+
+### 3. 접속
+
 접속: https://yourdomain.com:9443
+
+**⚠️ 중요**: `init-ollama.sh`를 실행하지 않으면 임베딩 생성이 실패합니다!
 
 ## SSL 인증서 설정
 

@@ -11,6 +11,8 @@ import uuid
 import hashlib
 from datetime import datetime
 import pytz
+import time
+import random
 
 from config import settings
 
@@ -132,6 +134,9 @@ def ensure_collection_exists():
 def fetch_and_extract_text(url: str) -> str:
     """Fetch URL content and extract text"""
     try:
+        # Add random delay to avoid overwhelming the server (1-3 seconds)
+        time.sleep(random.uniform(1.0, 3.0))
+
         # Fetch content
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -252,15 +257,20 @@ def process_url_for_embedding_incremental(url: str):
 
 
 @celery_app.task(base=EmbeddingTask, name="process_url_for_embedding_smart")
-def process_url_for_embedding_smart(url: str):
+def process_url_for_embedding_smart(url: str, text_content: str = None):
     """
     Process URL with smart duplicate detection based on content changes
+    If text_content is provided (from crawling), use it directly to avoid re-fetching
     """
     logger.info("Processing URL with smart duplicate detection", url=url)
 
     try:
-        # Always fetch content first to check if it changed
-        text_content = fetch_and_extract_text(url)
+        # Use provided text_content if available (from crawling), otherwise fetch
+        if text_content is None:
+            logger.info("No cached text, fetching from URL", url=url)
+            text_content = fetch_and_extract_text(url)
+        else:
+            logger.info("Using cached text from crawling", url=url, text_length=len(text_content))
 
         if not text_content or len(text_content.strip()) < 50:
             logger.warning("Insufficient content", url=url, length=len(text_content))

@@ -92,3 +92,8 @@ class FolderWithSitesResponse(BaseModel):
     created_at: str
     updated_at: str
     sites: list[ScheduledCrawlSiteResponse]
+
+
+class BatchUpdateSitesRequest(BaseModel):
+    """Batch update all sites in a folder"""
+    enabled: bool = Field(..., description="New enabled state for all sites in the folder")
