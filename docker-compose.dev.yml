@@ -1,6 +1,32 @@
 version: '3.8'
 
 services:
+  vpn:
+    image: qmcgaw/gluetun:latest
+    container_name: rag-vpn-dev
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=custom
+      - VPN_TYPE=wireguard
+      - VPN_ENDPOINT_IP=185.107.56.156
+      - VPN_ENDPOINT_PORT=51820
+      - WIREGUARD_PUBLIC_KEY=hc5/jolTT72oU7vbiFruJ20LtWU2I/T19E3/15ax6yw=
+      - WIREGUARD_PRIVATE_KEY=GBb6vcUDEhatbEJ8PiH/8hbEfnf+NGa3RM4KQEWyR30=
+      - WIREGUARD_ADDRESSES=10.2.0.2/32
+      - DNS_ADDRESS=10.2.0.1
+      - TZ=Asia/Seoul
+    ports:
+      - "8000:8000"  # API port
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   nginx:
     image: nginx:alpine
     container_name: rag-nginx-dev
@@ -10,7 +36,7 @@ services:
       - ./nginx-dev.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - frontend
-      - api
+      - vpn
     restart: unless-stopped
 
   api:
@@ -19,8 +45,7 @@ services:
       args:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     container_name: rag-api
-    ports:
-      - "8000:8000"
+    network_mode: "service:vpn"
     volumes:
       - ./backend:/app
     environment:
@@ -29,11 +54,14 @@ services:
     env_file:
       - .env.local
     depends_on:
-      - rabbitmq
-      - redis
-      - qdrant
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      vpn:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
     command: bash -lc "source activate appenv && python main.py"
 
   celery:
@@ -42,6 +70,7 @@ services:
       args:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     container_name: rag-celery
+    network_mode: "service:vpn"
     volumes:
       - ./backend:/app
     environment:
@@ -50,11 +79,14 @@ services:
     env_file:
       - .env.local
     depends_on:
-      - rabbitmq
-      - redis
-      - qdrant
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      vpn:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
     command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --pool=solo"
 
   frontend:

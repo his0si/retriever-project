@@ -1,0 +1,7 @@
+# WireGuard 설정 파일 (Private Key 포함)
+wg0.conf
+
+# 다른 VPN 설정 파일들
+*.conf
+*.key
+*.pem

@@ -1,4 +1,32 @@
 services:
+  vpn:
+    image: qmcgaw/gluetun:latest
+    container_name: rag-vpn
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=custom
+      - VPN_TYPE=wireguard
+      - VPN_ENDPOINT_IP=185.107.56.156
+      - VPN_ENDPOINT_PORT=51820
+      - WIREGUARD_PUBLIC_KEY=hc5/jolTT72oU7vbiFruJ20LtWU2I/T19E3/15ax6yw=
+      - WIREGUARD_PRIVATE_KEY=GBb6vcUDEhatbEJ8PiH/8hbEfnf+NGa3RM4KQEWyR30=
+      - WIREGUARD_ADDRESSES=10.2.0.2/32
+      - DNS_ADDRESS=10.2.0.1
+      - TZ=Asia/Seoul
+      - HTTPPROXY=on
+      - SHADOWSOCKS=off
+    ports:
+      - "8888:8888"  # HTTP proxy port
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   nginx:
     image: nginx:alpine
     container_name: rag-nginx
@@ -17,7 +45,7 @@ services:
       - .env
     depends_on:
       - frontend
-      - api
+      - vpn
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
@@ -39,13 +67,20 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
       - TZ=Asia/Seoul
+      - VPN_PROXY_URL=http://rag-vpn:8888
     env_file:
       - .env
     depends_on:
-      - rabbitmq
-      - redis
-      - qdrant
-      - ollama
+      vpn:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      ollama:
+        condition: service_started
     command: bash -lc "source activate appenv && python main.py"
     deploy:
       resources:
@@ -67,13 +102,20 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
       - TZ=Asia/Seoul
+      - VPN_PROXY_URL=http://rag-vpn:8888
     env_file:
       - .env
     depends_on:
-      - rabbitmq
-      - redis
-      - qdrant
-      - ollama
+      vpn:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      ollama:
+        condition: service_started
     command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --concurrency=1 --pool=prefork"
     deploy:
       resources:

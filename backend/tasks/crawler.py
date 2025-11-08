@@ -138,6 +138,7 @@ async def crawl_async(root_url: str, max_depth: int) -> Dict[str, str]:
     Returns a dictionary of {url: text_content} to avoid re-fetching during embedding
     """
     import random
+    import os
 
     domain = urlparse(root_url).netloc
 
@@ -166,13 +167,21 @@ async def crawl_async(root_url: str, max_depth: int) -> Dict[str, str]:
         selected_user_agent = get_random_user_agent()
         logger.info(f"🎭 Using User-Agent: {selected_user_agent[:50]}...")
 
+        # Get VPN proxy URL from environment variable
+        vpn_proxy_url = os.getenv("VPN_PROXY_URL")
+        proxy_config = None
+        if vpn_proxy_url:
+            proxy_config = {"server": vpn_proxy_url}
+            logger.info(f"🔐 Using VPN proxy: {vpn_proxy_url}")
+
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 headless=True,
                 args=['--no-sandbox', '--disable-dev-shm-usage']  # Better Docker compatibility
             )
             context = await browser.new_context(
-                user_agent=selected_user_agent
+                user_agent=selected_user_agent,
+                proxy=proxy_config
             )
 
             try:
