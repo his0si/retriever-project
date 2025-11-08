@@ -191,50 +191,77 @@ export default function QueueMonitor({ onRefreshTrigger, refreshTrigger }: Queue
                 </button>
               </div>
 
-              {/* Processing Statistics */}
+              {/* Processing Statistics - Separated by Worker */}
               <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
                 <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">처리 통계</h4>
-                {Object.keys(queueStatus.processing_stats).length > 0 ? (
-                  Object.entries(queueStatus.processing_stats).map(([worker, stats]) => (
-                    <div key={worker} className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+
+                {/* Crawler Worker Stats */}
+                <div className="mb-4 pb-4 border-b border-gray-300 dark:border-gray-600">
+                  <div className="text-sm font-semibold mb-2 text-green-700 dark:text-green-300 flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    크롤링 워커
+                  </div>
+                  {queueStatus.crawler_stats && Object.keys(queueStatus.crawler_stats).length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">총 처리:</span>
-                        <div className="font-semibold text-blue-600 dark:text-blue-400">{stats.total_processed}개</div>
+                        <div className="font-semibold text-blue-600 dark:text-blue-400">{queueStatus.crawler_stats.total_processed}개</div>
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">분당 처리:</span>
-                        <div className="font-semibold text-green-600 dark:text-green-400">{stats.tasks_per_minute}개</div>
+                        <div className="font-semibold text-green-600 dark:text-green-400">{queueStatus.crawler_stats.tasks_per_minute}개</div>
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">시간당 처리:</span>
-                        <div className="font-semibold text-purple-600 dark:text-purple-400">{stats.tasks_per_hour}개</div>
+                        <div className="font-semibold text-purple-600 dark:text-purple-400">{queueStatus.crawler_stats.tasks_per_hour}개</div>
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">가동 시간:</span>
-                        <div className="font-semibold text-gray-600 dark:text-gray-400">{Math.floor(stats.uptime_seconds / 60)}분</div>
+                        <div className="font-semibold text-gray-600 dark:text-gray-400">{Math.floor(queueStatus.crawler_stats.uptime_seconds / 60)}분</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">대기 큐:</span>
+                        <div className="font-semibold text-orange-600 dark:text-orange-400">{queueStatus.queue_status.crawler_queue_messages}개</div>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">총 처리:</span>
-                      <div className="font-semibold text-blue-600 dark:text-blue-400">0개</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">분당 처리:</span>
-                      <div className="font-semibold text-green-600 dark:text-green-400">0개</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">시간당 처리:</span>
-                      <div className="font-semibold text-purple-600 dark:text-purple-400">0개</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">가동 시간:</span>
-                      <div className="font-semibold text-gray-600 dark:text-gray-400">0분</div>
-                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">워커가 오프라인이거나 통계가 없습니다</div>
+                  )}
+                </div>
+
+                {/* Embedding Worker Stats */}
+                <div>
+                  <div className="text-sm font-semibold mb-2 text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    임베딩 워커
                   </div>
-                )}
+                  {queueStatus.embedding_stats && Object.keys(queueStatus.embedding_stats).length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">총 처리:</span>
+                        <div className="font-semibold text-blue-600 dark:text-blue-400">{queueStatus.embedding_stats.total_processed}개</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">분당 처리:</span>
+                        <div className="font-semibold text-green-600 dark:text-green-400">{queueStatus.embedding_stats.tasks_per_minute}개</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">시간당 처리:</span>
+                        <div className="font-semibold text-purple-600 dark:text-purple-400">{queueStatus.embedding_stats.tasks_per_hour}개</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">가동 시간:</span>
+                        <div className="font-semibold text-gray-600 dark:text-gray-400">{Math.floor(queueStatus.embedding_stats.uptime_seconds / 60)}분</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">대기 큐:</span>
+                        <div className="font-semibold text-orange-600 dark:text-orange-400">{queueStatus.queue_status.embedding_queue_messages}개</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">워커가 오프라인이거나 통계가 없습니다</div>
+                  )}
+                </div>
               </div>
 
               {/* Task Type Breakdown */}

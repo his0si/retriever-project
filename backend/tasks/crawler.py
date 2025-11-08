@@ -96,32 +96,12 @@ def crawl_website(task_id: str, root_url: str, max_depth: int = 2):
         )
 
         logger.info(f"🔵 웹사이트 크롤링 완료 - {len(url_data_dict)}개 URL 발견", task_id=task_id)
-
-        # 배치 크기 제한하여 스마트 임베딩 처리 작업 큐에 추가
-        BATCH_SIZE = 50
-        embedding_tasks = []
-
-        for i, (url, text_content) in enumerate(url_data_dict.items()):
-            if i > 0 and i % BATCH_SIZE == 0:
-                # 배치 간 짧은 지연
-                import time
-                time.sleep(1)
-
-            try:
-                # 크롤링한 텍스트를 임베딩 작업에 전달
-                task = process_url_for_embedding_smart.delay(url, text_content)
-                embedding_tasks.append(task.id)
-            except Exception as e:
-                logger.warning(f"스마트 임베딩 처리 큐 추가 실패 {url}: {str(e)}")
-                continue
-
-        logger.info(f"🔵 {len(embedding_tasks)}개의 스마트 임베딩 처리 작업을 큐에 추가", task_id=task_id)
+        logger.info(f"✅ 모든 페이지가 크롤링과 동시에 임베딩 큐에 추가되었습니다", task_id=task_id)
 
         return {
             "task_id": task_id,
             "status": "completed",
             "urls_found": len(url_data_dict),
-            "embedding_tasks_queued": len(embedding_tasks),
             "urls": list(url_data_dict.keys())
         }
 
@@ -142,15 +122,16 @@ async def crawl_async(root_url: str, max_depth: int) -> Dict[str, str]:
 
     domain = urlparse(root_url).netloc
 
-    # Acquire domain-level lock to prevent concurrent crawling of same domain
+    # Acquire domain-level semaphore to limit concurrent crawling of same domain
+    # 3개까지 동시 크롤링 허용 (1개 → 3개로 완화)
     async with domain_locks_lock:
         if domain not in domain_locks:
-            domain_locks[domain] = asyncio.Lock()
-        lock = domain_locks[domain]
+            domain_locks[domain] = asyncio.Semaphore(3)  # 동시에 3개까지!
+        semaphore = domain_locks[domain]
 
-    # Wait for lock - only one crawler per domain at a time
-    async with lock:
-        logger.info(f"🔒 Acquired crawl lock for domain: {domain}")
+    # Wait for semaphore - up to 3 crawlers per domain at a time
+    async with semaphore:
+        logger.info(f"🔒 Acquired crawl slot for domain: {domain} (3 concurrent allowed)")
 
         # Add random initial delay to prevent overwhelming servers when multiple crawls start simultaneously
         initial_delay = random.uniform(5.0, 15.0)
@@ -251,12 +232,20 @@ async def crawl_async(root_url: str, max_depth: int) -> Dict[str, str]:
                             lines = [line.strip() for line in text.split('\n') if line.strip()]
                             text_content = '\n'.join(lines)
 
-                            # Store the extracted text
-                            url_texts[current_url] = text_content
+                            # 🔥 즉시 임베딩 작업 큐에 추가 (메모리에 저장 안 함!)
+                            if text_content.strip():
+                                try:
+                                    process_url_for_embedding_smart.delay(current_url, text_content)
+                                    logger.info(f"✅ Embedding queued for: {current_url}")
+                                except Exception as embed_error:
+                                    logger.warning(f"Failed to queue embedding for {current_url}: {str(embed_error)}")
+
+                            # 통계용으로만 URL 카운트 (텍스트는 저장 안 함)
+                            url_texts[current_url] = ""
 
                         except Exception as e:
                             logger.warning(f"Failed to extract text from {current_url}: {str(e)}")
-                            url_texts[current_url] = ""  # Store empty string on failure
+                            url_texts[current_url] = ""
 
                         logger.info(f"🌐 Crawled: {current_url}", depth=depth, total_found=len(visited_urls))
 

@@ -17,8 +17,14 @@ celery_app.conf.update(
     timezone="Asia/Seoul",
     enable_utc=False,
     task_track_started=True,
-    task_time_limit=30 * 60,  # 30 minutes
-    task_soft_time_limit=25 * 60,  # 25 minutes
+    task_time_limit=2 * 60 * 60,  # 2 hours (깊이 2 크롤링용)
+    task_soft_time_limit=110 * 60,  # 110 minutes
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
+    # Queue routing: separate embedding tasks to dedicated queue
+    task_routes={
+        'process_url_for_embedding': {'queue': 'embedding'},
+        'process_url_for_embedding_incremental': {'queue': 'embedding'},
+        'process_url_for_embedding_smart': {'queue': 'embedding'},
+    },
 )

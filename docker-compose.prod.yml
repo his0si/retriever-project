@@ -96,6 +96,7 @@ services:
       args:
         PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
     container_name: rag-celery
+    hostname: celery-crawler-worker
     volumes:
       - ./backend:/app:ro
     environment:
@@ -116,13 +117,66 @@ services:
         condition: service_started
       ollama:
         condition: service_started
-    command: bash -lc "source activate appenv && celery -A celery_app worker --loglevel=info --concurrency=1 --pool=prefork"
+    command:
+      - bash
+      - -c
+      - >
+        source /opt/conda/bin/activate appenv &&
+        celery -A celery_app worker
+        --loglevel=info
+        --concurrency=3
+        --pool=prefork
+        -Q celery
+        --hostname=crawler-worker@celery-crawler-worker
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 3G
         reservations:
-          memory: 512M
+          memory: 1.5G
+    restart: unless-stopped
+
+  celery-embedding:
+    build:
+      context: ./backend
+      args:
+        PYTHON_VERSION: ${PYTHON_VERSION:-3.11}
+    container_name: rag-celery-embedding
+    hostname: celery-embedding-worker
+    volumes:
+      - ./backend:/app:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - TZ=Asia/Seoul
+    env_file:
+      - .env
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      ollama:
+        condition: service_started
+    command:
+      - bash
+      - -c
+      - >
+        source /opt/conda/bin/activate appenv &&
+        celery -A celery_app worker
+        --loglevel=info
+        --concurrency=4
+        --pool=prefork
+        -Q embedding
+        --hostname=embedding-worker@celery-embedding-worker
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     restart: unless-stopped
 
   frontend:
@@ -243,6 +297,9 @@ services:
       - "11434"
     volumes:
       - ollama_data:/root/.ollama
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     deploy:
       resources:
         reservations:

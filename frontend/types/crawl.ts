@@ -30,6 +30,7 @@ export interface ProcessingStats {
   uptime_seconds: number
   tasks_per_minute: number
   tasks_per_hour: number
+  worker_name?: string
 }
 
 export interface QueueStatus {
@@ -38,6 +39,9 @@ export interface QueueStatus {
     scheduled_tasks: number
     reserved_tasks: number
     total_pending: number
+    rabbitmq_messages: number
+    crawler_queue_messages: number
+    embedding_queue_messages: number
   }
   workers: {
     online: number
@@ -48,6 +52,8 @@ export interface QueueStatus {
     reserved: TaskDetail[]
   }
   processing_stats: Record<string, ProcessingStats>
+  crawler_stats: ProcessingStats
+  embedding_stats: ProcessingStats
   total_stats: Record<string, Record<string, number>>
   current_activity: {
     is_crawling: boolean

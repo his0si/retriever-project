@@ -62,26 +62,38 @@ async def get_queue_status():
         import subprocess
         import json
 
-        # Check RabbitMQ queue status via HTTP API
+        # Check RabbitMQ queue status via HTTP API for both queues
         celery_queue_messages = 0
+        embedding_queue_messages = 0
         try:
             import httpx
 
             # RabbitMQ Management API
-            rabbitmq_url = f"http://{settings.rabbitmq_host}:15672/api/queues/%2F/celery"
             auth = (settings.rabbitmq_user, settings.rabbitmq_pass)
 
             with httpx.Client() as client:
-                response = client.get(rabbitmq_url, auth=auth, timeout=5.0)
+                # Check celery queue (crawler)
+                celery_url = f"http://{settings.rabbitmq_host}:15672/api/queues/%2F/celery"
+                response = client.get(celery_url, auth=auth, timeout=5.0)
                 if response.status_code == 200:
                     queue_info = response.json()
                     celery_queue_messages = queue_info.get("messages", 0)
                 else:
-                    logger.warning(f"RabbitMQ API error: {response.status_code}")
+                    logger.warning(f"RabbitMQ API error for celery queue: {response.status_code}")
+
+                # Check embedding queue
+                embedding_url = f"http://{settings.rabbitmq_host}:15672/api/queues/%2F/embedding"
+                response = client.get(embedding_url, auth=auth, timeout=5.0)
+                if response.status_code == 200:
+                    queue_info = response.json()
+                    embedding_queue_messages = queue_info.get("messages", 0)
+                else:
+                    logger.warning(f"RabbitMQ API error for embedding queue: {response.status_code}")
 
         except Exception as rabbitmq_error:
             logger.warning(f"Failed to get RabbitMQ status via API: {rabbitmq_error}")
             celery_queue_messages = 0
+            embedding_queue_messages = 0
 
         # Assume celery worker is online (we'll check via celery inspect later)
         workers_online = 1
@@ -89,11 +101,15 @@ async def get_queue_status():
         # Try to get Celery stats if possible
         active_count = 0
         scheduled_count = 0
-        reserved_count = celery_queue_messages
+        reserved_count = celery_queue_messages + embedding_queue_messages
         active_details = []
         reserved_details = []
         total_stats = {}
         processing_stats = {}
+
+        # Separate stats for crawler and embedding workers
+        crawler_stats = {}
+        embedding_stats = {}
 
         try:
             # Get Celery app stats if available
@@ -143,22 +159,36 @@ async def get_queue_status():
                     if 'total' in worker_stats:
                         total_stats[worker] = worker_stats['total']
 
+                    # Determine worker type
+                    is_crawler = 'crawler-worker' in worker
+                    is_embedding = 'embedding-worker' in worker
+
                     # Calculate processing rate (tasks per minute)
                     uptime = worker_stats.get('uptime', 0)
                     total_tasks = sum(worker_stats.get('total', {}).values())
-                    if uptime > 0:
-                        processing_stats[worker] = {
-                            "total_processed": total_tasks,
-                            "uptime_seconds": uptime,
-                            "tasks_per_minute": round((total_tasks / uptime) * 60, 2) if uptime > 0 else 0,
-                            "tasks_per_hour": round((total_tasks / uptime) * 3600, 2) if uptime > 0 else 0
-                        }
+
+                    stats_obj = {
+                        "total_processed": total_tasks,
+                        "uptime_seconds": uptime,
+                        "tasks_per_minute": round((total_tasks / uptime) * 60, 2) if uptime > 0 else 0,
+                        "tasks_per_hour": round((total_tasks / uptime) * 3600, 2) if uptime > 0 else 0,
+                        "worker_name": worker
+                    }
+
+                    processing_stats[worker] = stats_obj
+
+                    # Separate stats by worker type
+                    if is_crawler:
+                        crawler_stats = stats_obj
+                    elif is_embedding:
+                        embedding_stats = stats_obj
 
                     # Worker details
                     worker_details[worker] = {
                         "pid": worker_stats.get('pid', 'unknown'),
                         "uptime": uptime,
-                        "pool": worker_stats.get('pool', {})
+                        "pool": worker_stats.get('pool', {}),
+                        "type": "crawler" if is_crawler else "embedding" if is_embedding else "unknown"
                     }
 
         except Exception as celery_error:
@@ -194,7 +224,9 @@ async def get_queue_status():
                 "scheduled_tasks": scheduled_count,
                 "reserved_tasks": reserved_count,
                 "total_pending": active_count + scheduled_count + reserved_count,
-                "rabbitmq_messages": celery_queue_messages
+                "rabbitmq_messages": celery_queue_messages + embedding_queue_messages,
+                "crawler_queue_messages": celery_queue_messages,
+                "embedding_queue_messages": embedding_queue_messages
             },
             "workers": {
                 "online": workers_online,
@@ -205,11 +237,13 @@ async def get_queue_status():
                 "reserved": reserved_details
             },
             "processing_stats": processing_stats,
+            "crawler_stats": crawler_stats,
+            "embedding_stats": embedding_stats,
             "total_stats": total_stats,
             "current_activity": {
                 "is_crawling": is_crawling,
                 "is_processing_embeddings": is_processing_embeddings,
-                "has_pending_work": (active_count + scheduled_count + reserved_count + celery_queue_messages) > 0
+                "has_pending_work": (active_count + scheduled_count + reserved_count + celery_queue_messages + embedding_queue_messages) > 0
             },
             "timestamp": str(uuid.uuid4())[:8]  # Simple timestamp for cache busting
         }
