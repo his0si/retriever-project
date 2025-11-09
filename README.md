@@ -67,10 +67,9 @@
 │   RabbitMQ     │ │    Redis       │ │    Qdrant      │ │    Ollama      │
 │ (5672 / 15672) │ │    (6379)      │ │  (6333–6334)   │ │   (11434)      │
 │----------------│ │----------------│ │----------------│ │----------------│
-│  Celery Queue  │ │     Cache      │ │   Vector DB    │ │ GPU 가속 LLM    │
-│  작업 모니터링   │ │   세션 저장     │ │  임베딩 저장    │ │ qwen2.5:7b     │
-└────────────────┘ └────────────────┘ └────────────────┘ │ bge-m3         │
-                                                          └────────────────┘
+│  Celery Queue  │ │     Cache      │ │   Vector DB    │ │ 임베딩 생성     │
+│  작업 모니터링   │ │   세션 저장     │ │  임베딩 저장    │ │ bge-m3         │
+└────────────────┘ └────────────────┘ └────────────────┘ └────────────────┘
            │
            ▼
 ┌────────────────┐
@@ -80,6 +79,10 @@
 │  IP 차단 방지   │
 └────────────────┘
 ```
+
+**AI 모델 역할 분담**:
+- **크롤링 & 임베딩**: Ollama bge-m3 (로컬, 비용 효율적)
+- **챗봇 답변 생성**: OpenAI GPT-4o-mini (클라우드, 높은 정확도)
 
 ## 시스템 구성
 
@@ -93,9 +96,9 @@
 - **Reverse Proxy**: Nginx + Let's Encrypt SSL
 - **VPN**: NordVPN (IP 차단 방지)
 
-### AI 모델 (Ollama)
-- **qwen2.5:7b** (4.7GB): RAG 질의응답용 메인 LLM
-- **bge-m3** (1.2GB): 텍스트 임베딩 생성 (768차원 벡터)
+### AI 모델
+- **OpenAI GPT-4o-mini**: RAG 챗봇 답변 생성용 (정확한 답변 제공)
+- **Ollama bge-m3** (1.2GB): 텍스트 임베딩 생성 (768차원 벡터)
 
 ### Celery 워커
 - **Main Worker**: 크롤링 작업 처리 (1개 워커)
@@ -449,10 +452,9 @@ scheduler.start()
    - RabbitMQ를 통한 비동기 처리
    ↓
 7. Embedding Worker가 각 URL 처리
-   ├─ 콘텐츠 추출
-   ├─ 마크다운 변환 (OpenAI GPT-4o-mini)
+   ├─ 텍스트 추출 (BeautifulSoup)
    ├─ 텍스트 청킹 (1000자 단위, 100자 오버랩)
-   ├─ 임베딩 생성 (BGE-M3, 768차원)
+   ├─ 임베딩 생성 (Ollama BGE-M3, 768차원)
    └─ Qdrant에 저장
    ↓
 8. 중복 감지 및 업데이트
@@ -460,11 +462,11 @@ scheduler.start()
    - 변경된 경우만 업데이트
 ```
 
-### 마크다운 변환
+### 텍스트 추출
 
-HTML을 구조화된 마크다운으로 변환하여 LLM이 이해하기 쉽게 만듭니다.
+HTML에서 불필요한 요소를 제거하고 실제 콘텐츠만 추출합니다.
 
-**변환 전 (HTML)**:
+**추출 전 (HTML)**:
 ```html
 <div class="content">
   <h1>수강신청 안내</h1>
@@ -474,19 +476,19 @@ HTML을 구조화된 마크다운으로 변환하여 LLM이 이해하기 쉽게 
 </div>
 ```
 
-**변환 후 (Markdown)**:
-```markdown
-## 수강신청 안내
+**추출 후 (텍스트)**:
+```
+수강신청 안내
 
 2025학년도 1학기 수강신청 일정은...
 ```
 
-**변환 과정**:
+**추출 과정**:
 1. BeautifulSoup로 HTML 파싱
-2. 불필요한 요소 제거 (nav, footer, script 등)
-3. OpenAI GPT-4o-mini로 구조화된 마크다운 생성
-4. 헤더, 리스트, 표 등 구조 보존
-5. 중요 정보 강조 (날짜, 연락처 등)
+2. 불필요한 요소 제거 (nav, footer, script, style 등)
+3. main, article 등 주요 콘텐츠 영역 식별
+4. 텍스트만 추출하여 정리
+5. 과도한 공백 제거 및 정규화
 
 ### 임베딩 및 벡터 저장
 
@@ -687,10 +689,10 @@ SUPABASE_KEY=your-supabase-anon-key
 QDRANT_HOST=https://your-cluster.qdrant.io
 QDRANT_API_KEY=your-qdrant-api-key
 
-# OpenAI (마크다운 변환용)
+# OpenAI (챗봇 답변 생성용)
 OPENAI_API_KEY=your-openai-api-key
 
-# Ollama (임베딩/LLM)
+# Ollama (임베딩 전용)
 OLLAMA_HOST=http://ollama:11434
 OLLAMA_MODEL=qwen2.5:7b
 OLLAMA_EMBEDDING_MODEL=bge-m3
