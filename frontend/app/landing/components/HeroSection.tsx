@@ -2,9 +2,16 @@
 
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function HeroSection() {
   const router = useRouter()
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    // Fade in on mount
+    setIsVisible(true)
+  }, [])
 
   const handleGetStarted = () => {
     signIn()
@@ -21,18 +28,12 @@ export default function HeroSection() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center py-8 px-2 sm:px-8">
-      {/* Background Image Overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50 z-10"></div>
-      
-      {/* Background Image */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-           style={{ 
-             backgroundImage: 'url(/images/background.png)' 
-           }}>
-      </div>
-      
       {/* Content */}
-      <div className="relative z-20 text-center px-2 sm:px-8 max-w-lg sm:max-w-2xl md:max-w-4xl mx-auto w-full">
+      <div
+        className={`relative z-20 text-center px-2 sm:px-8 max-w-lg sm:max-w-2xl md:max-w-4xl mx-auto w-full transition-all duration-1000 ${
+          isVisible ? 'translate-y-0' : 'translate-y-10'
+        }`}
+      >
         <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
           Retriever Project
         </h1>
