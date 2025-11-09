@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
-from .routes import health_router, crawl_router, chat_router, database_router
+from .routes import health_router, crawl_router, chat_router, database_router, user_preferences_router
 
 
 def create_app() -> FastAPI:
@@ -30,5 +30,6 @@ def create_app() -> FastAPI:
     app.include_router(crawl_router)
     app.include_router(chat_router)
     app.include_router(database_router, prefix="/db", tags=["database"])
+    app.include_router(user_preferences_router)
 
     return app

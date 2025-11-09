@@ -1,9 +1,10 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import structlog
 from langchain_ollama import OllamaEmbeddings
 from langchain_openai import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage
 from qdrant_client import QdrantClient
+from supabase_client import supabase
 
 from config import settings
 
@@ -32,17 +33,36 @@ class RAGService:
             base_url=settings.ollama_host
         )
     
-    async def get_answer(self, question: str, mode: str = "filter") -> Tuple[str, List[str]]:
+    async def get_answer(self, question: str, mode: str = "filter", user_id: str = "anonymous") -> Tuple[str, List[str]]:
         """
         Get answer for a question using RAG
         Args:
             question: User's question
             mode: Search mode - "filter" (strict) or "expand" (flexible)
+            user_id: User ID for personalized search
         Returns: (answer, sources)
         """
         try:
-            # Get query embedding
-            query_embedding = self._get_embedding(question)
+            # Get user preferences for department-based search
+            department_info = await self._get_user_department_info(user_id)
+            department_urls = department_info["urls"]
+            department_names = department_info["departments"]
+
+            # Enhance query with department info for better search results
+            enhanced_question = question
+            if department_info["enabled"] and department_names:
+                # Add department context to search query
+                dept_context = " ".join(department_names)
+                enhanced_question = f"{dept_context} {question}"
+                logger.info(
+                    "Enhanced search query with departments",
+                    original=question,
+                    enhanced=enhanced_question,
+                    departments=department_names
+                )
+
+            # Get query embedding (use enhanced question for better matching)
+            query_embedding = self._get_embedding(enhanced_question)
 
             # Adjust search parameters based on mode
             if mode == "expand":
@@ -94,6 +114,14 @@ class RAGService:
             if not search_results:
                 return "죄송합니다. 관련된 정보를 찾을 수 없습니다.", []
 
+            # Apply department boosting if enabled
+            if department_info["enabled"] and (department_urls or department_names):
+                search_results = self._apply_department_boosting(
+                    search_results,
+                    department_urls,
+                    department_names
+                )
+
             # Extract documents and sources
             documents = []
             sources = set()
@@ -123,7 +151,12 @@ class RAGService:
             )
 
             # Generate answer using GPT
-            answer = await self._generate_answer(context, question, mode)
+            answer = await self._generate_answer(
+                context,
+                question,
+                mode,
+                department_names if department_info["enabled"] else None
+            )
 
             # Log if answer contains suspicious content
             if "경남" in answer or "경북" in answer or "부산" in answer:
@@ -145,18 +178,150 @@ class RAGService:
         """Get embedding for text"""
         return self.embeddings_client.embed_query(text)
     
-    async def _generate_answer(self, context: str, question: str, mode: str = "filter") -> str:
+    async def _get_user_department_info(self, user_id: str) -> dict:
+        """Get user's preferred department information from database"""
+        try:
+            # Get user preferences
+            response = supabase.table("user_preferences").select("*").eq("user_id", user_id).execute()
+
+            if not response.data or len(response.data) == 0:
+                return {"enabled": False, "departments": [], "urls": []}
+
+            user_prefs = response.data[0]
+
+            # Check if department search is enabled
+            if not user_prefs.get("department_search_enabled", False):
+                return {"enabled": False, "departments": [], "urls": []}
+
+            # Get enabled departments
+            departments = user_prefs.get("preferred_departments", [])
+            enabled_depts = [
+                dept
+                for dept in departments
+                if dept.get("enabled", True)
+            ]
+
+            # Extract names and URLs separately
+            dept_names = [dept.get("name") for dept in enabled_depts if dept.get("name")]
+            dept_urls = [dept.get("url") for dept in enabled_depts if dept.get("url")]
+
+            logger.info(
+                "User department info loaded",
+                user_id=user_id,
+                department_names=dept_names,
+                url_count=len(dept_urls)
+            )
+
+            return {
+                "enabled": True,
+                "departments": dept_names,
+                "urls": dept_urls
+            }
+
+        except Exception as e:
+            logger.error("Failed to get user department info", user_id=user_id, error=str(e))
+            return {"enabled": False, "departments": [], "urls": []}
+
+    def _apply_department_boosting(
+        self,
+        search_results: List,
+        department_urls: List[str],
+        department_names: List[str]
+    ) -> List:
+        """
+        Apply boosting to search results from preferred departments
+        전공 URL 또는 전공 이름에 해당하는 결과에 가중치를 적용하여 최우선으로 정렬
+        """
+        try:
+            department_results = []
+            other_results = []
+
+            for result in search_results:
+                result_url = result.payload.get("url", "")
+                result_text = result.payload.get("text", "")
+
+                is_from_department = False
+
+                # Check if result is from a preferred department URL
+                if department_urls:
+                    is_from_department = any(
+                        dept_url and (dept_url in result_url or result_url in dept_url)
+                        for dept_url in department_urls
+                    )
+
+                # If not matched by URL, check by department name in text or URL
+                if not is_from_department and department_names:
+                    # Check if any department name appears in the URL or text
+                    for dept_name in department_names:
+                        # Remove common suffixes for matching
+                        dept_name_core = dept_name.replace("과", "").replace("학과", "").replace("학부", "").replace("전공", "").strip()
+
+                        # Check in URL and text
+                        if dept_name_core and (
+                            dept_name_core in result_url or
+                            dept_name_core in result_text or
+                            dept_name in result_text
+                        ):
+                            is_from_department = True
+                            break
+
+                if is_from_department:
+                    # Boost score by multiplying by 2.0 (강력한 우선순위 부여)
+                    result.score = result.score * 2.0
+                    department_results.append(result)
+                else:
+                    other_results.append(result)
+
+            # Sort department results by score
+            department_results.sort(key=lambda x: x.score, reverse=True)
+            other_results.sort(key=lambda x: x.score, reverse=True)
+
+            # Combine: department results first, then others
+            boosted_results = department_results + other_results
+
+            logger.info(
+                "Applied department boosting",
+                total_results=len(boosted_results),
+                department_results=len(department_results),
+                other_results=len(other_results),
+                department_names=department_names
+            )
+
+            return boosted_results
+
+        except Exception as e:
+            logger.error("Failed to apply department boosting", error=str(e))
+            return search_results
+
+    async def _generate_answer(
+        self,
+        context: str,
+        question: str,
+        mode: str = "filter",
+        user_departments: List[str] = None
+    ) -> str:
         """Generate answer using GPT"""
+
+        # Build user context info
+        user_context = ""
+        if user_departments:
+            dept_list = ", ".join(user_departments)
+            user_context = f"""**[사용자 전공 정보]**
+이 사용자는 다음 전공/학과에 관심이 있습니다: {dept_list}
+장학금, 수강신청, 학사일정, 프로그램 등의 정보를 제공할 때 이 전공/학과와 관련된 내용을 우선적으로 언급해주세요.
+단, 해당 전공 정보가 없어도 일반적인 정보는 제공해야 합니다.
+
+"""
 
         # Adjust system prompt based on mode
         if mode == "expand":
-            system_prompt = """**[언어 규칙 - 최우선 준수]**
+            system_prompt = f"""**[언어 규칙 - 최우선 준수]**
 - 사용자가 질문한 언어로 답변하세요
 - 한국어 질문 → 한국어 답변 (절대 중국어/영어 사용 금지)
 - 영어 질문 → 영어 답변
 - 다른 언어로 답변하면 안 됩니다
 
-당신은 학교 웹사이트 정보를 안내하는 Q&A 챗봇입니다.
+{user_context}당신은 학교 웹사이트 정보를 안내하는 Q&A 챗봇입니다.
 주어진 '컨텍스트'를 기반으로 사용자의 '질문'에 답변하되, 보다 유연하고 포괄적으로 답변하세요.
 컨텍스트의 정보를 바탕으로 합리적인 추론과 일반적인 대학 정보를 활용하여 답변할 수 있습니다.
 다만, 추론이나 일반적 정보를 사용할 때는 "일반적으로", "보통", "추측하자면" 등의 표현을 사용하여 명확히 구분하세요.
@@ -193,13 +358,13 @@ class RAGService:
 
 답변은 친절하고 명확하게 작성하되, 학생들에게 유용한 정보를 제공하는 것을 목표로 하세요."""
         else:
-            system_prompt = """**[언어 규칙 - 최우선 준수]**
+            system_prompt = f"""**[언어 규칙 - 최우선 준수]**
 - 사용자가 질문한 언어로 답변하세요
 - 한국어 질문 → 한국어 답변 (절대 중국어/영어 사용 금지)
 - 영어 질문 → 영어 답변
 - 다른 언어로 답변하면 안 됩니다
 
-당신은 학교 웹사이트 정보를 안내하는 Q&A 챗봇입니다.
+{user_context}당신은 학교 웹사이트 정보를 안내하는 Q&A 챗봇입니다.
 
 **[CRITICAL - 필터 모드 엄격 규칙]**
 이 모드는 "필터 모드"로, 다음 규칙을 절대적으로 준수해야 합니다:

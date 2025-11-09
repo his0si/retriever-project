@@ -9,6 +9,13 @@ import { supabase } from '@/lib/supabaseClient'
 import { v4 as uuidv4 } from 'uuid';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useRouter } from 'next/navigation'
+import DepartmentSelector from './DepartmentSelector'
+import {
+  getUserPreferences,
+  createUserPreferences,
+  updateUserPreferences,
+  Department
+} from '@/lib/userPreferencesApi'
 
 interface Message {
   id: string
@@ -40,6 +47,9 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   const [isLoading, setIsLoading] = useState(false)
   const [openTooltip, setOpenTooltip] = useState<'search' | 'major' | null>(null) // 툴팁 상태 통합 관리
   const [aiSearchMode, setAiSearchMode] = useState<'filter' | 'expand'>('filter')
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [departmentSearchEnabled, setDepartmentSearchEnabled] = useState(false)
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false)
   const [tooltipPlacement, setTooltipPlacement] = useState<'center' | 'pushRight' | 'pushLeft'>('center')
   const [tooltipOffsetPx, setTooltipOffsetPx] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
@@ -95,6 +105,33 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  // 사용자 설정 불러오기
+  useEffect(() => {
+    if (!user?.email) return
+
+    async function loadPreferences() {
+      try {
+        console.log('[ChatInterface] Loading preferences for user:', user!.email)
+        const prefs = await getUserPreferences(user!.email!)
+        console.log('[ChatInterface] Loaded preferences:', prefs)
+        if (prefs) {
+          setDepartments(prefs.preferred_departments)
+          setDepartmentSearchEnabled(prefs.department_search_enabled)
+          setAiSearchMode(prefs.search_mode)
+          console.log('[ChatInterface] Applied preferences - departments:', prefs.preferred_departments.length)
+        } else {
+          console.log('[ChatInterface] No preferences found, using defaults')
+        }
+        setPreferencesLoaded(true)
+      } catch (error) {
+        console.error('[ChatInterface] Failed to load user preferences:', error)
+        setPreferencesLoaded(true)
+      }
+    }
+
+    loadPreferences()
+  }, [user])
+
 
   // 입력창에서 Enter로 전송
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -122,6 +159,72 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
     }, 100);
   };
 
+  // 사용자 설정 저장 함수
+  const saveUserPreferences = async (updates: {
+    preferred_departments?: Department[]
+    department_search_enabled?: boolean
+    search_mode?: 'filter' | 'expand'
+  }) => {
+    if (!user?.email) {
+      console.warn('[ChatInterface] Cannot save preferences: no user email')
+      return
+    }
+
+    if (!preferencesLoaded) {
+      console.warn('[ChatInterface] Cannot save preferences: not loaded yet')
+      return
+    }
+
+    try {
+      console.log('[ChatInterface] Saving preferences:', updates)
+      const prefs = await getUserPreferences(user.email)
+      if (prefs) {
+        console.log('[ChatInterface] Updating existing preferences')
+        await updateUserPreferences(user.email, updates)
+      } else {
+        console.log('[ChatInterface] Creating new preferences')
+        // 현재 상태와 업데이트를 합침
+        const finalDepartments = updates.preferred_departments !== undefined
+          ? updates.preferred_departments
+          : departments
+        const finalEnabled = updates.department_search_enabled !== undefined
+          ? updates.department_search_enabled
+          : departmentSearchEnabled
+        const finalMode = updates.search_mode !== undefined
+          ? updates.search_mode
+          : aiSearchMode
+
+        await createUserPreferences(
+          user.email,
+          finalDepartments,
+          finalEnabled,
+          finalMode
+        )
+      }
+      console.log('[ChatInterface] Preferences saved successfully')
+    } catch (error) {
+      console.error('[ChatInterface] Failed to save user preferences:', error)
+    }
+  }
+
+  // 전공 변경 핸들러
+  const handleDepartmentsChange = (newDepartments: Department[]) => {
+    setDepartments(newDepartments)
+    saveUserPreferences({ preferred_departments: newDepartments })
+  }
+
+  // 전공 검색 활성화 토글
+  const handleDepartmentSearchEnabledChange = (enabled: boolean) => {
+    setDepartmentSearchEnabled(enabled)
+    saveUserPreferences({ department_search_enabled: enabled })
+  }
+
+  // 검색 모드 변경 핸들러
+  const handleSearchModeChange = (mode: 'filter' | 'expand') => {
+    setAiSearchMode(mode)
+    saveUserPreferences({ search_mode: mode })
+  }
+
   // 메시지 처리 함수 (공통 로직)
   const processMessage = async (userMessage: Message) => {
     try {
@@ -139,7 +242,8 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
         '/api/chat',
         {
           question: userMessage.content,
-          mode: aiSearchMode
+          mode: aiSearchMode,
+          user_id: user?.email || 'anonymous'
         }
       );
       const assistantMessage: Message = {
@@ -269,7 +373,9 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
     const handleClickOutside = (event: MouseEvent) => {
       if (openTooltip) {
         const target = event.target as Element;
-        if (!target.closest('[data-tooltip-trigger]') && !target.closest('[data-search-tooltip-trigger]')) {
+        if (!target.closest('[data-tooltip-trigger]') &&
+            !target.closest('[data-search-tooltip-trigger]') &&
+            !target.closest('[data-tooltip-content]')) {
           setOpenTooltip(null);
         }
       }
@@ -366,7 +472,12 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                         </svg>
 
                         {openTooltip === 'search' && (
-                          <div className={`absolute top-full mt-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`}>
+                          <div
+                            data-tooltip-content
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className={`absolute top-full mt-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`}
+                          >
                             <div className="p-4">
                               <div className="text-gray-900 dark:text-gray-100 font-semibold mb-2">AI 검색 모드 전환</div>
                               <div className="text-sky-700 dark:text-sky-300 text-sm leading-relaxed mb-3">
@@ -378,7 +489,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                                   className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'filter' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setAiSearchMode('filter');
+                                    handleSearchModeChange('filter');
                                   }}
                                 >
                                   필터 모드
@@ -388,7 +499,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                                   className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'expand' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setAiSearchMode('expand');
+                                    handleSearchModeChange('expand');
                                   }}
                                 >
                                   확장 모드
@@ -410,14 +521,26 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                         
                         {/* 전공 맞춤형 검색 툴팁 */}
                         {openTooltip === 'major' && (
-                          <div className={`absolute top-full mt-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`} style={{ left: tooltipPlacement === 'pushRight' ? `${tooltipOffsetPx}px` as any : undefined }}>
+                          <div
+                            data-tooltip-content
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className={`absolute top-full mt-2 w-[90vw] max-w-[24rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`}
+                            style={{ left: tooltipPlacement === 'pushRight' ? `${tooltipOffsetPx}px` as any : undefined }}
+                          >
                             <div className="p-4">
                               <div className="flex items-center gap-2 mb-3">
                                 <span className="text-gray-900 dark:text-gray-100 font-semibold">전공 맞춤형 검색 결과 제공</span>
                               </div>
-                              <div className="text-sky-700 dark:text-sky-300 text-sm leading-relaxed">
+                              <div className="text-sky-700 dark:text-sky-300 text-sm leading-relaxed mb-4">
                                 선택한 전공에 관련된 콘텐츠를 자동으로 우선 검색합니다.
                               </div>
+                              <DepartmentSelector
+                                departments={departments}
+                                enabled={departmentSearchEnabled}
+                                onDepartmentsChange={handleDepartmentsChange}
+                                onEnabledChange={handleDepartmentSearchEnabledChange}
+                              />
                             </div>
                             {/* 툴팁 화살표 */}
                             <div className={`absolute -top-2 w-4 h-4 bg-sky-50 dark:bg-sky-900/20 border-l border-t border-sky-300 dark:border-sky-700 rotate-45 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-4' : 'right-4'}`}></div>
@@ -545,7 +668,12 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                   </svg>
 
                   {openTooltip === 'search' && (
-                    <div className={`absolute bottom-full mb-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`}>
+                    <div
+                      data-tooltip-content
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className={`absolute bottom-full mb-2 w-[90vw] max-w-[22rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`}
+                    >
                       <div className="p-4">
                         <div className="text-gray-900 dark:text-gray-100 font-semibold mb-2">AI 검색 모드 전환</div>
                         <div className="text-gray-700 dark:text-gray-200 text-sm leading-relaxed mb-3">
@@ -557,7 +685,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                             className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'filter' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setAiSearchMode('filter');
+                              handleSearchModeChange('filter');
                             }}
                           >
                             필터 모드
@@ -567,7 +695,7 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                             className={`px-3 py-1.5 text-sm rounded-md border ${aiSearchMode === 'expand' ? 'bg-sky-600 text-sky-100 dark:text-sky-100 border-sky-600' : 'bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700'}`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setAiSearchMode('expand');
+                              handleSearchModeChange('expand');
                             }}
                           >
                             확장 모드
@@ -589,14 +717,26 @@ export default function ChatInterface({ isGuestMode = false, selectedSessionId, 
                   
                   {/* 전공 맞춤형 검색 툴팁 */}
                   {openTooltip === 'major' && (
-                    <div className={`absolute bottom-full mb-2 w-[90vw] max-w-80 bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`} style={{ left: tooltipPlacement === 'pushRight' ? `${tooltipOffsetPx}px` as any : undefined }}>
+                    <div
+                      data-tooltip-content
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      className={`absolute bottom-full mb-2 w-[90vw] max-w-[24rem] bg-sky-50 dark:bg-sky-900/20 rounded-lg shadow-lg border border-sky-300 dark:border-sky-700 z-50 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-0' : 'right-0'}`}
+                      style={{ left: tooltipPlacement === 'pushRight' ? `${tooltipOffsetPx}px` as any : undefined }}
+                    >
                       <div className="p-4">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-gray-900 dark:text-gray-100 font-semibold">전공 맞춤형 검색 결과 제공</span>
                         </div>
-                        <div className="text-sky-700 dark:text-sky-300 text-sm leading-relaxed">
+                        <div className="text-sky-700 dark:text-sky-300 text-sm leading-relaxed mb-4">
                           선택한 전공에 관련된 콘텐츠를 자동으로 우선 검색합니다.
                         </div>
+                        <DepartmentSelector
+                          departments={departments}
+                          enabled={departmentSearchEnabled}
+                          onDepartmentsChange={handleDepartmentsChange}
+                          onEnabledChange={handleDepartmentSearchEnabledChange}
+                        />
                       </div>
                       {/* 툴팁 화살표 */}
                       <div className={`absolute -bottom-2 w-4 h-4 bg-sky-50 dark:bg-sky-900/20 border-r border-b border-sky-300 dark:border-sky-700 rotate-45 ${tooltipPlacement === 'center' ? 'left-1/2 -translate-x-1/2' : tooltipPlacement === 'pushRight' ? 'left-4' : 'right-4'}`}></div>

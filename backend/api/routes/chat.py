@@ -19,13 +19,15 @@ async def chat(request: ChatRequest):
         # Get answer from RAG service
         answer, sources = await rag_service.get_answer(
             question=request.question,
-            mode=request.mode
+            mode=request.mode,
+            user_id=request.user_id
         )
 
         logger.info(
             "Chat response generated",
             question=request.question,
             mode=request.mode,
+            user_id=request.user_id,
             sources_count=len(sources)
         )
 
