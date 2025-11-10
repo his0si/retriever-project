@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { EnvelopeIcon } from '@heroicons/react/24/outline'
 
 export default function ContactSection() {
   const [isVisible, setIsVisible] = useState(false)
@@ -91,10 +92,6 @@ export default function ContactSection() {
         }`}
       >
         <div className="backdrop-blur-xl bg-white/10 rounded-3xl p-8 sm:p-12 border border-white/20 shadow-2xl">
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-8 text-center">
-            💬 Contact
-          </h2>
-
           <div className="space-y-8">
             <div className="text-white space-y-4">
               <p className="text-lg sm:text-xl leading-relaxed">
@@ -103,8 +100,9 @@ export default function ContactSection() {
               </p>
 
               <div className="backdrop-blur-md bg-white/5 rounded-xl p-6 border border-white/10">
-                <h3 className="text-xl font-semibold text-sky-300 mb-3">
-                  📨 제보 예시
+                <h3 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
+                  <EnvelopeIcon className="w-5 h-5 text-white" />
+                  제보 예시
                 </h3>
                 <div className="space-y-2 text-sm sm:text-base text-white/90">
                   <p><strong>제목:</strong> 교환학생 프로그램 공지 추가 요청</p>
@@ -112,7 +110,7 @@ export default function ContactSection() {
                     <strong>내용:</strong> 국제교류처 사이트(https://oia.ewha.ac.kr)에
                     교환학생 관련 공지가 많은데, Retriever에서 검색되지 않아요.
                   </p>
-                  <p className="text-sky-200 italic">
+                  <p className="text-white">
                     &quot;국제교류처 사이트도 크롤링 대상에 추가해주세요.&quot;
                   </p>
                 </div>

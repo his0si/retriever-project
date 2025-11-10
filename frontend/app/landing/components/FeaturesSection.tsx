@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { ChatBubbleLeftRightIcon, GlobeAltIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 
 export default function FeaturesSection() {
   const [isVisible, setIsVisible] = useState(false)
@@ -98,15 +99,12 @@ export default function FeaturesSection() {
         }`}
       >
         <div className="backdrop-blur-xl bg-white/10 rounded-3xl p-8 sm:p-12 border border-white/20 shadow-2xl">
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-12 text-center">
-            ⚙️ Features
-          </h2>
-
           <div className="space-y-12">
             {/* AI 챗봇 기능 */}
             <div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6">
-                🤖 AI 챗봇 기능
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <ChatBubbleLeftRightIcon className="w-6 h-6 text-white" />
+                AI 챗봇 기능
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {aiFeatures.map((feature, index) => (
@@ -127,8 +125,9 @@ export default function FeaturesSection() {
 
             {/* 크롤링 시스템 */}
             <div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6">
-                🕷️ 크롤링 시스템
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <GlobeAltIcon className="w-6 h-6 text-white" />
+                크롤링 시스템
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {crawlingFeatures.map((feature, index) => (
@@ -149,8 +148,9 @@ export default function FeaturesSection() {
 
             {/* 보안 및 인증 */}
             <div>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6">
-                🔐 보안 및 인증
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <LockClosedIcon className="w-6 h-6 text-white" />
+                보안 및 인증
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {securityFeatures.map((feature, index) => (
