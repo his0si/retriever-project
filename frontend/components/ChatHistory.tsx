@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from 'next-auth/react'
-import { StarIcon as StarOutline, TrashIcon, ClockIcon, PencilSquareIcon, GlobeAltIcon } from '@heroicons/react/24/outline'
+import { StarIcon as StarOutline, TrashIcon, ClockIcon, PencilSquareIcon, GlobeAltIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid'
 import { useRouter } from 'next/navigation'
 
@@ -133,6 +133,16 @@ export default function ChatHistory({
         >
           <GlobeAltIcon className="w-5 h-5 mr-1 text-black dark:text-white transition-colors duration-200" />
           <span>크롤링</span>
+        </button>
+      )}
+      {/* 관리자 전용 문의 받기 버튼 */}
+      {isAdmin && (
+        <button
+          className="w-[90%] mx-auto mb-2 py-2 flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-gray-100 font-semibold text-base rounded transition-colors duration-200 block flex-shrink-0 justify-start px-3"
+          onClick={() => router.push('/inquiries')}
+        >
+          <EnvelopeIcon className="w-5 h-5 mr-1 text-black dark:text-white transition-colors duration-200" />
+          <span>문의 받기</span>
         </button>
       )}
       {/* 파일/대화 리스트 */}

@@ -9,6 +9,7 @@ export default function ContactSection() {
     title: '',
     content: ''
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -29,19 +30,45 @@ export default function ContactSection() {
     }
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // 제보 내용을 alert로 표시 (추후 API 연동 가능)
-    alert(
-      `제보가 접수되었습니다!\n\n` +
-      `제목: ${formData.title}\n\n` +
-      `내용:\n${formData.content}\n\n` +
-      `관리자 검토 후 등록됩니다. 감사합니다!`
-    )
+    if (isSubmitting) return
 
-    // 폼 초기화
-    setFormData({ title: '', content: '' })
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.content
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert(
+          `제보가 접수되었습니다!\n\n` +
+          `제목: ${formData.title}\n\n` +
+          `내용:\n${formData.content}\n\n` +
+          `관리자 검토 후 등록됩니다. 감사합니다!`
+        )
+        // 폼 초기화
+        setFormData({ title: '', content: '' })
+      } else {
+        alert(`오류: ${data.error || '문의 제출에 실패했습니다.'}`)
+      }
+    } catch (error) {
+      console.error('Error submitting inquiry:', error)
+      alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -128,9 +155,10 @@ export default function ContactSection() {
 
               <button
                 type="submit"
-                className="w-full py-4 rounded-xl backdrop-blur-md bg-sky-500/80 hover:bg-sky-600/80 text-white font-semibold text-lg border border-sky-400/50 transition-all duration-300 transform hover:scale-[1.02]"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-xl backdrop-blur-md bg-sky-500/80 hover:bg-sky-600/80 text-white font-semibold text-lg border border-sky-400/50 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                제보하기
+                {isSubmitting ? '제출 중...' : '제보하기'}
               </button>
             </form>
 

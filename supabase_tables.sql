@@ -150,7 +150,22 @@ VALUES ('기본 폴더', 'daily', '02:00:00', NULL, true)
 ON CONFLICT (name) DO NOTHING;
 
 -- ============================================================================
--- 6. 테이블 생성 확인
+-- 6. 문의 받기 시스템 테이블
+-- ============================================================================
+
+-- 6-1. 문의 테이블
+CREATE TABLE IF NOT EXISTS inquiries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6-2. 문의 테이블 인덱스 생성 (성능 최적화)
+CREATE INDEX IF NOT EXISTS idx_inquiries_created_at ON inquiries(created_at DESC);
+
+-- ============================================================================
+-- 7. 테이블 생성 확인
 -- ============================================================================
 
 SELECT 'chat_sessions 테이블 생성 완료' AS status;
@@ -159,3 +174,4 @@ SELECT 'favorites 테이블 생성 완료' AS status;
 SELECT 'user_preferences 테이블 생성 완료' AS status;
 SELECT 'crawl_folders 테이블 생성 완료' AS status;
 SELECT 'scheduled_crawl_sites 테이블 생성 완료' AS status;
+SELECT 'inquiries 테이블 생성 완료' AS status;
