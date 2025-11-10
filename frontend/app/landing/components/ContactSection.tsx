@@ -108,10 +108,7 @@ export default function ContactSection() {
                   <p><strong>제목:</strong> 교환학생 프로그램 공지 추가 요청</p>
                   <p className="leading-relaxed">
                     <strong>내용:</strong> 국제교류처 사이트(https://oia.ewha.ac.kr)에
-                    교환학생 관련 공지가 많은데, Retriever에서 검색되지 않아요.
-                  </p>
-                  <p className="text-white">
-                    &quot;국제교류처 사이트도 크롤링 대상에 추가해주세요.&quot;
+                    교환학생 관련 공지가 많은데, Retriever에서 검색되지 않아요. 국제교류처 사이트도 크롤링 대상에 추가해주세요.
                   </p>
                 </div>
               </div>
@@ -154,16 +151,16 @@ export default function ContactSection() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 rounded-xl backdrop-blur-md bg-sky-500/80 hover:bg-sky-600/80 text-white font-semibold text-lg border border-sky-400/50 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full py-4 rounded-xl backdrop-blur-lg bg-gradient-to-r from-sky-400/30 to-blue-500/30 hover:from-sky-400/50 hover:to-blue-500/50 text-white font-semibold text-lg border border-white/30 hover:border-white/50 shadow-lg hover:shadow-sky-500/50 transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
               >
                 {isSubmitting ? '제출 중...' : '제보하기'}
               </button>
             </form>
 
-            <p className="text-sm text-white/70 text-center leading-relaxed">
-              해당 요청은 관리자 콘솔에서 검토 후 승인/등록됩니다.<br />
-              여러분의 피드백은 Retriever의 데이터 품질 향상에 직접 반영됩니다 🙌
-            </p>
+            <div className="text-sm text-white/80 text-center leading-relaxed space-y-1">
+              <p>해당 문의는 관리자 콘솔에서 검토 후 승인·반영됩니다.</p>
+              <p>여러분의 피드백은 Retriever를 더 똑똑하게 만드는 힘이 됩니다. 데이터 품질 개선에 직접 기여해주셔서 감사합니다!</p>
+            </div>
           </div>
         </div>
       </div>

@@ -142,7 +142,7 @@ export default function ChatHistory({
           onClick={() => router.push('/inquiries')}
         >
           <EnvelopeIcon className="w-5 h-5 mr-1 text-black dark:text-white transition-colors duration-200" />
-          <span>문의 받기</span>
+          <span>문의 내역</span>
         </button>
       )}
       {/* 파일/대화 리스트 */}

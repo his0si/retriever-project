@@ -88,17 +88,11 @@ export default function InquiriesInterface() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* 헤더 */}
-      <div className="flex items-center gap-3 mb-6">
-        <EnvelopeIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">문의 받기</h1>
-      </div>
-
       {/* 문의 목록과 상세 보기 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 문의 목록 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
             문의 목록 ({inquiries.length})
           </h2>
 
@@ -111,7 +105,7 @@ export default function InquiriesInterface() {
               아직 문의가 없습니다.
             </div>
           ) : (
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+            <div className="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin">
               {inquiries.map((inquiry) => (
                 <div
                   key={inquiry.id}
@@ -122,7 +116,7 @@ export default function InquiriesInterface() {
                       : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
                 >
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 truncate pr-8">
+                  <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-2 truncate pr-8">
                     {inquiry.title}
                   </h3>
                   <div className="flex items-center justify-between">
@@ -145,8 +139,8 @@ export default function InquiriesInterface() {
         </div>
 
         {/* 문의 상세 보기 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
             문의 상세
           </h2>
 
@@ -156,7 +150,7 @@ export default function InquiriesInterface() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   제목
                 </label>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-gray-900 dark:text-gray-100">
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm text-gray-900 dark:text-gray-100">
                   {selectedInquiry.title}
                 </div>
               </div>
@@ -165,7 +159,7 @@ export default function InquiriesInterface() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   작성일
                 </label>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
                   <CalendarIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   {formatDate(selectedInquiry.created_at)}
                 </div>
@@ -175,7 +169,7 @@ export default function InquiriesInterface() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   내용
                 </label>
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-gray-900 dark:text-gray-100 whitespace-pre-wrap min-h-[200px] max-h-[400px] overflow-y-auto">
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap min-h-[200px] max-h-[400px] overflow-y-auto scrollbar-thin">
                   {selectedInquiry.content}
                 </div>
               </div>

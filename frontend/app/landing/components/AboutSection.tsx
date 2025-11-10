@@ -38,31 +38,27 @@ export default function AboutSection() {
         }`}
       >
         <div className="backdrop-blur-xl bg-white/10 rounded-3xl p-8 sm:p-12 border border-white/20 shadow-2xl">
-          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-8 text-center">
-            About
-          </h2>
-
           <div className="space-y-6 text-white">
-            <p className="text-xl sm:text-2xl font-semibold text-center leading-relaxed">
-              &quot;학교 정보, 직접 뒤지지 말고 Retriever에게 맡겨보세요.&quot;
+            <p className="text-2xl sm:text-3xl font-semibold text-center leading-relaxed">
+              학교생활에 필요한 정보, 찾기 어려우셨죠?
             </p>
 
             <div className="space-y-4 text-base sm:text-lg leading-relaxed text-white/90">
               <p>
-                Retriever Project는 학교 공식 사이트에 흩어져 있는 공지, 학사 정보, 학과별 안내 등을
-                AI가 자동으로 수집·요약·제공하는 지능형 정보 검색 플랫폼입니다.
+                학사공지, 장학금, 공모전, 학식, 도서관 좌석까지 —<br />
+                필요한 정보는 여기저기 흩어져 있고, 우리는 그것을 찾기 위해 수많은 사이트를 헤매야 했습니다.
               </p>
 
               <p>
-                사용자는 챗봇과 대화하듯 질문만 입력하면,
-                Retriever가 크롤링 → 임베딩 → 검색 → 응답의 전 과정을 자동으로 수행해
-                정확한 출처 기반 답변을 제공합니다.
+                Retriever Project는 이러한 불편함을 해결하기 위해 탄생했습니다.
+                리트리버 프로젝트는 학교 안팎의 분산된 정보를 자동으로 수집하고,
+                이를 하나의 지능형 채널(챗봇)을 통해 제공하는 기관 특화형 AI 정보 통합 플랫폼입니다.
               </p>
 
               <p className="text-lg sm:text-xl font-semibold text-center pt-4 text-sky-200">
-                본 프로젝트는<br />
-                &quot;학생들이 학교 정보를 더 빠르고 정확하게 접근할 수 있는 방법&quot;<br />
-                을 목표로 개발되었습니다.
+                그 첫 번째 버전인 Ewha Univ. Edition은<br />
+                기존 학교 공식 챗봇이 다루지 못했던 외부 장학금, 공모전, 대외활동 정보까지 포함하여<br />
+                정보의 폭과 깊이를 한층 확장했습니다.
               </p>
             </div>
           </div>
