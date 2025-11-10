@@ -110,3 +110,20 @@ html, body {
 .animate-slide-in-left {
   animation: slide-in-left 0.2s ease-out;
 }
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.feature-title {
+  animation: fadeIn 4s ease-in-out forwards;
+}
+
+.about-highlight {
+  animation: fadeIn 4s ease-in-out forwards;
+}

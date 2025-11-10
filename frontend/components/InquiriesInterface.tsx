@@ -87,12 +87,12 @@ export default function InquiriesInterface() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 p-4">
       {/* 문의 목록과 상세 보기 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 문의 목록 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <h2 className="font-medium mb-3 text-gray-900 dark:text-gray-100">
             문의 목록 ({inquiries.length})
           </h2>
 
@@ -105,22 +105,22 @@ export default function InquiriesInterface() {
               아직 문의가 없습니다.
             </div>
           ) : (
-            <div className="space-y-3 max-h-[600px] overflow-y-auto scrollbar-thin">
+            <div className="space-y-2 max-h-[600px] overflow-y-auto scrollbar-thin">
               {inquiries.map((inquiry) => (
                 <div
                   key={inquiry.id}
                   onClick={() => setSelectedInquiry(inquiry)}
-                  className={`p-4 rounded-lg cursor-pointer transition-all duration-200 border relative ${
+                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 border relative ${
                     selectedInquiry?.id === inquiry.id
                       ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-600'
                       : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
                 >
-                  <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-2 truncate pr-8">
+                  <h3 className="font-medium text-xs text-gray-900 dark:text-gray-100 mb-2 truncate pr-8">
                     {inquiry.title}
                   </h3>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                       <CalendarIcon className="w-4 h-4" />
                       <span>{formatDate(inquiry.created_at)}</span>
                     </div>
@@ -129,7 +129,7 @@ export default function InquiriesInterface() {
                       className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors duration-200"
                       aria-label="삭제"
                     >
-                      <TrashIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200" />
+                      <TrashIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200" />
                     </button>
                   </div>
                 </div>
@@ -139,43 +139,43 @@ export default function InquiriesInterface() {
         </div>
 
         {/* 문의 상세 보기 */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <h2 className="font-medium mb-3 text-gray-900 dark:text-gray-100">
             문의 상세
           </h2>
 
           {selectedInquiry ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   제목
                 </label>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm text-gray-900 dark:text-gray-100">
+                <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg text-xs text-gray-900 dark:text-gray-100">
                   {selectedInquiry.title}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   작성일
                 </label>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                  <CalendarIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg text-xs text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   {formatDate(selectedInquiry.created_at)}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   내용
                 </label>
-                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap min-h-[200px] max-h-[400px] overflow-y-auto scrollbar-thin">
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-xs text-gray-900 dark:text-gray-100 whitespace-pre-wrap min-h-[200px] max-h-[400px] overflow-y-auto scrollbar-thin">
                   {selectedInquiry.content}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-center h-64 text-xs text-gray-500 dark:text-gray-400">
               문의를 선택해주세요
             </div>
           )}

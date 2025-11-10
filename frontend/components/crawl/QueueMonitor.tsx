@@ -179,7 +179,7 @@ export default function QueueMonitor({ onRefreshTrigger, refreshTrigger }: Queue
 
           {/* Detailed View - Only shown when showDetails is true */}
           {showDetails && (
-            <div className="space-y-4 border-t pt-4">
+            <div className="space-y-4 border-t border-gray-200 dark:border-gray-600 pt-4">
               {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
@@ -333,28 +333,28 @@ export default function QueueMonitor({ onRefreshTrigger, refreshTrigger }: Queue
 
               {/* Reserved Tasks Details */}
               {queueStatus.task_details.reserved.length > 0 && (
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  <h5 className="text-sm font-medium text-orange-900 mb-2">대기 중인 작업</h5>
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-100 dark:border-orange-800">
+                  <h5 className="text-sm font-medium text-orange-900 dark:text-orange-100 mb-2">대기 중인 작업</h5>
                   <div className="space-y-2">
                     {queueStatus.task_details.reserved.slice(0, 5).map((task, idx) => (
-                      <div key={idx} className="text-xs bg-white p-2 rounded border">
-                        <div className="font-medium text-orange-800">
+                      <div key={idx} className="text-xs bg-white dark:bg-gray-700 p-2 rounded border border-orange-200 dark:border-orange-600">
+                        <div className="font-medium text-orange-800 dark:text-orange-300">
                           {task.name === 'crawl_website' ? '크롤링' :
                            task.name === 'process_url_for_embedding_smart' ? '스마트 임베딩' :
                            task.name}
                         </div>
-                        <div className="text-gray-600 mt-1">
+                        <div className="text-gray-600 dark:text-gray-400 mt-1">
                           ID: {task.task_id.slice(0, 12)}... | 워커: {task.worker}
                         </div>
                         {task.args && task.args.length > 0 && (
-                          <div className="text-gray-500 mt-1 truncate">
+                          <div className="text-gray-500 dark:text-gray-400 mt-1 truncate">
                             URL: {task.args[0] || '알 수 없음'}
                           </div>
                         )}
                       </div>
                     ))}
                     {queueStatus.task_details.reserved.length > 5 && (
-                      <div className="text-xs text-orange-600 text-center py-2">
+                      <div className="text-xs text-orange-600 dark:text-orange-400 text-center py-2">
                         ... 그리고 {queueStatus.task_details.reserved.length - 5}개 더
                       </div>
                     )}
@@ -364,17 +364,17 @@ export default function QueueMonitor({ onRefreshTrigger, refreshTrigger }: Queue
 
               {/* Worker Details */}
               {Object.keys(queueStatus.workers.details).length > 0 && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <h5 className="text-sm font-medium text-gray-900 mb-2">워커 세부사항</h5>
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                  <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">워커 세부사항</h5>
                   <div className="space-y-2">
                     {Object.entries(queueStatus.workers.details).map(([worker, stats]: [string, any]) => (
-                      <div key={worker} className="text-xs bg-white p-2 rounded border">
-                        <div className="font-medium text-gray-800">{worker}</div>
-                        <div className="text-gray-600 mt-1">
+                      <div key={worker} className="text-xs bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600">
+                        <div className="font-medium text-gray-800 dark:text-gray-100">{worker}</div>
+                        <div className="text-gray-600 dark:text-gray-400 mt-1">
                           PID: {stats.pid} | 가동시간: {Math.floor(stats.uptime / 60)}분
                         </div>
                         {stats.pool && (
-                          <div className="text-gray-500 mt-1">
+                          <div className="text-gray-500 dark:text-gray-400 mt-1">
                             동시 실행: {stats.pool['max-concurrency']}개 | 풀: {stats.pool.implementation?.split(':')[1] || 'unknown'}
                           </div>
                         )}

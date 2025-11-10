@@ -96,7 +96,7 @@ export default function ContactSection() {
             <div className="text-white space-y-4">
               <p className="text-lg sm:text-xl leading-relaxed">
                 Retriever가 아직 찾지 못한 정보가 있나요?<br />
-                새로운 사이트를 제보해주시면 데이터베이스에 추가하겠습니다.
+                새로운 사이트나 누락된 정보, 혹은 개선 아이디어가 있다면 제보해주세요.
               </p>
 
               <div className="backdrop-blur-md bg-white/5 rounded-xl p-6 border border-white/10">
@@ -159,7 +159,7 @@ export default function ContactSection() {
 
             <div className="text-sm text-white/80 text-center leading-relaxed space-y-1">
               <p>해당 문의는 관리자 콘솔에서 검토 후 승인·반영됩니다.</p>
-              <p>여러분의 피드백은 Retriever를 더 똑똑하게 만드는 힘이 됩니다. 데이터 품질 개선에 직접 기여해주셔서 감사합니다!</p>
+              <p>여러분의 피드백은 Retriever를 더 똑똑하게 만드는 힘이 됩니다. 데이터 품질 개선에 기여해주셔서 감사합니다.</p>
             </div>
           </div>
         </div>

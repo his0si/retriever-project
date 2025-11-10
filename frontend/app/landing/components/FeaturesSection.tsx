@@ -28,7 +28,7 @@ export default function FeaturesSection() {
   const aiFeatures = [
     {
       title: 'RAG 기반 질의응답',
-      description: '벡터 DB에 저장된 학교 정보를 기반으로 정확한 답변 제공'
+      description: 'Vector DB에 저장된 학교 정보를 기반으로 정확한 답변 제공'
     },
     {
       title: '전공 맞춤형 검색',
@@ -55,7 +55,7 @@ export default function FeaturesSection() {
     },
     {
       title: '스케줄 크롤링',
-      description: '폴더 단위로 일별/주별/월별 자동 크롤링'
+      description: '크롤링 깊이 · 수집 주기 · 사이트 활성화 여부 등 세부 옵션을 조정해 필요에 맞게 데이터 수집 범위를 최적화'
     },
     {
       title: '작업 큐 모니터링',
@@ -63,7 +63,7 @@ export default function FeaturesSection() {
     },
     {
       title: 'VPN 지원',
-      description: 'IP 차단 방지를 위한 NordVPN 통합'
+      description: 'IP 차단을 방지하기 위해 NordVPN을 통합하여 안정적인 크롤링 지원'
     },
     {
       title: '중복 방지',
@@ -112,8 +112,12 @@ export default function FeaturesSection() {
                     key={index}
                     className="backdrop-blur-md bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-300"
                   >
-                    <h4 className="text-lg font-semibold text-sky-300 mb-2">
-                      {feature.title}
+                    <h4 className="text-lg font-bold mb-2 relative group">
+                      <span
+                        className="feature-title relative inline-block bg-gradient-to-r from-sky-300 to-blue-400 bg-clip-text text-transparent"
+                      >
+                        {feature.title}
+                      </span>
                     </h4>
                     <p className="text-sm text-white/80">
                       {feature.description}
@@ -135,8 +139,12 @@ export default function FeaturesSection() {
                     key={index}
                     className="backdrop-blur-md bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-300"
                   >
-                    <h4 className="text-lg font-semibold text-sky-300 mb-2">
-                      {feature.title}
+                    <h4 className="text-lg font-bold mb-2 relative group">
+                      <span
+                        className="feature-title relative inline-block bg-gradient-to-r from-sky-300 to-blue-400 bg-clip-text text-transparent"
+                      >
+                        {feature.title}
+                      </span>
                     </h4>
                     <p className="text-sm text-white/80">
                       {feature.description}
@@ -158,8 +166,12 @@ export default function FeaturesSection() {
                     key={index}
                     className="backdrop-blur-md bg-white/5 rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-300"
                   >
-                    <h4 className="text-lg font-semibold text-sky-300 mb-2">
-                      {feature.title}
+                    <h4 className="text-lg font-bold mb-2 relative group">
+                      <span
+                        className="feature-title relative inline-block bg-gradient-to-r from-sky-300 to-blue-400 bg-clip-text text-transparent"
+                      >
+                        {feature.title}
+                      </span>
                     </h4>
                     <p className="text-sm text-white/80">
                       {feature.description}
