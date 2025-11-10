@@ -1,29 +1,115 @@
 # Retriever Project
 
-크롤링 기반 AI 챗봇을 위한 엔드투엔드 정보 제공 파이프라인 구축
+**대학 정보 검색을 위한 RAG 기반 지능형 챗봇 플랫폼**
 
-[🐶사이트 바로 가기](https://retrieverproject.duckdns.org:9443)
+크롤링 자동화부터 벡터 검색, AI 답변 생성까지 - 엔드투엔드 정보 제공 파이프라인
+
+[🐶사이트 바로 가기](https://retrieverproject.duckdns.org:9443) | [📖 API 문서](https://retrieverproject.duckdns.org:9443/backend/docs)
+
+## 🎯 프로젝트 특징
+
+### 기술적 하이라이트
+
+**프론트엔드**
+- Next.js 14 App Router와 React Server Components로 최신 웹 아키텍처 구현
+- TypeScript 타입 안전성으로 런타임 에러 최소화
+- TailwindCSS로 반응형 디자인 및 다크모드 지원
+- NextAuth 기반 OAuth 2.0 + 역할 기반 접근 제어
+
+**백엔드**
+- FastAPI 비동기 프레임워크로 고성능 API 서버 구축
+- Celery + RabbitMQ로 크롤링 및 임베딩 작업 비동기 처리
+- Playwright를 활용한 JavaScript 렌더링 사이트 크롤링
+- APScheduler로 시간 기반 자동 크롤링 스케줄링
+- Pydantic으로 데이터 검증 및 타입 안전성 보장
+
+**AI/ML**
+- RAG (Retrieval-Augmented Generation) 아키텍처
+- Qdrant 벡터 DB로 시맨틱 검색 구현
+- BGE-M3 다국어 임베딩 모델 (한국어 최적화)
+- OpenAI GPT-4o-mini로 컨텍스트 기반 답변 생성
+- 전공 맞춤형 검색 및 듀얼 모드 검색 (필터/확장)
+
+**인프라**
+- Docker Compose 기반 마이크로서비스 아키텍처
+- Nginx 리버스 프록시 + Let's Encrypt SSL
+- WireGuard VPN으로 IP 차단 방지
+- Redis 캐싱으로 성능 최적화
+- Supabase PostgreSQL로 관계형 데이터 관리
+
+### 프로젝트 구조
+
+```
+retriever-project/
+├── frontend/                 # Next.js 14 프론트엔드
+│   ├── app/                 # App Router
+│   │   ├── landing/        # 랜딩 페이지
+│   │   ├── chat/           # 챗봇 인터페이스
+│   │   ├── crawl/          # 크롤링 관리
+│   │   ├── inquiries/      # 문의 관리 (관리자)
+│   │   └── api/            # API Routes
+│   ├── components/          # 재사용 가능한 컴포넌트
+│   └── lib/                # 유틸리티 및 클라이언트
+├── backend/                 # FastAPI 백엔드
+│   ├── api/                # API 라우트
+│   │   ├── routes/        # 엔드포인트 정의
+│   │   └── models/        # Pydantic 모델
+│   ├── services/           # 비즈니스 로직
+│   │   ├── rag.py         # RAG 파이프라인
+│   │   └── department_matcher.py
+│   ├── tasks/              # Celery 태스크
+│   │   ├── crawler.py     # 크롤링 작업
+│   │   └── embeddings.py  # 임베딩 생성
+│   └── main.py             # FastAPI 앱 진입점
+├── docker-compose.prod.yml  # 프로덕션 구성
+└── nginx.conf              # Nginx 설정
+```
 
 ## 주요 기능
 
+### 🎨 사용자 인터페이스
+- **랜딩 페이지**: 프로젝트 소개 및 기능 안내 페이지
+  - Hero Section: 프로젝트 핵심 가치 전달
+  - Features Section: 주요 기능 소개
+  - Contact Section: 사용자 피드백 및 사이트 제보 폼
+- **반응형 디자인**: 모바일/태블릿/데스크톱 최적화
+- **다크 모드**: 사용자 선호도 기반 테마 전환
+
 ### 🤖 AI 챗봇 기능
-- **RAG 기반 질의응답**: 벡터 DB에 저장된 학교 정보를 기반으로 정확한 답변 제공
+- **RAG 기반 질의응답**: Qdrant 벡터 DB와 OpenAI GPT-4o-mini를 활용한 정확한 답변 생성
 - **전공 맞춤형 검색**: 사용자의 전공/학과 설정에 따라 관련 정보 우선 제공
+  - 자동 쿼리 강화 (전공 정보 자동 추가)
+  - 이중 부스팅 (URL + 텍스트 매칭)
+  - 최대 3개 전공 지원
 - **이중 검색 모드**: 필터 모드(정확한 정보)와 확장 모드(유연한 답변) 지원
 - **채팅 히스토리**: 세션별 대화 기록 저장 및 즐겨찾기 기능
 - **소스 추적**: 모든 답변의 출처 URL 표시
 
 ### 🕷️ 크롤링 시스템
-- **지능형 크롤링**: Playwright 기반 동적 콘텐츠 지원
-- **스케줄 크롤링**: 폴더 단위로 일별/주별/월별 자동 크롤링
-- **작업 큐 모니터링**: RabbitMQ 기반 실시간 크롤링 상태 확인
-- **VPN 지원**: IP 차단 방지를 위한 NordVPN 통합
-- **중복 방지**: 콘텐츠 해시 기반 스마트 업데이트
+- **지능형 크롤링**: Playwright 기반 JavaScript 렌더링 및 동적 콘텐츠 지원
+- **스케줄 크롤링**: APScheduler 기반 폴더 단위 자동 크롤링
+  - Daily/Weekly/Monthly 스케줄 지원
+  - 폴더별 독립적인 크롤링 주기 설정
+- **작업 큐 시스템**: Celery + RabbitMQ 기반 비동기 작업 처리
+  - 크롤링 전담 워커 (prefork pool, concurrency=3)
+  - 임베딩 전담 워커 (prefork pool, concurrency=4)
+- **VPN 통합**: WireGuard 기반 VPN으로 IP 차단 방지
+- **중복 감지**: MD5 해시 기반 콘텐츠 변경 감지 및 스마트 업데이트
+- **텍스트 처리**: BeautifulSoup 기반 HTML 파싱 및 정제
+
+### 📬 사용자 피드백 시스템
+- **사이트 제보 기능**: 사용자가 누락된 사이트나 정보를 제보
+- **관리자 콘솔**: 제보된 문의 확인 및 관리
+  - 역할 기반 접근 제어 (admin 권한 필요)
+  - 문의 목록 조회, 상세 보기, 삭제 기능
+- **실시간 알림**: 새로운 제보 접수 시 관리자에게 알림
 
 ### 🔐 보안 및 인증
-- **OAuth 로그인**: Google, Kakao 소셜 로그인 지원
+- **OAuth 2.0 로그인**: Google, Kakao 소셜 로그인 지원
+- **역할 기반 접근 제어**: NextAuth 세션 확장으로 admin 역할 관리
 - **HTTPS/SSL**: Let's Encrypt 자동 인증서 발급 및 갱신
 - **세션 관리**: NextAuth 기반 안전한 사용자 세션 관리
+- **CORS 정책**: 백엔드 API 보안 강화
 
 ## 시스템 아키텍처
 
@@ -82,23 +168,62 @@
 
 ## 시스템 구성
 
-### 핵심 서비스
-- **Backend**: FastAPI + Celery + Playwright
-- **Frontend**: Next.js 14 + TypeScript + TailwindCSS
-- **Database**: Supabase (PostgreSQL + Auth + Storage)
-- **Vector DB**: Qdrant (클라우드 호스팅)
-- **Message Queue**: RabbitMQ + Celery
-- **Cache**: Redis
-- **Reverse Proxy**: Nginx + Let's Encrypt SSL
-- **VPN**: NordVPN (IP 차단 방지)
+### 프론트엔드 기술 스택
+- **프레임워크**: Next.js 14 (App Router, React Server Components)
+- **언어**: TypeScript 5.x
+- **스타일링**: TailwindCSS 3.x + @tailwindcss/typography
+- **UI 컴포넌트**: Heroicons 2.x
+- **인증**: NextAuth 4.x (OAuth 2.0 + 세션 관리)
+- **데이터 페칭**: Axios + React Hooks
+- **마크다운 렌더링**: react-markdown + remark-gfm
+- **데이터베이스 클라이언트**: @supabase/supabase-js 2.x
 
-### AI 모델
-- **OpenAI GPT-4o-mini**: RAG 챗봇 답변 생성용 (정확한 답변 제공)
-- **Ollama bge-m3** (1.2GB): 텍스트 임베딩 생성 (768차원 벡터)
+### 백엔드 기술 스택
+- **웹 프레임워크**: FastAPI 0.110 (비동기 Python 웹 프레임워크)
+- **ASGI 서버**: Uvicorn (표준 인터페이스 지원)
+- **작업 큐**: Celery 5.3 + Redis (비동기 작업 처리)
+- **메시지 브로커**: RabbitMQ 3 + Kombu (AMQP 프로토콜)
+- **스케줄러**: APScheduler 3.10 (Cron 기반 스케줄링)
+- **웹 크롤링**: Playwright 1.41 (Chromium 자동화)
+- **HTML 파싱**: BeautifulSoup4 + lxml
+- **벡터 DB**: Qdrant (클라우드 호스팅, 768차원 벡터)
+- **임베딩 생성**: Ollama (BGE-M3 모델)
+- **데이터 검증**: Pydantic 2.x (타입 안전성)
+- **로깅**: structlog (구조화된 로깅)
 
-### Celery 워커
-- **Main Worker**: 크롤링 작업 처리 (1개 워커)
-- **Embedding Worker**: 임베딩 생성 전담 (1개 워커)
+### 인프라 및 데브옵스
+- **컨테이너화**: Docker + Docker Compose
+- **리버스 프록시**: Nginx (Alpine)
+- **SSL/TLS**: Let's Encrypt (자동 갱신)
+- **VPN**: WireGuard (gluetun 컨테이너)
+- **데이터베이스**: Supabase (PostgreSQL 15 + PostgREST)
+- **캐싱**: Redis 7 (LRU 정책, AOF 영속성)
+- **모니터링**: RabbitMQ Management UI
+
+### AI 모델 및 임베딩
+- **답변 생성 모델**: OpenAI GPT-4o-mini
+  - 컨텍스트 기반 정확한 답변 생성
+  - 토큰 효율성과 비용 최적화
+- **임베딩 모델**: BAAI BGE-M3 (1.2GB)
+  - 768차원 dense 벡터 생성
+  - 다국어 지원 (한국어 최적화)
+  - 최대 8192 토큰 처리
+  - Ollama를 통한 로컬 추론
+
+### Celery 워커 아키텍처
+- **Crawler Worker** (rag-celery)
+  - 크롤링 작업 전담 처리
+  - Prefork pool (멀티프로세싱)
+  - Concurrency: 3 (동시 3개 작업)
+  - 메모리: 1.5GB~3GB
+  - VPN 프록시 사용
+
+- **Embedding Worker** (rag-celery-embedding)
+  - 임베딩 생성 전담 처리
+  - Prefork pool (멀티프로세싱)
+  - Concurrency: 4 (동시 4개 작업)
+  - 메모리: 1GB~2GB
+  - Ollama와 직접 통신
 
 ## 포트 구성
 
@@ -545,6 +670,88 @@ else:
     qdrant_client.upsert(...)
 ```
 
+## 사용자 피드백 시스템 상세
+
+### 제보 워크플로우
+
+```
+1. 사용자가 랜딩 페이지 Contact 섹션에서 제보 작성
+   ├─ 제목: 요청 사항 요약
+   └─ 내용: 상세 설명 및 URL
+   ↓
+2. Next.js API Route (/api/inquiries) 호출
+   ├─ 유효성 검사 (제목, 내용 필수)
+   └─ Supabase inquiries 테이블에 저장
+   ↓
+3. 관리자가 /inquiries 페이지에서 확인
+   ├─ 역할 검증 (admin 권한 필요)
+   ├─ 문의 목록 실시간 조회
+   └─ 상세 내용 확인
+   ↓
+4. 관리자가 검토 후 조치
+   ├─ 크롤링 사이트 추가
+   ├─ 스케줄 폴더에 등록
+   └─ 문의 삭제
+```
+
+### 제보 시스템 특징
+
+**사용자 편의성**
+- 로그인 없이 제보 가능 (진입 장벽 최소화)
+- 직관적인 폼 인터페이스
+- 제보 예시 제공으로 가이드
+
+**관리자 기능**
+- 역할 기반 접근 제어 (NextAuth admin role)
+- 실시간 문의 목록 조회 (created_at DESC)
+- 문의 상세 보기 및 삭제 기능
+- 반응형 디자인 (모바일 최적화)
+
+**데이터 구조**
+```typescript
+interface Inquiry {
+  id: string          // UUID (자동 생성)
+  title: string       // 제목
+  content: string     // 내용
+  created_at: string  // 생성 시간 (ISO 8601)
+}
+```
+
+### 관리자 인증 설정
+
+NextAuth 세션 확장:
+
+```typescript
+// frontend/types/next-auth.d.ts
+declare module "next-auth" {
+  interface Session {
+    user: {
+      name?: string | null
+      email?: string | null
+      image?: string | null
+      role?: string  // 역할 추가
+    }
+  }
+}
+
+// frontend/app/api/auth/[...nextauth]/route.ts
+callbacks: {
+  async session({ session, token }) {
+    if (session.user) {
+      session.user.role = token.role as string
+    }
+    return session
+  },
+  async jwt({ token, user }) {
+    if (user) {
+      // 관리자 이메일 체크
+      token.role = user.email === 'admin@example.com' ? 'admin' : 'user'
+    }
+    return token
+  }
+}
+```
+
 ## Supabase 데이터베이스 설정
 
 ### 테이블 구조
@@ -630,6 +837,21 @@ CREATE TABLE user_preferences (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+```
+
+#### 4. 사용자 피드백
+
+**inquiries** - 사용자 제보 및 문의
+```sql
+CREATE TABLE inquiries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 인덱스 생성 (최신 순 조회 최적화)
+CREATE INDEX idx_inquiries_created_at ON inquiries(created_at DESC);
 ```
 
 ### 자동 업데이트 트리거
@@ -725,9 +947,11 @@ docker compose -f docker-compose.prod.yml up -d
 
 ### 5. 접속
 
-- 웹사이트: https://yourdomain.com:9443
-- API 문서: https://yourdomain.com:9443/backend/docs
-- RabbitMQ UI: https://yourdomain.com:9443/rabbitmq/
+- **랜딩 페이지**: https://yourdomain.com:9443/landing
+- **챗봇 서비스**: https://yourdomain.com:9443/chat
+- **문의 관리** (관리자): https://yourdomain.com:9443/inquiries
+- **API 문서**: https://yourdomain.com:9443/backend/docs
+- **RabbitMQ UI**: https://yourdomain.com:9443/rabbitmq/
 
 ## 로컬 개발
 
@@ -801,6 +1025,28 @@ curl -X POST https://yourdomain.com:9443/backend/crawl/folders \
     "schedule_time": "00:00:00",
     "enabled": true
   }'
+```
+
+### 사이트 제보하기
+
+```bash
+# 프론트엔드 API 사용
+curl -X POST https://yourdomain.com:9443/api/inquiries \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "교환학생 프로그램 공지 추가 요청",
+    "content": "국제교류처 사이트(https://oia.ewha.ac.kr)에 교환학생 관련 공지가 많은데, Retriever에서 검색되지 않아요. 크롤링 대상에 추가해주세요."
+  }'
+```
+
+### 문의 목록 조회 (관리자)
+
+```bash
+# 모든 문의 조회
+curl https://yourdomain.com:9443/api/inquiries
+
+# 특정 문의 삭제
+curl -X DELETE https://yourdomain.com:9443/api/inquiries/{inquiry_id}
 ```
 
 ## 모니터링 및 관리
@@ -893,51 +1139,201 @@ docker restart rag-nginx
 
 ### 1. 크롤링 속도 향상
 
+**병렬 처리**
 ```python
 # backend/tasks/crawler.py
 MAX_CONCURRENT_PAGES = 10  # 동시 크롤링 페이지 수
 BATCH_SIZE = 100           # 배치 크기 증가
 ```
 
+**Celery 워커 스케일링**
+```bash
+# docker-compose.prod.yml에서 concurrency 조정
+celery:
+  command: celery -A celery_app worker --concurrency=5  # 3 → 5로 증가
+
+# 또는 추가 워커 인스턴스 실행
+docker compose -f docker-compose.prod.yml up -d --scale celery=2
+```
+
 ### 2. 임베딩 속도 향상
 
+**GPU 활용**
 ```bash
 # GPU 메모리 확인
 nvidia-smi
 
 # Ollama GPU 사용률 확인
 docker exec rag-ollama nvidia-smi
+
+# GPU 메모리 부족 시 모델 최적화
+# ollama run bge-m3 --gpu-memory 2GB
 ```
 
-### 3. Redis 캐싱
+**배치 임베딩**
+```python
+# backend/tasks/embeddings.py
+# 청크를 배치로 처리하여 API 호출 최소화
+EMBEDDING_BATCH_SIZE = 10  # 한 번에 10개 청크 임베딩
+```
 
+### 3. 벡터 검색 최적화
+
+**Qdrant 인덱스 최적화**
+```python
+# 컬렉션 최적화 설정
+qdrant_client.update_collection(
+    collection_name="school_docs",
+    optimizer_config=models.OptimizersConfigDiff(
+        indexing_threshold=20000,  # 인덱싱 임계값
+    )
+)
+```
+
+**검색 파라미터 튜닝**
+```python
+# backend/services/rag.py
+search_params = models.SearchParams(
+    hnsw_ef=128,  # HNSW 탐색 깊이 (정확도 vs 속도)
+    exact=False,   # 근사 검색 사용
+)
+```
+
+### 4. Redis 캐싱 전략
+
+**검색 결과 캐싱**
 ```python
 # 검색 결과 캐싱 (30분)
-cache_key = f"search:{query_hash}"
+cache_key = f"search:{query_hash}:{mode}:{departments}"
 cached = redis.get(cache_key)
 if cached:
     return json.loads(cached)
+
+# 캐시 저장 (TTL 30분)
+redis.setex(cache_key, 1800, json.dumps(result))
+```
+
+**임베딩 캐싱**
+```python
+# 자주 사용되는 쿼리의 임베딩 캐싱
+embedding_cache_key = f"embedding:{query_hash}"
+cached_embedding = redis.get(embedding_cache_key)
+```
+
+### 5. 프론트엔드 최적화
+
+**Next.js 최적화**
+```typescript
+// 이미지 최적화
+import Image from 'next/image'
+
+// 동적 import로 코드 스플리팅
+const ChatInterface = dynamic(() => import('@/components/ChatInterface'))
+
+// React Server Components 활용
+// app/page.tsx는 서버에서 렌더링
+```
+
+**번들 크기 최적화**
+```bash
+# 프로덕션 빌드 분석
+npm run build
+npm run analyze  # 번들 크기 분석
+
+# 불필요한 의존성 제거
+npm prune --production
 ```
 
 ## 보안 고려사항
 
 ### 1. 인증 및 권한
 
-- OAuth 2.0 기반 소셜 로그인
-- JWT 토큰 기반 세션 관리
-- HTTPS 강제 사용
+**OAuth 2.0 소셜 로그인**
+```typescript
+// frontend/app/api/auth/[...nextauth]/route.ts
+export const authOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    KakaoProvider({
+      clientId: process.env.KAKAO_CLIENT_ID!,
+      clientSecret: process.env.KAKAO_CLIENT_SECRET!,
+    }),
+  ],
+  // JWT 기반 세션 관리
+  session: { strategy: "jwt" },
+}
+```
+
+**역할 기반 접근 제어 (RBAC)**
+```typescript
+// 관리자 페이지 보호
+if (session?.user?.role !== 'admin') {
+  redirect('/chat')  // 권한 없으면 리다이렉트
+}
+```
 
 ### 2. 데이터 보호
 
-- 사용자 데이터 암호화 (Supabase)
-- API 키 환경 변수 관리
-- CORS 정책 적용
+**환경 변수 관리**
+```bash
+# .env 파일 (절대 커밋하지 않음)
+OPENAI_API_KEY=sk-...
+SUPABASE_KEY=eyJ...
+QDRANT_API_KEY=...
+NEXTAUTH_SECRET=$(openssl rand -base64 32)
 
-### 3. Rate Limiting
+# .gitignore에 추가
+.env
+.env.local
+.env*.local
+```
 
+**Supabase Row Level Security (RLS)**
+```sql
+-- 사용자 자신의 데이터만 접근 가능
+ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can only see their own history"
+ON chat_history FOR SELECT
+USING (auth.uid() = user_id);
+```
+
+**HTTPS 강제**
+```nginx
+# nginx.conf
+server {
+    listen 80;
+    return 301 https://$host$request_uri;  # HTTP → HTTPS 리다이렉트
+}
+```
+
+### 3. API 보안
+
+**CORS 정책**
+```python
+# backend/main.py
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://retrieverproject.duckdns.org:9443",
+        "http://localhost:3000"  # 개발 환경
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+```
+
+**Rate Limiting**
 ```python
 # backend/main.py
 from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -945,6 +1341,74 @@ limiter = Limiter(key_func=get_remote_address)
 @limiter.limit("10/minute")  # 분당 10회 제한
 async def chat(request: ChatRequest):
     ...
+
+@app.post("/api/inquiries")
+@limiter.limit("5/hour")  # 시간당 5회 제한 (스팸 방지)
+async def create_inquiry(request: InquiryRequest):
+    ...
+```
+
+**입력 검증**
+```python
+# backend/api/models/requests.py
+from pydantic import BaseModel, Field, validator
+
+class ChatRequest(BaseModel):
+    question: str = Field(..., min_length=1, max_length=1000)
+    mode: str = Field(..., regex="^(filter|expand)$")
+
+    @validator('question')
+    def sanitize_question(cls, v):
+        # XSS 방지: HTML 태그 제거
+        return v.strip().replace('<', '&lt;').replace('>', '&gt;')
+```
+
+### 4. 크롤링 보안
+
+**VPN 사용**
+```yaml
+# docker-compose.prod.yml
+vpn:
+  cap_add:
+    - NET_ADMIN  # VPN 연결에 필요한 권한만 부여
+  environment:
+    - VPN_TYPE=wireguard
+    - WIREGUARD_PRIVATE_KEY=${VPN_PRIVATE_KEY}  # 환경 변수로 관리
+```
+
+**User-Agent 로테이션**
+```python
+# backend/tasks/crawler.py
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+]
+browser = playwright.chromium.launch(
+    args=[f'--user-agent={random.choice(USER_AGENTS)}']
+)
+```
+
+### 5. 컨테이너 보안
+
+**최소 권한 원칙**
+```yaml
+# docker-compose.prod.yml
+api:
+  user: "1000:1000"  # non-root 사용자
+  read_only: true    # 읽기 전용 파일 시스템
+  cap_drop:
+    - ALL            # 모든 권한 제거
+```
+
+**보안 스캔**
+```bash
+# Docker 이미지 취약점 스캔
+docker scout cves rag-api
+docker scout recommendations rag-api
+
+# 컨테이너 보안 감사
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy image rag-api:latest
 ```
 
 ## 라이선스
