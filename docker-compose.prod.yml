@@ -22,10 +22,11 @@ services:
       - "8888:8888"  # HTTP proxy port
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "sh", "-c", "test -f /tmp/gluetun/ip"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   nginx:
     image: nginx:alpine
@@ -74,9 +75,9 @@ services:
       vpn:
         condition: service_healthy
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       qdrant:
         condition: service_started
       ollama:
@@ -110,9 +111,9 @@ services:
       vpn:
         condition: service_healthy
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       qdrant:
         condition: service_started
       ollama:
@@ -153,9 +154,9 @@ services:
       - .env
     depends_on:
       rabbitmq:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       qdrant:
         condition: service_started
       ollama:
@@ -240,10 +241,11 @@ services:
         reservations:
           memory: 256M
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
     restart: unless-stopped
 
   redis:
@@ -308,6 +310,36 @@ services:
               count: 1
               capabilities: [gpu]
     restart: unless-stopped
+
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: rag-ollama-init
+    depends_on:
+      - ollama
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "=== Ollama 초기화 시작 ==="
+        echo "Ollama 서비스 대기 중..."
+        until curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
+          echo "Ollama 대기 중... (5초 후 재시도)"
+          sleep 5
+        done
+        echo "Ollama 서비스 연결 성공!"
+
+        for MODEL in "qwen2.5:7b" "bge-m3"; do
+          echo "모델 확인: $$MODEL"
+          if curl -s http://ollama:11434/api/tags | grep -q "\"name\":\"$$MODEL\""; then
+            echo "✓ 모델 $$MODEL 이미 존재"
+          else
+            echo "✗ 모델 $$MODEL 다운로드 시작..."
+            curl -X POST http://ollama:11434/api/pull -d "{\"name\":\"$$MODEL\"}" || echo "경고: 모델 다운로드 실패"
+            echo "✓ 모델 $$MODEL 처리 완료"
+          fi
+        done
+        echo "=== Ollama 초기화 완료 ==="
+    restart: "no"
 
 volumes:
   rabbitmq_data:
