@@ -17,8 +17,8 @@ celery_app.conf.update(
     timezone="Asia/Seoul",
     enable_utc=False,
     task_track_started=True,
-    task_time_limit=2 * 60 * 60,  # 2 hours (깊이 2 크롤링용)
-    task_soft_time_limit=110 * 60,  # 110 minutes
+    task_time_limit=4.5 * 60 * 60,  # 4.5 hours (큰 웹사이트 크롤링용)
+    task_soft_time_limit=4 * 60 * 60,  # 4 hours (240 minutes)
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
     # Queue routing: separate embedding tasks to dedicated queue

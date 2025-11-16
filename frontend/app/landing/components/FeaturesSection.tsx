@@ -62,8 +62,8 @@ export default function FeaturesSection() {
       description: 'RabbitMQ 기반 실시간 크롤링 상태 확인'
     },
     {
-      title: 'VPN 지원',
-      description: 'IP 차단을 방지하기 위해 NordVPN을 통합하여 안정적인 크롤링 지원'
+      title: '크롤링 트래픽 제어',
+      description: '요청 간 동적 지연, User-Agent 로테이션, 도메인별 동시 접속 제한으로 서버 부담 최소화'
     },
     {
       title: '중복 방지',

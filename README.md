@@ -93,7 +93,7 @@ retriever-project/
 - **작업 큐 시스템**: Celery + RabbitMQ 기반 비동기 작업 처리
   - 크롤링 전담 워커 (prefork pool, concurrency=3)
   - 임베딩 전담 워커 (prefork pool, concurrency=4)
-- **VPN 통합**: WireGuard 기반 VPN으로 IP 차단 방지
+- **크롤링 트래픽 제어**: 요청 간 동적 지연, User-Agent 로테이션, 도메인별 동시 접속 제한으로 서버 부담 최소화
 - **중복 감지**: MD5 해시 기반 콘텐츠 변경 감지 및 스마트 업데이트
 - **텍스트 처리**: BeautifulSoup 기반 HTML 파싱 및 정제
 
