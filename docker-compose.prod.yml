@@ -82,7 +82,7 @@ services:
         condition: service_started
       ollama:
         condition: service_started
-    command: bash -lc "source activate appenv && python main.py"
+    command: bash -c "source /opt/conda/bin/activate appenv && python main.py"
     deploy:
       resources:
         limits:

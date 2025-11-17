@@ -80,5 +80,17 @@ RUN source activate appenv \
 # Copy application code
 COPY . .
 
+# Create non-root user for running applications
+RUN groupadd -r appuser && useradd -r -g appuser -u 1000 -m appuser \
+    && chown -R appuser:appuser /app \
+    && chown -R appuser:appuser /opt/conda
+
+# Initialize conda for appuser
+RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> /home/appuser/.bashrc \
+    && echo "conda activate appenv" >> /home/appuser/.bashrc
+
+# Switch to non-root user
+USER appuser
+
 # Default command (can be overridden)
 CMD ["bash", "-lc", "source activate appenv && python main.py"]
