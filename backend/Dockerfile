@@ -68,15 +68,6 @@ COPY requirements.txt .
 RUN source activate appenv \
     && pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers
-RUN source activate appenv \
-    && playwright install chromium \
-    && echo "Playwright Chromium installed successfully"
-
-# Verify Playwright installation
-RUN source activate appenv \
-    && python -c "from playwright.sync_api import sync_playwright; print('Playwright verification successful')"
-
 # Copy application code
 COPY . .
 
@@ -91,6 +82,15 @@ RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> /home/appuser/.bashrc \
 
 # Switch to non-root user
 USER appuser
+
+# Install Playwright browsers as appuser
+RUN source activate appenv \
+    && playwright install chromium \
+    && echo "Playwright Chromium installed successfully"
+
+# Verify Playwright installation
+RUN source activate appenv \
+    && python -c "from playwright.sync_api import sync_playwright; print('Playwright verification successful')"
 
 # Default command (can be overridden)
 CMD ["bash", "-lc", "source activate appenv && python main.py"]
