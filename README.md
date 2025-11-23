@@ -1,10 +1,25 @@
 # Retriever Project
 
-**대학 정보 검색을 위한 RAG 기반 지능형 챗봇 플랫폼**
+**기관 정보 검색을 위한 RAG 기반 지능형 챗봇 플랫폼**
 
 크롤링 자동화부터 벡터 검색, AI 답변 생성까지 - 엔드투엔드 정보 제공 파이프라인
 
-[🐶사이트 바로 가기](https://retrieverproject.duckdns.org:9443) | [📖 API 문서](https://retrieverproject.duckdns.org:9443/backend/docs)
+[🐶사이트 바로 가기](https://retrieverproject.duckdns.org:9443) | [📖 API 문서](https://retrieverproject.duckdns.org:9443/backend/docs) | [🎥 시연 영상](https://youtu.be/MH297Mxt1Bg)
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/bff3b7c5-822b-457c-998e-8f44226e2b66" />
+
+<table>
+  <tr>
+    <td width="50%">
+      <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d3485c8e-dbdb-4d31-b331-bc15cc33a6a0" />
+    </td>
+    <td width="50%">
+      <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7730840b-7be0-45f7-a50b-d3539abec070" />
+    </td>
+  </tr>
+</table>
+
+
 
 ## 🎯 프로젝트 특징
 
