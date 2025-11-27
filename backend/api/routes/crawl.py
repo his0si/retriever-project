@@ -281,37 +281,53 @@ async def purge_queue():
         except Exception as revoke_error:
             logger.warning(f"Failed to revoke some active tasks: {revoke_error}")
 
-        # Step 2: Purge RabbitMQ queue
-        rabbitmq_url = f"http://{settings.rabbitmq_host}:15672/api/queues/%2F/celery/contents"
+        # Step 2: Purge RabbitMQ queues (both celery and embedding)
         auth = (settings.rabbitmq_user, settings.rabbitmq_pass)
+        celery_purged = 0
+        embedding_purged = 0
 
         with httpx.Client() as client:
-            # DELETE all messages from the queue
-            response = client.delete(rabbitmq_url, auth=auth, timeout=5.0)
+            # Purge celery queue
+            celery_url = f"http://{settings.rabbitmq_host}:15672/api/queues/%2F/celery/contents"
+            response = client.delete(celery_url, auth=auth, timeout=5.0)
 
             if response.status_code not in [200, 204]:
-                logger.error(f"Failed to purge RabbitMQ queue: {response.status_code} - {response.text}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"RabbitMQ 큐 초기화 실패: {response.status_code}"
-                )
+                logger.error(f"Failed to purge celery queue: {response.status_code} - {response.text}")
+            else:
+                try:
+                    result = response.json()
+                    celery_purged = result.get('message_count', 0)
+                    logger.info(f"Purged celery queue: {celery_purged} messages")
+                except:
+                    celery_purged = 0
 
-            # Try to get purged count from response
-            try:
-                result = response.json()
-                purged_count = result.get('message_count', 0)
-            except:
-                purged_count = 0
+            # Purge embedding queue
+            embedding_url = f"http://{settings.rabbitmq_host}:15672/api/queues/%2F/embedding/contents"
+            response = client.delete(embedding_url, auth=auth, timeout=5.0)
+
+            if response.status_code not in [200, 204]:
+                logger.error(f"Failed to purge embedding queue: {response.status_code} - {response.text}")
+            else:
+                try:
+                    result = response.json()
+                    embedding_purged = result.get('message_count', 0)
+                    logger.info(f"Purged embedding queue: {embedding_purged} messages")
+                except:
+                    embedding_purged = 0
+
+        purged_count = celery_purged + embedding_purged
 
         total_cleared = revoked_count + purged_count
-        logger.info(f"Queue purged: {revoked_count} active tasks revoked, {purged_count} queued messages deleted")
+        logger.info(f"Queue purged: {revoked_count} active tasks revoked, {celery_purged} celery messages + {embedding_purged} embedding messages = {purged_count} total deleted")
 
         return {
             "status": "success",
-            "message": f"모든 작업이 중지되었습니다",
+            "message": f"모든 작업이 중지되었습니다 (크롤링: {celery_purged}개, 임베딩: {embedding_purged}개)",
             "total_cleared": total_cleared,
             "active_revoked": revoked_count,
-            "queued_purged": purged_count
+            "queued_purged": purged_count,
+            "celery_purged": celery_purged,
+            "embedding_purged": embedding_purged
         }
 
     except HTTPException:

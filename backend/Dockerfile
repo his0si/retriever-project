@@ -84,13 +84,13 @@ RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> /home/appuser/.bashrc \
 USER appuser
 
 # Install Playwright browsers as appuser
-RUN source activate appenv \
+RUN /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate appenv \
     && playwright install chromium \
-    && echo "Playwright Chromium installed successfully"
+    && echo 'Playwright Chromium installed successfully'"
 
 # Verify Playwright installation
-RUN source activate appenv \
-    && python -c "from playwright.sync_api import sync_playwright; print('Playwright verification successful')"
+RUN /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate appenv \
+    && python -c \"from playwright.sync_api import sync_playwright; print('Playwright verification successful')\""
 
 # Default command (can be overridden)
 CMD ["bash", "-lc", "source activate appenv && python main.py"]
