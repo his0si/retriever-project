@@ -1,12 +1,27 @@
 # Retriever Project
 
-**대학 정보 검색을 위한 RAG 기반 지능형 챗봇 플랫폼**
+**기관 정보 검색을 위한 RAG 기반 지능형 챗봇 플랫폼**
 
 크롤링 자동화부터 벡터 검색, AI 답변 생성까지 - 엔드투엔드 정보 제공 파이프라인
 
-[🐶사이트 바로 가기](https://retrieverproject.duckdns.org:9443) | [📖 API 문서](https://retrieverproject.duckdns.org:9443/backend/docs)
+[🐶사이트 바로 가기](https://retrieverproject.duckdns.org:9443) | [📖 API 문서](https://retrieverproject.duckdns.org:9443/backend/docs) | [🎥 시연 영상](https://youtu.be/MH297Mxt1Bg)
 
-## 🎯 프로젝트 특징
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/bff3b7c5-822b-457c-998e-8f44226e2b66" />
+
+<table>
+  <tr>
+    <td width="50%">
+      <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d3485c8e-dbdb-4d31-b331-bc15cc33a6a0" />
+    </td>
+    <td width="50%">
+      <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7730840b-7be0-45f7-a50b-d3539abec070" />
+    </td>
+  </tr>
+</table>
+
+
+
+## 프로젝트 특징
 
 ### 기술적 하이라이트
 
@@ -67,7 +82,7 @@ retriever-project/
 
 ## 주요 기능
 
-### 🎨 사용자 인터페이스
+### 사용자 인터페이스
 - **랜딩 페이지**: 프로젝트 소개 및 기능 안내 페이지
   - Hero Section: 프로젝트 핵심 가치 전달
   - Features Section: 주요 기능 소개
@@ -75,7 +90,7 @@ retriever-project/
 - **반응형 디자인**: 모바일/태블릿/데스크톱 최적화
 - **다크 모드**: 사용자 선호도 기반 테마 전환
 
-### 🤖 AI 챗봇 기능
+### AI 챗봇 기능
 - **RAG 기반 질의응답**: Qdrant 벡터 DB와 OpenAI GPT-4o-mini를 활용한 정확한 답변 생성
 - **전공 맞춤형 검색**: 사용자의 전공/학과 설정에 따라 관련 정보 우선 제공
   - 자동 쿼리 강화 (전공 정보 자동 추가)
@@ -85,7 +100,7 @@ retriever-project/
 - **채팅 히스토리**: 세션별 대화 기록 저장 및 즐겨찾기 기능
 - **소스 추적**: 모든 답변의 출처 URL 표시
 
-### 🕷️ 크롤링 시스템
+### 크롤링 시스템
 - **지능형 크롤링**: Playwright 기반 JavaScript 렌더링 및 동적 콘텐츠 지원
 - **스케줄 크롤링**: APScheduler 기반 폴더 단위 자동 크롤링
   - Daily/Weekly/Monthly 스케줄 지원
@@ -97,14 +112,14 @@ retriever-project/
 - **중복 감지**: MD5 해시 기반 콘텐츠 변경 감지 및 스마트 업데이트
 - **텍스트 처리**: BeautifulSoup 기반 HTML 파싱 및 정제
 
-### 📬 사용자 피드백 시스템
+### 사용자 피드백 시스템
 - **사이트 제보 기능**: 사용자가 누락된 사이트나 정보를 제보
 - **관리자 콘솔**: 제보된 문의 확인 및 관리
   - 역할 기반 접근 제어 (admin 권한 필요)
   - 문의 목록 조회, 상세 보기, 삭제 기능
 - **실시간 알림**: 새로운 제보 접수 시 관리자에게 알림
 
-### 🔐 보안 및 인증
+### 보안 및 인증
 - **OAuth 2.0 로그인**: Google, Kakao 소셜 로그인 지원
 - **역할 기반 접근 제어**: NextAuth 세션 확장으로 admin 역할 관리
 - **HTTPS/SSL**: Let's Encrypt 자동 인증서 발급 및 갱신
@@ -251,7 +266,7 @@ retriever-project/
 
 ## 주요 기능 상세
 
-### 1. 전공 맞춤형 검색 🎓
+### 1. 전공 맞춤형 검색 
 
 사용자의 전공/학과 정보를 기반으로 관련 정보를 우선적으로 제공합니다.
 
@@ -298,7 +313,7 @@ CREATE TABLE user_preferences (
 );
 ```
 
-### 2. AI 검색 모드 전환 🔍
+### 2. AI 검색 모드 전환 
 
 사용 상황에 따라 검색 전략을 선택할 수 있습니다.
 
@@ -349,7 +364,7 @@ CREATE TABLE user_preferences (
 → 출처: 학사일정 + 수강신청 안내 + 일반 정보
 ```
 
-### 3. VPN 통합 (IP 차단 방지) 🛡️
+### 3. VPN 통합 (IP 차단 방지) 
 
 크롤링 작업 시 IP 차단을 방지하기 위해 NordVPN을 통합했습니다.
 
@@ -411,7 +426,7 @@ docker restart rag-vpn
 docker logs rag-vpn
 ```
 
-### 4. 크롤링 작업 큐 모니터링 📊
+### 4. 크롤링 작업 큐 모니터링 
 
 RabbitMQ와 Celery를 통한 실시간 작업 모니터링을 제공합니다.
 
@@ -457,7 +472,7 @@ docker exec -it rag-celery celery -A tasks flower --port=5555
 
 접속: `http://localhost:5555`
 
-### 5. 스케줄 크롤링 폴더 시스템 📁
+### 5. 스케줄 크롤링 폴더 시스템 
 
 관련 사이트를 폴더로 그룹화하여 서로 다른 주기로 크롤링할 수 있습니다.
 
