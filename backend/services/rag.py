@@ -96,7 +96,7 @@ class RAGService:
             # Filter mode: strict validation
             if mode == "filter":
                 if not search_results or len(search_results) < min_results:
-                    return "죄송합니다. 데이터베이스에서 관련된 정보를 찾을 수 없습니다. 질문을 다르게 표현하거나 확장 모드를 시도해보세요.", []
+                    return "죄송합니다. 충분히 관련성 높은 정보를 찾을 수 없습니다. 확장 모드를 사용하시거나 질문을 더 구체적으로 해주세요.", []
 
                 # Additional check: ensure results have decent scores
                 avg_score = sum(r.score for r in search_results) / len(search_results)
@@ -112,7 +112,7 @@ class RAGService:
                 )
 
             if not search_results:
-                return "죄송합니다. 관련된 정보를 찾을 수 없습니다.", []
+                return "죄송합니다. 충분히 관련성 높은 정보를 찾을 수 없습니다. 확장 모드를 사용하시거나 질문을 더 구체적으로 해주세요.", []
 
             # Apply department boosting if enabled
             if department_info["enabled"] and (department_urls or department_names):
@@ -375,7 +375,7 @@ class RAGService:
    - 일반 상식, 다른 대학 정보, 추론 등 일체 금지
 
 2. **컨텍스트 외 정보 처리**:
-   - 컨텍스트에 답변이 명확히 없으면: "죄송합니다. 제공된 자료에서 해당 정보를 찾을 수 없습니다."
+   - 컨텍스트에 답변이 명확히 없으면: "죄송합니다. 충분히 관련성 높은 정보를 찾을 수 없습니다. 확장 모드를 사용하시거나 질문을 더 구체적으로 해주세요."
    - 절대 다른 대학, 다른 기관의 정보로 대체하지 마세요
    - "일반적으로", "보통", "추측하자면" 같은 표현 사용 금지
 
